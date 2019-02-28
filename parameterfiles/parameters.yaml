@@ -1,0 +1,21 @@
+%YAML 1.0
+
+
+CameraFile: "/home/steve/Data/MYNTVI/camera_parameter1.yaml"
+
+Base.feature_number: 1000
+Base.local_window_size: 10000
+
+GridFastExtractor.feature_num: 200
+GridFastExtractor.grid_rows: 4
+GridFastExtractor.grid_cols: 5
+GridFastExtractor.fast_threshold: 10
+
+#VO.pyramid_patch_size: 15
+VO.LK.pyramid_levels: 5
+VO.LK.patch_size: 15
+VO.LK.max_iteration: 50
+VO.LK.track_precision: 1e-4
+
+
+

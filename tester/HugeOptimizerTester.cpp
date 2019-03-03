@@ -233,6 +233,9 @@ int main() {
 //		std::cout <<std::endl;
 //		}
 		cv::waitKey(10);
+		out_file << current_pose.matrix()(0, 3) << ","
+		         << current_pose.matrix()(1, 3) << ","
+		         << current_pose.matrix()(2, 3) << std::endl;
 
 	}
 

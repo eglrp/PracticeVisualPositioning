@@ -32,7 +32,7 @@ int main() {
 	featureTrackServer.setCameraParameter(stereo_camera_ptr->M1, stereo_camera_ptr->D1);
 
 
-	bool sfm_flag = true;
+	bool sfm_flag = false;
 	std::vector<std::vector<cv::Point2f>> all_frame_pts;
 	std::vector<std::vector<int>> all_frame_ids;
 	int max_feature_id = 0;
@@ -76,7 +76,7 @@ int main() {
 			all_frame_ids.push_back(cur_ids);
 		} else {
 
-			cv::waitKey(10);
+			cv::waitKey(50);
 		}
 
 	}
@@ -86,6 +86,7 @@ int main() {
 		for(int i=0;i<all_frame_ids.size();++i){
 //			cv::sfm::reconstruction()
 //			cv::sfm::importReconstruction()
+//			cv::sfm::preconditionerFromPoints()
 		}
 
 	}

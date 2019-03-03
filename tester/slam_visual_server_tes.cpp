@@ -16,18 +16,22 @@
 int main()
 {
 
-	auto visual_server = BaseSLAM::SLAMVisualServer("test");
+//	auto visual_server = BaseSLAM::SLAMVisualServer("test");
+	BaseSLAM::SLAMVisualServer visual_server("test");
 
-	for(int k=0;k<1000;++k){
+	for(int k=0;k<10000;++k){
 		cv::Affine3d fake_pose;
-		fake_pose.matrix(0,3)=double(k)/500.0;
-		visual_server.addNewPose(fake_pose);
-		cv::waitKey(1);
+		fake_pose.matrix(0,3)=sin(double(k)/500.0)*50.0;
+		fake_pose.matrix(1,3)=cos(double(k)/500.0)*50.0;
+		fake_pose.matrix(2,3) = sin(double(k)/200.0)*50.0;
+		visual_server.addOdometryNewPose(fake_pose);
+		cv::waitKey(100);
 	}
 
 	cv::waitKey(0);
 
 
+	return 0;
 
 
 }

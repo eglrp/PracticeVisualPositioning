@@ -113,7 +113,7 @@ target_link_libraries(feature_track_server_test
 
 
 add_executable(slam_visual_server_test tester/slam_visual_server_tes.cpp)
-target_compile_definitions(
+target_link_libraries(
 		slam_visual_server_test
 		${OpenCV_LIBS}
 		${Boost_LIBRARIES}

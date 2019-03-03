@@ -10,15 +10,18 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/viz.hpp>
 
+#include <thread>
+
 namespace BaseSLAM {
 	class SLAMVisualServer {
 	public:
 		std::string windows_name_ = "default";
 
 		cv::viz::Viz3d windows_;//(windows_name_);
-		cv::viz::WTrajectory* wTrajectory_ptr_=nullptr;//default trajectory.
+		cv::viz::WTrajectory *wTrajectory_ptr_ = nullptr;//default trajectory.
 
 		std::vector<cv::Affine3d> pose_vec_;
+//		std::deque<cv::Affine3d> pose_vec_;
 
 		SLAMVisualServer(std::string windows_name) {
 			windows_name_ = windows_name;
@@ -28,18 +31,17 @@ namespace BaseSLAM {
 		}
 
 
-		bool addNewPose(cv::Affine3d pose){
+		bool addOdometryNewPose(cv::Affine3d pose) {
 			pose_vec_.push_back(pose);
-			if(wTrajectory_ptr_==nullptr){
-				wTrajectory_ptr_ = new cv::viz::WTrajectory(pose_vec_);
-				windows_.showWidget("trajectory",*wTrajectory_ptr_);
-			}else{
-				wTrajectory_ptr_->updatePose(pose);
+			windows_.showWidget("trajectory",
+			                    cv::viz::WTrajectory(pose_vec_, 3));
+			windows_.spinOnce();
+
+			if(pose_vec_.size()>1000){
+				pose_vec_.erase(pose_vec_.begin(),pose_vec_.begin()+10);
 			}
 			return true;
 		}
-
-
 
 
 	};

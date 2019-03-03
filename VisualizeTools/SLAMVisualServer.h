@@ -18,27 +18,32 @@ namespace BaseSLAM {
 		std::string windows_name_ = "default";
 
 		cv::viz::Viz3d windows_;//(windows_name_);
-		cv::viz::WTrajectory *wTrajectory_ptr_ = nullptr;//default trajectory.
+//		cv::viz::WTrajectory *wTrajectory_ptr_ = nullptr;//default trajectory.
 
 		std::vector<cv::Affine3d> pose_vec_;
-//		std::deque<cv::Affine3d> pose_vec_;
 
 		SLAMVisualServer(std::string windows_name) {
 			windows_name_ = windows_name;
 			windows_ = cv::viz::Viz3d(windows_name_);
-//			wTrajectory_ = cv::viz::WTrajectory(pose_vec_);
-//			windows_.showWidget("",)
+
+
 		}
 
 
+
+		/**
+		 * @brief add new pose to odometry trajectory, which will not larger than 1000.
+		 * @param pose
+		 * @return
+		 */
 		bool addOdometryNewPose(cv::Affine3d pose) {
 			pose_vec_.push_back(pose);
-			windows_.showWidget("trajectory",
+			windows_.showWidget("odometry_trajectory",
 			                    cv::viz::WTrajectory(pose_vec_, 3));
 			windows_.spinOnce();
 
-			if(pose_vec_.size()>1000){
-				pose_vec_.erase(pose_vec_.begin(),pose_vec_.begin()+10);
+			if (pose_vec_.size() > 1000) {
+				pose_vec_.erase(pose_vec_.begin(), pose_vec_.begin() + 10);
 			}
 			return true;
 		}

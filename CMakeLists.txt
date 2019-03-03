@@ -124,6 +124,13 @@ target_link_libraries(
 		${Boost_LIBRARIES}
 )
 
+add_executable(mono_slam_tester tester/mono_slam_tester.cpp)
+target_link_libraries(mono_slam_tester
+					  ${OpenCV_LIBS}
+					  ${G2O_LIBS} ${CSPARSE_LIBRARY}
+					  ${Boost_LIBRARIES}
+					  )
+
 
 
 #add_executable(trajectory_tester tester/wtrajectory_test.cpp)

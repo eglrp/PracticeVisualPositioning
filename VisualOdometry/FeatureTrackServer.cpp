@@ -259,6 +259,27 @@ bool FeatureTrackServer::rejectWithFRANSAC() {
 				mask_status
 		);
 
+
+		cv::Mat essential_matrix =
+				cv::findEssentialMat(
+						un_cur_pts,
+						un_forw_pts, cam_mat_
+				);
+
+		cv::Mat RR, TTt;
+		try {
+
+			cv::recoverPose(essential_matrix, un_cur_pts, un_forw_pts, cam_mat_, RR, TTt);
+			std::cout << "RR:" << RR << "\nTTt:" << TTt << std::endl;
+
+			RR.copyTo(R);
+			TTt.copyTo(Tt);
+
+		} catch (cv::Exception &e) {
+			std::cout << e.what() << std::endl;
+		}
+
+
 		reduceVector<cv::Point2f>(pre_pts_, mask_status);
 		reduceVector<cv::Point2f>(cur_pts_, mask_status);
 		reduceVector<cv::Point2f>(forw_pts_, mask_status);

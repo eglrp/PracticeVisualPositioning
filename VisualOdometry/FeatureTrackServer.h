@@ -98,7 +98,7 @@ public:
 	/**
 	 * @brief  hyper parameters
 	 */
-	int max_features_ = 200;
+	int max_features_ = 150;
 	int min_feature_dis_ = 15;// pixel
 
 	int pyr_patch_size_ = 10;
@@ -108,7 +108,7 @@ public:
 	bool debug_flag_ = true; // for debug
 	std::ofstream out_file_stream_;// output file.
 	/////////////////////////////////////////////
-
+	cv::Mat R,Tt;
 
 	std::vector<cv::Point2f> n_pts_;
 	std::vector<cv::Point2f> cur_pts_, forw_pts_, pre_pts_, prev_un_pts_, cur_un_pts_;

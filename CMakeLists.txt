@@ -118,6 +118,11 @@ target_compile_definitions(
 		${OpenCV_LIBS}
 		${Boost_LIBRARIES}
 )
+
+
+#add_executable(trajectory_tester tester/wtrajectory_test.cpp)
+#target_link_libraries(trajectory_tester
+#					  ${OpenCV_LIBS})
 ######################################################
 # UNIT TESTING
 ######################################################
@@ -133,5 +138,4 @@ add_executable(runConfigServerTests
 
 target_link_libraries(runConfigServerTests
 					  gtest gtest_main)
-
 

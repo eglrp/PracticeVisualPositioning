@@ -110,7 +110,12 @@ target_link_libraries(feature_track_server_test
 					  ${Boost_LIBRARIES}
 					  )
 
-
+add_executable(huge_optimizer_tester tester/HugeOptimizerTester.cpp)
+target_link_libraries(huge_optimizer_tester
+					  ${OpenCV_LIBS}
+					  ${G2O_LIBS} ${CSPARSE_LIBRARY}
+					  ${Boost_LIBRARIES}
+					  )
 
 add_executable(slam_visual_server_test tester/slam_visual_server_tes.cpp)
 target_link_libraries(
@@ -118,6 +123,7 @@ target_link_libraries(
 		${OpenCV_LIBS}
 		${Boost_LIBRARIES}
 )
+
 
 
 #add_executable(trajectory_tester tester/wtrajectory_test.cpp)

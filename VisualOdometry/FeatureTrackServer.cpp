@@ -222,13 +222,7 @@ bool FeatureTrackServer::rejectWithFRANSAC() {
 	if (forw_pts_.size() >= 8) {
 		std::vector<cv::Point2f> un_cur_pts(cur_pts_.size()), un_forw_pts(forw_pts_.size());
 		std::vector<uchar> mask_status;
-//		for (int i = 0; i < cur_pts_.size(); ++i) {
-//			Eigen::Vector3d tmp_p;
-//			cv::undistortPoints(
-//					forw_pts_,
-//					)
-//
-//		}
+
 		cv::undistortPoints(
 				cur_pts_,
 				un_cur_pts,

@@ -70,7 +70,9 @@ int main(){
 
 	auto left_cam_matrix = stereo_camera_ptr->M1;
 
-	int cam_id_offset = 5000000;
+	int cam_id_offset = 7000000;
+	int feature_offset= 6000000;
+
 	g2o::ParameterCamera *camera_parameter = new g2o::ParameterCamera();
 	camera_parameter->setId(cam_id_offset + 1);
 	printf("set camera parameter fx:%f,fy:%f,cx:%f,cy:%f\n",
@@ -90,7 +92,22 @@ int main(){
 
 	std::map<int,std::vector<int>> feature_frames_map;
 
+	//create g2o camera para
 
+//	g2o::ParameterCamera *camera_parameter = new g2o::ParameterCamera();
+//	camera_parameter->setId(cam_id_offset + 1);
+//	printf("set camera parameter fx:%f,fy:%f,cx:%f,cy:%f\n",
+//	       left_cam_matrix.at<float>(0, 1),
+//	       left_cam_matrix.at<float>(1, 1),
+//	       left_cam_matrix.at<float>(0, 2),
+//	       left_cam_matrix.at<float>(1, 2));
+//	camera_parameter->setKcam(
+//			left_cam_matrix.at<float>(0, 1),
+//			left_cam_matrix.at<float>(1, 1),
+//			left_cam_matrix.at<float>(0, 2),
+//			left_cam_matrix.at<float>(1, 2));
+//	int cam_param_index = 900000000;
+//	camera_parameter->setId(cam_param_index);
 
 	for(int i=0;i<img_reader.vec_size_;++i){
 		whole_img = img_reader.get_image(i);
@@ -106,8 +123,53 @@ int main(){
 		featureTrackServer.addNewFrame(left_img);
 		std::cout << featureTrackServer.cur_frame_id_ << std::endl;
 
-		for(int fi=0;fi < featureTrackServer.cur_pts_.size();++fi){
 
+		std::vector<cv::Point2f> un_pts;
+		cv::undistortPoints(featureTrackServer.cur_pts_,un_pts,
+				stereo_camera_ptr->M1,stereo_camera_ptr->D1);
+		g2o::VertexSE3 * current_cam_vertex = new g2o::VertexSE3();
+		current_cam_vertex->setId(featureTrackServer.cur_frame_id_);
+		Eigen::Isometry3d ini_pos = Eigen::Isometry3d::Identity();
+		ini_pos.matrix()(0,3) = double(featureTrackServer.curr_feature_id_)/1000.0;
+		ini_pos.matrix()(0,1) = double(featureTrackServer.curr_feature_id_)/1000.0;
+		current_cam_vertex->setEstimate(Eigen::Isometry3d::Identity());
+		if(featureTrackServer.cur_frame_id_==1){
+			current_cam_vertex->setFixed(true);
+		}
+		globalOptimizer.addVertex(current_cam_vertex);
+
+		Eigen::Matrix3d points_info = Eigen::Matrix3d::Identity() * 50.0;
+
+		for(int fi=0;fi < un_pts.size();++fi){
+			int feature_id = featureTrackServer.ids_[fi];
+			std::cout << "here feature id:"<< feature_id << std::endl;
+			if(feature_id>0&&featureTrackServer.track_cnt_[fi]>3) {
+//				std::cout << "track cnt:" << featureTrackServer.track_cnt_[fi] << std::endl;
+				if (featureTrackServer.track_cnt_[fi] == 4) {
+//				try{
+					g2o::VertexPointXYZ *pointXyz = new g2o::VertexPointXYZ();
+					pointXyz->setId(feature_id + feature_offset);
+					pointXyz->setEstimate(Eigen::Vector3d(2.0, 3.0, 0.0));
+					globalOptimizer.addVertex(pointXyz);
+//				}
+
+				}
+
+				g2o::EdgeSE3PointXYZDisparity *ob_pt = new g2o::EdgeSE3PointXYZDisparity();
+				ob_pt->vertices()[0] = globalOptimizer.vertex(featureTrackServer.cur_frame_id_);
+				ob_pt->vertices()[1] = globalOptimizer.vertex(feature_id + feature_offset);
+				ob_pt->setParameterId(0, cam_param_index);
+
+				ob_pt->setMeasurement(Eigen::Vector3d(
+						un_pts[fi].x,
+						un_pts[fi].y,
+						0.1
+				));
+
+				ob_pt->setInformation(points_info);
+
+				globalOptimizer.addEdge(ob_pt);
+			}
 
 		}
 
@@ -116,9 +178,15 @@ int main(){
 		cv::imshow("left_src",left_img);
 		cv::imshow("right_src", right_img);
 
+		if(i%20==0&& i <300){
+			globalOptimizer.initializeOptimization();
+			globalOptimizer.optimize();
+		}
 		cv::waitKey(10);
 
 	}
+
+	globalOptimizer.save("/home/steve/test_hug.g2o");
 
 	cv::waitKey();
 

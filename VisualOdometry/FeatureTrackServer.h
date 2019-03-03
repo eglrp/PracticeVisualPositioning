@@ -52,7 +52,8 @@ public:
 		if (n_pts_.size() > 0) {
 			for (auto &p:n_pts_) {
 				forw_pts_.push_back(p);
-				ids_.push_back(-1);
+				ids_.push_back(curr_feature_id_);
+				curr_feature_id_++;
 				track_cnt_.push_back(1);
 			}
 			return true;

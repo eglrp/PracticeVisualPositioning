@@ -160,6 +160,7 @@ bool FeatureTrackServer::addNewFrame(cv::Mat &_img) {
 			lossed_cnt++;
 		}
 
+
 		out_file_stream_ << track_cnt_[i];
 		if (i < forw_pts_.size() - 1) {
 			out_file_stream_ << ",";
@@ -173,6 +174,13 @@ bool FeatureTrackServer::addNewFrame(cv::Mat &_img) {
 
 	// update here.
 //	if()
+///updated feature id here.
+//for(int i=0;i<forw_pts_.size();++i){
+//	if(track_cnt_[i]>1&&ids_[i]==-1){
+//		ids_[i] = curr_feature_id_;
+//		curr_feature_id_++;
+//	}
+//}
 
 
 //	if(lossed_cnt<200|| cur_frame_id_<10){

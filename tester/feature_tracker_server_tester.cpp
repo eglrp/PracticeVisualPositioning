@@ -65,8 +65,8 @@ int main() {
 		if (sfm_flag) {
 			std::vector<cv::Point2f> cur_pts;
 			std::vector<int> cur_ids;
-			for(int fi=0;fi<featureTrackServer.forw_pts_.size();++fi){
-				if(featureTrackServer.ids_[fi]>max_feature_id){
+			for (int fi = 0; fi < featureTrackServer.forw_pts_.size(); ++fi) {
+				if (featureTrackServer.ids_[fi] > max_feature_id) {
 					max_feature_id++;
 				}
 				cur_pts.push_back(featureTrackServer.forw_pts_[fi]);
@@ -81,9 +81,9 @@ int main() {
 
 	}
 
-	if(sfm_flag){
+	if (sfm_flag) {
 		std::vector<std::vector<cv::Point2f>> points2d;
-		for(int i=0;i<all_frame_ids.size();++i){
+		for (int i = 0; i < all_frame_ids.size(); ++i) {
 //			cv::sfm::reconstruction()
 //			cv::sfm::importReconstruction()
 //			cv::sfm::preconditionerFromPoints()

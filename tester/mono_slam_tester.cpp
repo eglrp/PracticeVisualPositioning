@@ -13,9 +13,14 @@
 #include <VisualOdometry/FrontEndOptimizer.h>
 #include <VisualOdometry/FrontEndOptimizer.cpp>
 
+
+#include <VisualOdometry/SFMFeatureManager.h>
+#include <VisualOdometry/SFMFeatureManager.cpp>
+
 #include <VisualOdometry/StereoCamera.h>
 
 #include "util/MYNTEYEReader.h"
+
 
 int main(){
 
@@ -35,7 +40,6 @@ int main(){
 		whole_img = img_reader.get_image(i);
 
 		std::cout << " readed " << i << "-th image" << std::endl;
-
 
 		left_img = img_reader.copy_left_img(whole_img);
 		right_img = img_reader.copy_right_img(whole_img);

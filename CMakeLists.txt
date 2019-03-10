@@ -26,16 +26,6 @@ find_package(Eigen3 REQUIRED)
 find_package(BLAS)
 find_package(LAPACK)
 
-#GTSAM
-find_package(GTSAM REQUIRED) # Uses installed package
-include_directories(${GTSAM_INCLUDE_DIR})
-set(GTSAM_LIBRARIES gtsam)   # TODO: automatic search libs
-
-find_package(GTSAMCMakeTools)
-include(GtsamMakeConfigFile)
-include(GtsamBuildTypes)
-include(GtsamTesting)
-
 
 #BOOST
 find_package(Boost REQUIRED COMPONENTS filesystem system)
@@ -47,25 +37,24 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 # G2O
 # G2O
-SET(G2O_ROOT /usr/local/include/g2o)
-FIND_PACKAGE(G2O)
-FIND_PACKAGE(CSparse)
-if (CSPARSE_FOUND)
-	message("founded csparse")
-endif (CSPARSE_FOUND)
+#SET(G2O_ROOT /usr/local/include/g2o)
+#FIND_PACKAGE(G2O)
+#FIND_PACKAGE(CSparse)
+#if (CSPARSE_FOUND)
+#	message("founded csparse")
+#endif (CSPARSE_FOUND)
 
 #INCLUDE_DIRECTORIES(${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR})
-SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator
-	g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d
-	g2o_core g2o_interface g2o_solver_csparse g2o_solver_structure_only
-	g2o_types_sba g2o_types_slam3d g2o_csparse_extension g2o_opengl_helper
-	g2o_solver_dense g2o_stuff g2o_types_sclam2d g2o_parser g2o_solver_pcg
-	g2o_types_data g2o_types_sim3 cxsparse
-	g2o_types_slam3d_addons)
+#SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator
+#	g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d
+#	g2o_core g2o_interface g2o_solver_csparse g2o_solver_structure_only
+#	g2o_types_sba g2o_types_slam3d g2o_csparse_extension g2o_opengl_helper
+#	g2o_solver_dense g2o_stuff g2o_types_sclam2d g2o_parser g2o_solver_pcg
+#	g2o_types_data g2o_types_sim3 cxsparse
+#	g2o_types_slam3d_addons)
 
 
 include_directories(${OpenCV_INCLUDE_DIRS}
-					${GTSAM_INCLUDE_DIR}
 					${Boost_INCLUDE_DIRS}
 					${Eigen_INCLUDE_DIRS}
 					./
@@ -74,16 +63,11 @@ include_directories(${OpenCV_INCLUDE_DIRS}
 					/usr/include
 					/usr/local/include
 					${CSPARSE_INCLUDE_DIR}
-					${G2O_INCLUDE_DIR}
 					/home/steve/Code/googletest/googletest/include
 					)
 
 
-#add_executable( DisplayImage DisplayImage.cpp )
-#target_link_libraries( DisplayImage ${OpenCV_LIBS} )
 link_directories(
-		#		/opt/intel/mkl/lib/intel64/
-		#		/opt/intel/mkl/lib/intel64_lin/
 		${Boost_LIBRARY_DIRS}
 		/usr/local/lib
 		/usr/lib
@@ -93,9 +77,6 @@ link_directories(
 
 
 )
-#target_link_libraries(
-#
-#)
 
 aux_source_directory(
 		./VisualOdometry SRC_FILES
@@ -106,14 +87,12 @@ aux_source_directory(
 add_executable(feature_track_server_test tester/feature_tracker_server_tester.cpp)
 target_link_libraries(feature_track_server_test
 					  ${OpenCV_LIBS}
-					  ${G2O_LIBS} ${CSPARSE_LIBRARY}
 					  ${Boost_LIBRARIES}
 					  )
 
-add_executable(huge_optimizer_tester tester/HugeOptimizerTester.cpp)
+add_executable(huge_optimizer_tester tester/invalid/HugeOptimizerTester.cpp)
 target_link_libraries(huge_optimizer_tester
 					  ${OpenCV_LIBS}
-					  ${G2O_LIBS} ${CSPARSE_LIBRARY}
 					  ${Boost_LIBRARIES}
 					  )
 
@@ -127,7 +106,6 @@ target_link_libraries(
 add_executable(mono_slam_tester tester/mono_slam_tester.cpp)
 target_link_libraries(mono_slam_tester
 					  ${OpenCV_LIBS}
-					  ${G2O_LIBS} ${CSPARSE_LIBRARY}
 					  ${Boost_LIBRARIES}
 					  )
 

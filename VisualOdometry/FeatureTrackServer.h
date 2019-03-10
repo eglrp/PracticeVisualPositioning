@@ -14,7 +14,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <Eigen/Dense>
+//#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 
 class FeatureTrackServer {

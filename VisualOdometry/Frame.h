@@ -8,10 +8,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/features2d.hpp>
-
 #include <opencv2/line_descriptor.hpp>
 
-#include <util/DataUnit.h>
 #include <VisualOdometry/StereoCamera.h>
 
 
@@ -19,35 +17,26 @@
 #include <memory>
 
 
+#include <eigen3/Eigen/Geometry>
+
 //using namespace gtsam;
 
 namespace BaseSLAM {
 	class Frame {
 	public:
-		std::shared_ptr<BaseSLAM::StereoCamera> cam_ptr_; // camera model
-//		std::shared_ptr<BaseSLAM::StereoINSData> data_ptr_;//
-		BaseSLAM::StereoINSData *data_ptr_;//
+//		std::shared_ptr<BaseSLAM::StereoCamera> cam_ptr_; // camera model
 
-		long idx_;// id of frame
+		long frame_id_;// id of frame
 		double time_stampe_; // when it is recorded
 
 		Eigen::Isometry3d transform_matrix_; // transform matrix  form world to camera
 
+		std::vector<double> time_vec_;
+		std::vector<Eigen::Vector3d> acc_vec_;
+		std::vector<Eigen::Vector3d> gyr_vec_;
+		std::vector<Eigen::Vector3d> mag_vec_;
 
-		std::vector<cv::KeyPoint> left_feature_points_, right_feature_points_;// key points (or feature points)
-		cv::Mat left_descriptors_, right_descriptors_;
-
-		std::vector<cv::line_descriptor::KeyLine> left_lines_, right_lines_; // line descriptors.
-		cv::Mat left_line_descriptors_, right_line_descriptors_;
-
-
-		Frame(std::shared_ptr<StereoCamera> cam_ptr, StereoINSData *data_ptr, int index) {
-			idx_ = index;
-			cam_ptr_ = cam_ptr;
-			data_ptr_ = data_ptr;
-			time_stampe_ = data_ptr->global_timestamp_;
-
-		}
+		std::vector<int> contained_feature_id_;
 
 
 	};

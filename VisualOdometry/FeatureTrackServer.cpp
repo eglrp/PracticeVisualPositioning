@@ -173,15 +173,6 @@ bool FeatureTrackServer::addNewFrame(cv::Mat &_img) {
 	                 << blur_score << "}" << std::endl;
 
 	// update here.
-//	if()
-///updated feature id here.
-//for(int i=0;i<forw_pts_.size();++i){
-//	if(track_cnt_[i]>1&&ids_[i]==-1){
-//		ids_[i] = curr_feature_id_;
-//		curr_feature_id_++;
-//	}
-//}
-
 
 //	if(lossed_cnt<200|| cur_frame_id_<10){
 	prev_img_ = cur_img_;

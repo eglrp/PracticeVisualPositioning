@@ -6,6 +6,14 @@
 #define PRACTICEVISUALPOSITIONING_FEATUREMANAGER_H
 
 
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <numeric>
+
+#include <eigen3/Eigen/Dense>
+
+
 class FeatureManager {
 
 };

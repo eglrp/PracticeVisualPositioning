@@ -33,6 +33,7 @@ int main(){
 	featureTrackServer.setCameraParameter(stereo_camera_ptr->M1,stereo_camera_ptr->D1);
 	for(int i=0;i<img_reader.vec_size_;++i){
 		whole_img = img_reader.get_image(i);
+
 		std::cout << " readed " << i << "-th image" << std::endl;
 
 

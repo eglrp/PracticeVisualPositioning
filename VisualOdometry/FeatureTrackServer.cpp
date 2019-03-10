@@ -174,7 +174,6 @@ bool FeatureTrackServer::addNewFrame(cv::Mat &_img) {
 
 	// update here.
 
-//	if(lossed_cnt<200|| cur_frame_id_<10){
 	prev_img_ = cur_img_;
 	pre_pts_ = cur_pts_;
 	prev_un_pts_ = cur_un_pts_;
@@ -183,8 +182,6 @@ bool FeatureTrackServer::addNewFrame(cv::Mat &_img) {
 
 	prev_img_pyr_.swap(cur_img_pyr_);
 	cur_img_pyr_.swap(forw_img_pyr_);
-
-//	}
 
 	undistortedPoints();
 

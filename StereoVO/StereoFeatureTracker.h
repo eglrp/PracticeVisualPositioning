@@ -7,8 +7,16 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <StereoVO/StereoConfigServer.h>
+
 class StereoFeatureTracker {
 public:
+
+
+
+
+	StereoConfigServer * config_ptr_ = StereoConfigServer::getInstance();
+
 
 };
 

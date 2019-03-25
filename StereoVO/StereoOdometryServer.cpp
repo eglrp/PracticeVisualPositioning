@@ -3,3 +3,5 @@
 //
 
 #include "StereoOdometryServer.h"
+
+class StereoOdometryServer

@@ -28,8 +28,6 @@ int main(){
 
 	config_ptr->stereo_model_flag = true;
 
-
-
 	cv::Mat cam_mat(3, 3, CV_32F);
 	cv::Mat coeff_mat(5, 1, CV_32F);
 
@@ -45,13 +43,19 @@ int main(){
 	coeff_mat.at<float>(3, 0) = 0.0;
 	coeff_mat.at<float>(4, 0) = 0.0;
 
-	cv::Mat btc_mat(4,4,CV_32F);
 
-	for(int i=0;i<4;++i){
-		btc_mat.at<float>(i,i) =1.0f;
-	}
+	cam_mat.copyTo(config_ptr->left_cam_mat);
+	cam_mat.copyTo(config_ptr->right_cam_mat);
 
-	btc_mat.at<float>(0,3) = 0.53715065326792f;
+	coeff_mat.copyTo(config_ptr->left_dist_coeff);
+	coeff_mat.copyTo(config_ptr->right_dist_coeff);
+
+	config_ptr->left_camTbody = Eigen::Matrix4d::Identity();
+	config_ptr->right_camTbody = Eigen::Matrix4d::Identity();
+	config_ptr->right_camTbody(0,3) =  0.53715065326792;
+
+
+
 
 	std::string img_name;
 	while(list_file_stream >> img_name){

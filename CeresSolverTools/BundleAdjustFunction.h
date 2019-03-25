@@ -5,6 +5,8 @@
 #ifndef PRACTICEVISUALPOSITIONING_BUNDLEADJUSTFUNCTION_H
 #define PRACTICEVISUALPOSITIONING_BUNDLEADJUSTFUNCTION_H
 
+#include <ceres/ceres.h>
+#include <ceres/rotation.h>
 
 struct SnavelyReprojectionError {
 	SnavelyReprojectionError(double observed_x, double observed_y)

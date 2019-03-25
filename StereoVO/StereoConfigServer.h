@@ -15,6 +15,9 @@
 class StereoConfigServer{
 public:
 
+	/**
+	 * @brief Parameters in whole Visual odometry System.
+	 */
 	cv::Mat left_cam_mat;
 	cv::Mat right_cam_mat;
 	cv::Mat left_dist_coeff;
@@ -25,6 +28,12 @@ public:
 
 
 	bool stereo_model_flag = true;
+
+
+	/**
+	 *  Function
+	 *
+	 */
 
 	static StereoConfigServer* getInstance(){
 
@@ -50,11 +59,13 @@ protected:
 
 	StereoConfigServer &operator=(const StereoConfigServer&){}
 
-	static StereoConfigServer *instance_;
+	static StereoConfigServer *instance_ ;
 
 
 
 };
+
+StereoConfigServer *StereoConfigServer::instance_ = nullptr;
 
 
 #endif //PRACTICEVISUALPOSITIONING_STEREOCONFIGSERVER_H

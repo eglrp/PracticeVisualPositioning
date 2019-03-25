@@ -35,24 +35,12 @@ find_package(OpenCV REQUIRED)
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-# G2O
-# G2O
-#SET(G2O_ROOT /usr/local/include/g2o)
-#FIND_PACKAGE(G2O)
-#FIND_PACKAGE(CSparse)
-#if (CSPARSE_FOUND)
-#	message("founded csparse")
-#endif (CSPARSE_FOUND)
+FIND_PACKAGE(CSparse)
+if (CSPARSE_FOUND)
+	message("founded csparse")
+endif (CSPARSE_FOUND)
 
-#INCLUDE_DIRECTORIES(${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR})
-#SET(G2O_LIBS g2o_cli g2o_ext_freeglut_minimal g2o_simulator
-#	g2o_solver_slam2d_linear g2o_types_icp g2o_types_slam2d
-#	g2o_core g2o_interface g2o_solver_csparse g2o_solver_structure_only
-#	g2o_types_sba g2o_types_slam3d g2o_csparse_extension g2o_opengl_helper
-#	g2o_solver_dense g2o_stuff g2o_types_sclam2d g2o_parser g2o_solver_pcg
-#	g2o_types_data g2o_types_sim3 cxsparse
-#	g2o_types_slam3d_addons)
-
+find_package(Ceres REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS}
 					${Boost_INCLUDE_DIRS}
@@ -64,6 +52,7 @@ include_directories(${OpenCV_INCLUDE_DIRS}
 					/usr/local/include
 					${CSPARSE_INCLUDE_DIR}
 					/home/steve/Code/googletest/googletest/include
+					${CERES_INCLUDE_DIRS}
 					)
 
 
@@ -74,14 +63,11 @@ link_directories(
 		/usr/lib/x86_64-linux-gnu
 		${BLAS_LIBRARIES}
 		${LAPACK_LIBRARIES}
-
-
 )
 
 aux_source_directory(
 		./VisualOdometry SRC_FILES
 )
-
 
 
 add_executable(feature_track_server_test tester/feature_tracker_server_tester.cpp)
@@ -109,7 +95,13 @@ target_link_libraries(mono_slam_tester
 					  ${Boost_LIBRARIES}
 					  )
 
-
+add_executable(StereoKittiTester tester/StereoKittiTester.cpp)
+target_link_libraries(
+		StereoKittiTester
+		${OpenCV_LIBS}
+		${Boost_LIBRARIES}
+		${CERES_LIBRARIES}
+)
 
 #add_executable(trajectory_tester tester/wtrajectory_test.cpp)
 #target_link_libraries(trajectory_tester

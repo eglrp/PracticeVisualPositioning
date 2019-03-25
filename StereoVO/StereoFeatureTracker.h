@@ -5,8 +5,10 @@
 #ifndef PRACTICEVISUALPOSITIONING_STEREOFEATURETRACKER_H
 #define PRACTICEVISUALPOSITIONING_STEREOFEATURETRACKER_H
 
+#include <opencv2/opencv.hpp>
 
 class StereoFeatureTracker {
+public:
 
 };
 

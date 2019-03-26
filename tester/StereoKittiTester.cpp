@@ -15,16 +15,18 @@
 
 #include <StereoVO/StereoConfigServer.h>
 
+#include <StereoVO/StereoOdometryServer.h>
 
-int main(){
+
+int main() {
 
 	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/05/";
 	std::string left_sub_dir_name = "image_0";
 	std::string right_sub_dir_name = "image_1";
 
-	std::fstream list_file_stream(dir_name+left_sub_dir_name+".list");
+	std::fstream list_file_stream(dir_name + left_sub_dir_name + ".list");
 
-	StereoConfigServer* config_ptr = StereoConfigServer::getInstance();
+	StereoConfigServer *config_ptr = StereoConfigServer::getInstance();
 
 	config_ptr->stereo_model_flag = true;
 
@@ -52,22 +54,23 @@ int main(){
 
 	config_ptr->left_camTbody = Eigen::Matrix4d::Identity();
 	config_ptr->right_camTbody = Eigen::Matrix4d::Identity();
-	config_ptr->right_camTbody(0,3) =  0.53715065326792;
+	config_ptr->right_camTbody(0, 3) = 0.53715065326792;
 
 
+	StereoOdometryServer odometry;
 
 
 	std::string img_name;
-	while(list_file_stream >> img_name){
-		cv::Mat left_img = cv::imread(dir_name+left_sub_dir_name+"/"+img_name,
-				cv::IMREAD_GRAYSCALE);
-		cv::Mat right_img = cv::imread(dir_name+right_sub_dir_name+"/"+img_name,
-				cv::IMREAD_GRAYSCALE);
+	while (list_file_stream >> img_name) {
+		cv::Mat left_img = cv::imread(dir_name + left_sub_dir_name + "/" + img_name,
+		                              cv::IMREAD_GRAYSCALE);
+		cv::Mat right_img = cv::imread(dir_name + right_sub_dir_name + "/" + img_name,
+		                               cv::IMREAD_GRAYSCALE);
 
 		cv::imshow("left", left_img);
-		cv::imshow("right",right_img);
+		cv::imshow("right", right_img);
 
-
+		odometry.addNewFrame(left_img, right_img);
 
 
 		cv::waitKey(10);

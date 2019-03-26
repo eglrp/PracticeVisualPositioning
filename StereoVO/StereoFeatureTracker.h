@@ -12,11 +12,15 @@
 class StereoFeatureTracker {
 public://TODO: change to protect
 
-	StereoFeatureTracker();
+	StereoFeatureTracker(){}
 
-	~StereoFeatureTracker();
+	~StereoFeatureTracker(){}
 
-	bool addNewFrame(cv::Mat &l_mat, cv::Mat &r_mat=cv::noArray());
+	bool addNewFrame(cv::Mat &l_img, cv::Mat &r_img);
+
+	bool addNewFrame(cv::Mat &l_mat) {
+		return addNewFrame(l_mat, l_mat);
+	}
 
 	bool setMask();
 
@@ -26,7 +30,7 @@ public://TODO: change to protect
 
 	bool addPoint2forw();
 
-	bool isInimage();
+	bool isInimage(const cv::Point2f &points);
 
 	// Values...
 	StereoConfigServer *config_ptr_ = StereoConfigServer::getInstance();
@@ -36,7 +40,7 @@ public://TODO: change to protect
 	cv::Mat prev_img_, cur_img_, forw_img_; // image by main camera
 	cv::Mat prev_r_img_, cur_r_img_, forw_r_img_;// image by right camera.
 
-	std::vector<cv::Mat> prev_img_pyr_, cur_img_pyr_;// image pyr by main camera
+	std::vector<cv::Mat> prev_img_pyr_, cur_img_pyr_, forw_img_pyr_, forw_r_pyr_;// image pyr by main camera
 
 	std::vector<cv::Point2f> n_pts_; // for saving detected new feature points
 
@@ -47,6 +51,9 @@ public://TODO: change to protect
 
 	std::vector<int> ids_, track_cnt_;
 	std::vector<int> r_ids_, r_track_cnt_;
+
+	int cur_frame_id_ = 0;
+	int cur_feature_id = 0;
 
 
 };

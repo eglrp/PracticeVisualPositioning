@@ -72,6 +72,15 @@ aux_source_directory(
 )
 
 
+aux_source_directory( ./StereoVO StereoVO_FILES)
+
+#aux_source_directory(
+#		./CeresSolverTools
+#		CERESTOOL
+#)
+
+
+
 add_executable(feature_track_server_test tester/feature_tracker_server_tester.cpp)
 target_link_libraries(feature_track_server_test
 					  ${OpenCV_LIBS}
@@ -97,12 +106,13 @@ target_link_libraries(mono_slam_tester
 					  ${Boost_LIBRARIES}
 					  )
 
-add_executable(StereoKittiTester tester/StereoKittiTester.cpp)
+add_executable(StereoKittiTester tester/StereoKittiTester.cpp ${StereoVO_FILES} )
 target_link_libraries(
 		StereoKittiTester
 		${OpenCV_LIBS}
 		${Boost_LIBRARIES}
 		${CERES_LIBRARIES}
+
 )
 
 #add_executable(trajectory_tester tester/wtrajectory_test.cpp)

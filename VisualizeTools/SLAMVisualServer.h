@@ -26,7 +26,6 @@ namespace BaseSLAM {
 			windows_name_ = windows_name;
 			windows_ = cv::viz::Viz3d(windows_name_);
 
-
 		}
 
 

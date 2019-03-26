@@ -57,10 +57,13 @@ public:
 	int lk_itea_count = 30;
 	float lk_eps = 0.01;
 
-
 	bool use_lk_reverse = true;
 	float reverse_dis_threshold = 0.5;
 
+
+
+	bool steres_use_lk_reverse = true;
+	float stereo_reverse_dis_threshold = 0.5;
 
 	bool show_mask = true;
 

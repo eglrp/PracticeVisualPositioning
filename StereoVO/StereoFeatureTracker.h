@@ -32,6 +32,8 @@ public://TODO: change to protect
 
 	bool isInimage(const cv::Point2f &points);
 
+	bool trackStereoPoints();
+
 	// Values...
 	StereoConfigServer *config_ptr_ = StereoConfigServer::getInstance();
 

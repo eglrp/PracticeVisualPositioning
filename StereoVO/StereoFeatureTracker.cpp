@@ -7,7 +7,7 @@
 
 bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 	//region calculate pyramid for current frame
-	std::vector<cv::Mat> t_l_img_pyr, t_r_img_pyr;
+	std::vector <cv::Mat> t_l_img_pyr, t_r_img_pyr;
 	if (config_ptr_->use_pyramid) {
 		cv::buildOpticalFlowPyramid(
 				l_img,
@@ -61,6 +61,7 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 	} else {
 		forw_img_ = l_img;
 
+
 		if (config_ptr_->use_pyramid) {
 			forw_img_pyr_.assign(t_l_img_pyr.begin(), t_l_img_pyr.end());
 		}
@@ -76,9 +77,9 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 	forw_pts_.clear();
 
-	// track feature in left image.
+	//region track feature in left image.
 	if (cur_pts_.size() > 0) {
-		std::vector<uchar> status;
+		std::vector <uchar> status;
 		std::vector<float> err;
 
 		if (config_ptr_->use_pyramid) {
@@ -124,8 +125,8 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 
 		if (config_ptr_->use_lk_reverse) {
-			std::vector<uchar> reverse_status;
-			std::vector<cv::Point2f> reverse_pts = pre_pts_;
+			std::vector <uchar> reverse_status;
+			std::vector <cv::Point2f> reverse_pts = pre_pts_;
 
 			//region reverse track using LK
 			if (config_ptr_->use_pyramid) {
@@ -185,38 +186,42 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 		reduceVector<int>(track_cnt_, status);
 
 	}
+	//endregion
+
 
 	for (auto &n:track_cnt_) {
 		n++;
 	}
 
-	if (true) {
-		rejectWithRANSAC();
+	rejectWithRANSAC();
 
-		setMask();
+	setMask();
 
-		int n_max_cnt = config_ptr_->max_features -
-		                static_cast<int>(forw_pts_.size());
-		if (n_max_cnt > 0) {
-			if (mask_.rows == forw_img_.rows && mask_.cols == forw_img_.cols) {
-				cv::goodFeaturesToTrack(
-						forw_img_,
-						n_pts_,
-						n_max_cnt,
-						config_ptr_->feature_quality,
-						config_ptr_->min_feature_dis,
-						mask_,
-						3, false, 0.04
-				);
-			} else {
-				printf("mask size[%d,%d] is not same to forw image size[%d,%d]\n",
-				       mask_.rows, mask_.cols, forw_img_.rows, forw_img_.cols);
-			}
+	int n_max_cnt = config_ptr_->max_features -
+	                static_cast<int>(forw_pts_.size());
+	if (n_max_cnt > 0) {
+		if (mask_.rows == forw_img_.rows && mask_.cols == forw_img_.cols) {
+			cv::goodFeaturesToTrack(
+					forw_img_,
+					n_pts_,
+					n_max_cnt,
+					config_ptr_->feature_quality,
+					config_ptr_->min_feature_dis,
+					mask_,
+					3, false, 0.04
+			);
 		} else {
-			n_pts_.clear();
+			printf("mask size[%d,%d] is not same to forw image size[%d,%d]\n",
+			       mask_.rows, mask_.cols, forw_img_.rows, forw_img_.cols);
 		}
+	} else {
+		n_pts_.clear();
+	}
 
-		addPoint2forw();
+	addPoint2forw();
+
+	if (config_ptr_->stereo_model_flag) {
+		trackStereoPoints();
 	}
 
 
@@ -258,6 +263,23 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 	cv::imshow("feature img", col_mat);
 
+	if (config_ptr_->stereo_model_flag) {
+		cv::Mat r_col_mat;
+		cv::cvtColor(forw_r_img_,
+		             r_col_mat,
+		             cv::COLOR_GRAY2BGR);
+
+		for(int i=0;i<forw_r_pts.size();++i){
+			if(r_track_cnt_[i] > 0){
+				cv::circle(r_col_mat,forw_r_pts[i],3,cv::Scalar(0,0,100),4);
+			}
+		}
+
+		cv::imshow("right stereo img", r_col_mat);
+
+	}
+
+
 	return true;
 
 }
@@ -282,8 +304,8 @@ bool StereoFeatureTracker::rejectWithRANSAC() {
 	    !(config_ptr_->left_dist_coeff.empty())) {
 
 		if (forw_pts_.size() >= 8) {
-			std::vector<cv::Point2f> ucur_pts, ufor_pts;
-			std::vector<uchar> mask_status;
+			std::vector <cv::Point2f> ucur_pts, ufor_pts;
+			std::vector <uchar> mask_status;
 
 
 			cv::undistortPoints(
@@ -342,7 +364,7 @@ bool StereoFeatureTracker::undistortedPoints() {
 bool StereoFeatureTracker::setMask() {
 	mask_ = cv::Mat(forw_img_.rows, forw_img_.cols, CV_8UC1, cv::Scalar(255));
 
-	std::vector<std::pair<int, std::pair<cv::Point2f, int>>> cnt_pts_id;
+	std::vector < std::pair < int, std::pair < cv::Point2f, int >> > cnt_pts_id;
 	for (uint i(0); i < forw_pts_.size(); ++i) {
 		cnt_pts_id.push_back(std::make_pair(track_cnt_[i], std::make_pair(forw_pts_[i], ids_[i])));
 	}
@@ -397,4 +419,120 @@ bool StereoFeatureTracker::addPoint2forw() {
 	}
 }
 
+
+bool StereoFeatureTracker::trackStereoPoints() {
+	assert(!forw_r_img_.empty());
+
+	std::vector <uchar> valid_status;
+	std::vector <uchar> r_valid_states;
+
+	std::vector <cv::Point2f> right_pts;
+	std::vector<int> right_ids_;
+
+	std::vector<float> error;
+	if (config_ptr_->use_pyramid) {
+
+		cv::calcOpticalFlowPyrLK(
+				forw_img_pyr_,
+				forw_r_pyr_,
+				forw_pts_,
+				right_pts,
+				valid_status,
+				error,
+				cv::Size(config_ptr_->lk_patch_size,
+				         config_ptr_->lk_patch_size),
+				config_ptr_->pyr_levels,
+				cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS,
+				                 config_ptr_->lk_itea_count,
+				                 config_ptr_->lk_eps)
+		);
+
+	} else {
+		cv::calcOpticalFlowPyrLK(
+				forw_img_,
+				forw_r_img_,
+				forw_pts_,
+				right_pts,
+				valid_status,
+				error,
+				cv::Size(config_ptr_->lk_patch_size,
+				         config_ptr_->lk_patch_size),
+				config_ptr_->pyr_levels,
+				cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS,
+				                 config_ptr_->lk_itea_count,
+				                 config_ptr_->lk_eps)
+		);
+	}
+
+
+	if (config_ptr_->steres_use_lk_reverse) {
+		std::vector <cv::Point2f> reverse_lpts;
+		if (config_ptr_->use_pyramid) {
+			cv::calcOpticalFlowPyrLK(
+					forw_r_pyr_,
+					forw_img_pyr_,
+					right_pts,
+					reverse_lpts,
+					r_valid_states,
+					error,
+					cv::Size(config_ptr_->lk_patch_size,
+					         config_ptr_->lk_patch_size),
+					config_ptr_->pyr_levels,
+					cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS,
+					                 config_ptr_->lk_itea_count,
+					                 config_ptr_->lk_eps)
+			);
+		} else {
+			cv::calcOpticalFlowPyrLK(
+					forw_r_img_,
+					forw_img_,
+					right_pts,
+					reverse_lpts,
+					r_valid_states,
+					error,
+					cv::Size(config_ptr_->lk_patch_size,
+					         config_ptr_->lk_patch_size),
+					config_ptr_->pyr_levels,
+					cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS,
+					                 config_ptr_->lk_itea_count,
+					                 config_ptr_->lk_eps)
+			);
+		}
+
+
+		for (int i = 0; i < forw_pts_.size(); ++i) {
+			if (valid_status[i] &&
+			    r_valid_states[i] &&
+			    isInimage(reverse_lpts[i]) &&
+			    cv::norm(forw_pts_[i] - reverse_lpts[i]) < config_ptr_->stereo_reverse_dis_threshold
+					) {
+				valid_status[i] = 1;
+
+			} else {
+				valid_status[i] = 0;
+
+			}
+		}
+
+	}
+
+	forw_r_pts.clear();
+	r_ids_.clear();
+	r_track_cnt_.clear();
+	for (int i = 0; i < forw_pts_.size(); ++i) {
+		if (valid_status[i] && isInimage(right_pts[i])) {
+			// valid point
+			r_ids_.push_back(ids_[i]);
+			r_track_cnt_.push_back(track_cnt_[i]);
+
+		} else {
+			r_ids_.push_back(-1);
+			r_track_cnt_.push_back(-1);
+
+		}
+		forw_r_pts.push_back(right_pts[i]);
+	}
+
+
+}
 

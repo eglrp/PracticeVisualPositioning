@@ -8,6 +8,8 @@
 #include <thread>
 #include <mutex>
 
+#include <fstream>
+
 #include <opencv2/opencv.hpp>
 
 #include <Eigen/Dense>
@@ -25,6 +27,22 @@ public:
 
 	Eigen::Matrix4d left_camTbody;
 	Eigen::Matrix4d right_camTbody;
+
+	bool debug_flag = true;
+
+
+	/**
+	 * @brief Parameters for Feature tracking.
+	 */
+
+	int pyr_patch_size = 5;
+	int pyr_levels = 3;
+
+	int max_features = 200;
+	int min_feature_dis = 200;
+
+
+
 
 
 	bool stereo_model_flag = true;

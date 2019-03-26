@@ -40,6 +40,8 @@ if (CSPARSE_FOUND)
 	message("founded csparse")
 endif (CSPARSE_FOUND)
 
+
+
 find_package(Ceres REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS}

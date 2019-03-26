@@ -5,8 +5,14 @@
 #ifndef PRACTICEVISUALPOSITIONING_STEREOODOMETRYSERVER_H
 #define PRACTICEVISUALPOSITIONING_STEREOODOMETRYSERVER_H
 
+#include <StereoVO/StereoFeatureTracker.h>
+#include <StereoVO/StereoFeatureManager.h>
 
 class StereoOdometryServer {
+
+public:
+
+
 
 };
 

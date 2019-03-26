@@ -12,9 +12,6 @@
 class StereoFeatureTracker {
 public:
 
-
-
-
 	StereoConfigServer * config_ptr_ = StereoConfigServer::getInstance();
 
 

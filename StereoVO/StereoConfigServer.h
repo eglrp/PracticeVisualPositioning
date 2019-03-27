@@ -27,8 +27,8 @@ public:
 	cv::Mat left_dist_coeff;
 	cv::Mat right_dist_coeff;
 
-	Eigen::Matrix4d left_camTbody;
-	Eigen::Matrix4d right_camTbody;
+	Eigen::Matrix4d left_bodyTocam;
+	Eigen::Matrix4d right_bodyTocam;
 
 	bool debug_flag = true;
 

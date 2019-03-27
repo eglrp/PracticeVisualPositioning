@@ -52,9 +52,9 @@ int main() {
 	coeff_mat.copyTo(config_ptr->left_dist_coeff);
 	coeff_mat.copyTo(config_ptr->right_dist_coeff);
 
-	config_ptr->left_camTbody = Eigen::Matrix4d::Identity();
-	config_ptr->right_camTbody = Eigen::Matrix4d::Identity();
-	config_ptr->right_camTbody(0, 3) = 0.53715065326792;
+	config_ptr->left_bodyTocam = Eigen::Matrix4d::Identity();
+	config_ptr->right_bodyTocam = Eigen::Matrix4d::Identity();
+	config_ptr->right_bodyTocam(0, 3) = 0.53715065326792;
 
 
 	StereoOdometryServer odometry;

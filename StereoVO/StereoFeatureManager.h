@@ -8,6 +8,10 @@
 #include <vector>
 #include <map>
 #include <deque>
+#include <set>
+#include <list>
+
+
 
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
@@ -53,7 +57,9 @@ struct FeaturePreId {
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;
-	std::vector<int> key_frame_id_vec;
+
+	bool in_slide_windows_flag = false;
+	std::deque<int> key_frame_id_deque;
 
 };
 
@@ -101,7 +107,8 @@ public:
 	std::map<int, FramePreId> frame_map_;// save all frame and its observed feature's id in the whole process.
 
 	std::deque<int> key_frame_id_vec_;// save id of current key frame.
-	std::map<int, std::vector<int>> key_frame_feature_id_map_; // save frame_id -> feature id(contained in slide windows).
+//	std::map<int, std::vector<int>> key_frame_feature_id_map_; // save frame_id -> feature id(contained in slide windows).
+	std::set<int> sw_feature_id_set_; // feature id contained in slide windows
 
 
 };

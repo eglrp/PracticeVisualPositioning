@@ -32,13 +32,16 @@ public:
 
 	bool debug_flag = true;
 
+
+	bool additional_check = true; // additional check to avoid error understanding of coding.
+
 	bool stereo_model_flag = true;
 
 	/**
 	 * @brief Image preprocess parameters.
 	 */
 
-	bool use_clahe = true;
+	bool use_clahe = false;
 	float clahe_para = 3.0;
 	int clahe_patch_size = 21;
 
@@ -73,14 +76,20 @@ public:
 	double ransac_confidence = 0.99;
 	double ransac_error = 1.0;
 
+
 	/**
-	 * Parameter of optimizer
+	 * Parameters For Feature Manager
+	 */
+	int slide_windows_size = 20; //
+
+	int min_covisible_feature = 100;// lower bound of tracked feature number.
+	float min_parallex = 10.0; // average moving distance of all features.
+
+
+	/**
+	 * Parameter For Optimizer
 	 */
 
-	int slide_windows_size = 20;
-
-	int min_covisible_feature = 100;
-	float max_avg_feature_move = 10.0;
 
 	int robust_kernel_type = 1;// 0:HuberLoss 1:CauchyLoss
 	double robust_ratio = 1.0;// parameter for robust loss function.

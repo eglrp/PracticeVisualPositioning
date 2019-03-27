@@ -18,6 +18,8 @@
 
 #include <StereoVO/StereoConfigServer.h>
 
+#include <util/GeoTools.h>
+
 struct FramePreId {
 	FramePreId(int id) : frame_id(id) {
 	}
@@ -25,8 +27,9 @@ struct FramePreId {
 	long frame_id;
 	bool key_frame_flag = false;
 
-	Eigen::Vector3d pos;
-	Eigen::Quaterniond qua;
+	bool initialized_pose = false;
+	Eigen::Vector3d pos = Eigen::Vector3d::Zero();
+	Eigen::Quaterniond qua = Eigen::Quaterniond::Identity();
 
 	std::vector<int> feature_id_vec_;
 	std::map<int, cv::Point2f> id_pt_map;
@@ -42,12 +45,14 @@ struct FeaturePreId {
 	int feature_id;
 	int tracked_counter;
 
-	Eigen::Vector3d pt;
+	bool initialized = false;
+	Eigen::Vector3d pt = Eigen::Vector3d::Zero();
 	// may not be using.
 	double inv_depth;
 	int depth_frame_id;
 
-	std::map<int, cv::Point2f> frame_pt_map;
+//	std::map<int, cv::Point2f> frame_pt_map;
+	std::vector<int> frame_id_vec;
 	std::vector<int> key_frame_id_vec;
 
 };
@@ -60,21 +65,32 @@ public:
 
 	/**
 	 * @brief  add new feature represented frame.
-	 * @param frame_id
-	 * @param feature_id
-	 * @param feature_pts
-	 * @param r_feature_id
+	 * @param frame_id frame id of current frame
+	 * @param feature_id_v feature id vector
+	 * @param feature_pts feature points(2d)
+	 * @param r_feature_id_v feature id for right ( set -1 if not observed by right cam)
 	 * @param r_feature_pts
 	 * @return
 	 */
 	bool addNewFrame(int frame_id,
-	                 std::vector<int> feature_id,
-	                 std::vector<cv::Point2f> feature_pts,
-	                 std::vector<int> r_feature_id,
-	                 std::vector<cv::Point2f> r_feature_pts);
+	                 const std::vector<int> &feature_id_v,
+	                 const std::vector<cv::Point2f> &feature_pts,
+	                 const std::vector<int> &r_feature_id_v,
+	                 const std::vector<cv::Point2f> &r_feature_pts);
 
 
+	/**
+	 * @brief Check if it's needed to add a new key frame.
+	 * @return
+	 */
+	bool CheckKeyFrameCondition(const FramePreId &cur_frame);
 
+
+	bool AddNewKeyFrame(FramePreId &cur_frame);
+
+	bool Optimization();
+
+	bool UpdateVisualization();
 
 	StereoConfigServer *config_ptr_;
 

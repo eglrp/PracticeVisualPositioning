@@ -14,6 +14,8 @@
 
 #include <Eigen/Dense>
 
+#include <ceres/ceres.h>
+
 class StereoConfigServer {
 public:
 
@@ -70,6 +72,25 @@ public:
 
 	double ransac_confidence = 0.99;
 	double ransac_error = 1.0;
+
+	/**
+	 * Parameter of optimizer
+	 */
+
+	int slide_windows_size = 20;
+
+	int min_covisible_feature = 100;
+	float max_avg_feature_move = 10.0;
+
+	int robust_kernel_type = 1;// 0:HuberLoss 1:CauchyLoss
+	double robust_ratio = 1.0;// parameter for robust loss function.
+
+	std::string solver_type = "DENSE_SCHUR";
+	std::string trust_region_strategy_type = "DOGLEG";
+	int max_num_itea = 10;
+	double max_solver_time_in_seconds = 1.0;
+
+
 
 
 

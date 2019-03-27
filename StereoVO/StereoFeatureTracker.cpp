@@ -188,11 +188,11 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 	}
 	//endregion
 
-
 	for (auto &n:track_cnt_) {
 		n++;
 	}
 
+	//reject invalid pairs
 	rejectWithRANSAC();
 
 	setMask();
@@ -200,6 +200,7 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 	int n_max_cnt = config_ptr_->max_features -
 	                static_cast<int>(forw_pts_.size());
 	if (n_max_cnt > 0) {
+		// track new feature points if feature points number is less than max_features.
 		if (mask_.rows == forw_img_.rows && mask_.cols == forw_img_.cols) {
 			cv::goodFeaturesToTrack(
 					forw_img_,
@@ -238,6 +239,9 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 
 	undistortedPoints();
+
+
+	//DISPLAY feature in frame.
 	cv::Mat col_mat;
 	cv::cvtColor(forw_img_, col_mat, cv::COLOR_GRAY2BGR);
 	for (int i = 0; i < forw_pts_.size(); ++i) {
@@ -286,6 +290,7 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 
 bool StereoFeatureTracker::isInimage(const cv::Point2f &points) {
+
 	if (points.x < 0 ||
 	    points.x > forw_img_.cols ||
 	    points.y < 0 ||
@@ -326,6 +331,7 @@ bool StereoFeatureTracker::rejectWithRANSAC() {
 					config_ptr_->left_cam_mat
 			);
 
+			// select pairs based on RANSAC(to found an acceptable Fundemental matrix.).
 			cv::Mat F =
 					cv::findFundamentalMat(
 							ucur_pts,
@@ -383,6 +389,7 @@ bool StereoFeatureTracker::setMask() {
 	track_cnt_.clear();
 
 	for (auto &it:cnt_pts_id) {
+		// set mask to avoid detect new feature point in such region.
 		if (mask_.at<uchar>(it.second.first) == 255) {
 			forw_pts_.push_back(it.second.first);
 			ids_.push_back(it.second.second);
@@ -404,6 +411,7 @@ bool StereoFeatureTracker::setMask() {
 bool StereoFeatureTracker::addPoint2forw() {
 	if (n_pts_.size() > 0) {
 		for (auto &p:n_pts_) {
+			// add new feature to tracked feature points.
 			forw_pts_.push_back(p);
 			ids_.push_back(cur_feature_id);
 			cur_feature_id++;

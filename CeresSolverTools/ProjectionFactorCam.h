@@ -15,7 +15,7 @@ public:
 	bool Evaluate( double const *const * parameters,
 			double *residuals, double **jacobians) const;
 
-	Eigen::Vector3d pts_i, pts_j;
+	Eigen::Vector3d pi, pj;
 	Eigen::Matrix3d cTb;
 	Eigen::Matrix<double,2,3> tangent_base;
 	static Eigen::Matrix2d sqrt_info;
@@ -26,7 +26,7 @@ public:
 ProjectionFactorCam::ProjectionFactorCam(const Eigen::Vector3d &pts_i, const Eigen::Vector3d &pts_j,
                                          Eigen::Matrix4d cTb_mat){
 	cTb  = cTb_mat;
-	pts_i =
+//	pts_i =
 
 
 

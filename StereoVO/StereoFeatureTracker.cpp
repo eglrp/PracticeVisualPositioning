@@ -7,7 +7,7 @@
 
 bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 	//region calculate pyramid for current frame
-	std::vector <cv::Mat> t_l_img_pyr, t_r_img_pyr;
+	std::vector<cv::Mat> t_l_img_pyr, t_r_img_pyr;
 	if (config_ptr_->use_pyramid) {
 		cv::buildOpticalFlowPyramid(
 				l_img,
@@ -79,7 +79,7 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 	//region track feature in left image.
 	if (cur_pts_.size() > 0) {
-		std::vector <uchar> status;
+		std::vector<uchar> status;
 		std::vector<float> err;
 
 		if (config_ptr_->use_pyramid) {
@@ -125,8 +125,8 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 
 
 		if (config_ptr_->use_lk_reverse) {
-			std::vector <uchar> reverse_status;
-			std::vector <cv::Point2f> reverse_pts = pre_pts_;
+			std::vector<uchar> reverse_status;
+			std::vector<cv::Point2f> reverse_pts = pre_pts_;
 
 			//region reverse track using LK
 			if (config_ptr_->use_pyramid) {
@@ -248,18 +248,10 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 		if (track_cnt_[i] > 1) {
 
 			if (track_cnt_[i] > 5) {
-//				cv::putText(col_mat, std::to_string(ids_[i]),
-//				            forw_pts_[i],
-//				            3,
-//				            1.0,
-//				            cv::Scalar(0, 0, 100));
 				cv::circle(col_mat, forw_pts_[i], 4, cv::Scalar(0, 0, 250), 4);
 			} else {
-
 				cv::circle(col_mat, forw_pts_[i], 3, cv::Scalar(0, 100, 150), 4);
 			}
-
-
 		} else {
 			cv::circle(col_mat, forw_pts_[i], 2, cv::Scalar(0, 250, 0));
 		}
@@ -273,9 +265,9 @@ bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
 		             r_col_mat,
 		             cv::COLOR_GRAY2BGR);
 
-		for(int i=0;i<forw_r_pts.size();++i){
-			if(r_track_cnt_[i] > 0){
-				cv::circle(r_col_mat,forw_r_pts[i],3,cv::Scalar(0,0,100),4);
+		for (int i = 0; i < forw_r_pts.size(); ++i) {
+			if (r_track_cnt_[i] > 0) {
+				cv::circle(r_col_mat, forw_r_pts[i], 3, cv::Scalar(0, 0, 100), 4);
 			}
 		}
 
@@ -309,8 +301,8 @@ bool StereoFeatureTracker::rejectWithRANSAC() {
 	    !(config_ptr_->left_dist_coeff.empty())) {
 
 		if (forw_pts_.size() >= 8) {
-			std::vector <cv::Point2f> ucur_pts, ufor_pts;
-			std::vector <uchar> mask_status;
+			std::vector<cv::Point2f> ucur_pts, ufor_pts;
+			std::vector<uchar> mask_status;
 
 
 			cv::undistortPoints(
@@ -370,7 +362,7 @@ bool StereoFeatureTracker::undistortedPoints() {
 bool StereoFeatureTracker::setMask() {
 	mask_ = cv::Mat(forw_img_.rows, forw_img_.cols, CV_8UC1, cv::Scalar(255));
 
-	std::vector < std::pair < int, std::pair < cv::Point2f, int >> > cnt_pts_id;
+	std::vector<std::pair<int, std::pair<cv::Point2f, int >>> cnt_pts_id;
 	for (uint i(0); i < forw_pts_.size(); ++i) {
 		cnt_pts_id.push_back(std::make_pair(track_cnt_[i], std::make_pair(forw_pts_[i], ids_[i])));
 	}
@@ -431,10 +423,10 @@ bool StereoFeatureTracker::addPoint2forw() {
 bool StereoFeatureTracker::trackStereoPoints() {
 	assert(!forw_r_img_.empty());
 
-	std::vector <uchar> valid_status;
-	std::vector <uchar> r_valid_states;
+	std::vector<uchar> valid_status;
+	std::vector<uchar> r_valid_states;
 
-	std::vector <cv::Point2f> right_pts;
+	std::vector<cv::Point2f> right_pts;
 	std::vector<int> right_ids_;
 
 	std::vector<float> error;
@@ -474,7 +466,7 @@ bool StereoFeatureTracker::trackStereoPoints() {
 
 
 	if (config_ptr_->steres_use_lk_reverse) {
-		std::vector <cv::Point2f> reverse_lpts;
+		std::vector<cv::Point2f> reverse_lpts;
 		if (config_ptr_->use_pyramid) {
 			cv::calcOpticalFlowPyrLK(
 					forw_r_pyr_,

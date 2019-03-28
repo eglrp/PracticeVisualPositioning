@@ -12,7 +12,6 @@
 #include <list>
 
 
-
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -24,7 +23,8 @@
 
 #include <util/GeoTools.h>
 
-struct FramePreId {
+class FramePreId {
+public:
 	FramePreId(int id) : frame_id(id) {
 	}
 
@@ -40,7 +40,8 @@ struct FramePreId {
 	std::map<int, cv::Point2f> id_r_pt_map;
 };
 
-struct FeaturePreId {
+class FeaturePreId {
+public:
 	FeaturePreId(int id, int cnt = 1) : feature_id(id),
 	                                    tracked_counter(cnt) {
 
@@ -59,7 +60,7 @@ struct FeaturePreId {
 	std::vector<int> frame_id_vec;
 
 	bool in_slide_windows_flag = false;
-	std::deque<int> key_frame_id_deque;
+	std::deque<int> key_frame_id_set;
 
 };
 
@@ -89,14 +90,14 @@ public:
 	 * @brief Check if it's needed to add a new key frame.
 	 * @return
 	 */
-	bool CheckKeyFrameCondition(const FramePreId &cur_frame);
+	bool CheckKeyFrameCondition(FramePreId &cur_frame);
 
 
 	bool AddNewKeyFrame(FramePreId &cur_frame);
 
 	bool Optimization();
 
-	bool UpdateVisualization();
+	bool UpdateVisualization(int frame_id);
 
 	StereoConfigServer *config_ptr_;
 
@@ -106,10 +107,11 @@ public:
 	std::map<int, FeaturePreId> feature_map_;// save all features observed in the whole process
 	std::map<int, FramePreId> frame_map_;// save all frame and its observed feature's id in the whole process.
 
+	// record key frame and related features.
 	std::deque<int> key_frame_id_vec_;// save id of current key frame.
-//	std::map<int, std::vector<int>> key_frame_feature_id_map_; // save frame_id -> feature id(contained in slide windows).
 	std::set<int> sw_feature_id_set_; // feature id contained in slide windows
 
+	std::deque<Eigen::Matrix4d> pose_deque;
 
 };
 

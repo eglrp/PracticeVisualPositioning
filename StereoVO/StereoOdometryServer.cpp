@@ -26,7 +26,7 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 
 	}
 
-	if (config_ptr_->stereo_model_flag&& right_img.channels()>1) {
+	if (config_ptr_->stereo_model_flag && right_img.channels() > 1) {
 
 		cv::cvtColor(
 				right_img,
@@ -53,12 +53,28 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 	}
 
 
+	tracker_ptr_->addNewFrame(left_img, right_img);
 
-	tracker_ptr_->addNewFrame(left_img,right_img);
+	feature_manager_ptr_->addNewFrame(
+			tracker_ptr_->cur_frame_id_,
+			tracker_ptr_->ids_,
+			tracker_ptr_->forw_pts_,
+			tracker_ptr_->r_ids_,
+			tracker_ptr_->forw_r_pts
+	);
 
+	if (feature_manager_ptr_->pose_deque.size() > 0) {
+		for (int i = 0; i < feature_manager_ptr_->pose_deque.size(); ++i) {
+			Eigen::Matrix4d pose = feature_manager_ptr_->pose_deque[i];
+			cv::Mat R, t;
+			cv::eigen2cv(Eigen::Matrix3d(pose.block(0, 0, 3, 3)), R);
+			cv::eigen2cv(Eigen::Vector3d(pose.block(0, 3, 3, 1)), t);
+			cv::Affine3d affine_3d(R, t);
+			visualizer_ptr_->addOdometryNewPose(affine_3d);
+		}
 
-
-
+		feature_manager_ptr_->pose_deque.clear();
+	}
 
 
 }

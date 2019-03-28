@@ -430,6 +430,8 @@ bool StereoFeatureTracker::trackStereoPoints() {
 	std::vector<int> right_ids_;
 
 	std::vector<float> error;
+
+	// region track feature points by lk
 	if (config_ptr_->use_pyramid) {
 
 		cv::calcOpticalFlowPyrLK(
@@ -463,8 +465,10 @@ bool StereoFeatureTracker::trackStereoPoints() {
 				                 config_ptr_->lk_eps)
 		);
 	}
+	// endregion
 
 
+	//region check pairs by reverse lk tracking.
 	if (config_ptr_->steres_use_lk_reverse) {
 		std::vector<cv::Point2f> reverse_lpts;
 		if (config_ptr_->use_pyramid) {
@@ -515,6 +519,7 @@ bool StereoFeatureTracker::trackStereoPoints() {
 		}
 
 	}
+	//endregion
 
 	forw_r_pts.clear();
 	r_ids_.clear();
@@ -528,7 +533,6 @@ bool StereoFeatureTracker::trackStereoPoints() {
 		} else {
 			r_ids_.push_back(-1);
 			r_track_cnt_.push_back(-1);
-
 		}
 		forw_r_pts.push_back(right_pts[i]);
 	}

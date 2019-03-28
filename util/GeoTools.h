@@ -5,31 +5,25 @@
 #ifndef PRACTICEVISUALPOSITIONING_GEOTOOLS_H
 #define PRACTICEVISUALPOSITIONING_GEOTOOLS_H
 
+#pragma once
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 
-/** define **/
 
-bool triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
-                      Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d);
-
-//
-//bool triangulatePoint(Eigen::Matrix<double, 4, 4> &Pose0,
-//                      Eigen::Matrix<double, 4, 4> &Pose1,
-//                      Eigen::Vector2d &point0,
-//                      Eigen::Vector2d &point1,
-//                      Eigen::Vector3d &point_3d);
-
-bool triangulatePoint(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<double, 3, 1> &t0,
-                      Eigen::Matrix<double, 3, 3> &R1, Eigen::Matrix<double, 3, 1> &t1,
-                      Eigen::Vector2d &pt0, Eigen::Vector2d &pt1,
-                      Eigen::Vector3d &pt3d);
-
-
-bool triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
+/**
+ * @brief
+ * @param Pose0
+ * @param Pose1
+ * @param point0
+ * @param point1
+ * @param point_3d
+ * @return
+ */
+inline bool triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                       Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d) {
 	Eigen::Matrix4d design_matrix = Eigen::Matrix4d::Zero();
 	design_matrix.row(0) = point0[0] * Pose0.row(2) - Pose0.row(0);
@@ -56,10 +50,10 @@ bool triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 
  * @param pt3d 3D position of points.
  * @return
  */
-bool triangulatePoint(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<double, 3, 1> &t0,
-                      Eigen::Matrix<double, 3, 3> &R1, Eigen::Matrix<double, 3, 1> &t1,
-                      Eigen::Vector2d &pt0, Eigen::Vector2d &pt1,
-                      Eigen::Vector3d &pt3d) {
+inline bool triangulatePointRt(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<double, 3, 1> &t0,
+                        Eigen::Matrix<double, 3, 3> &R1, Eigen::Matrix<double, 3, 1> &t1,
+                        Eigen::Vector2d &pt0, Eigen::Vector2d &pt1,
+                        Eigen::Vector3d &pt3d) {
 	Eigen::Matrix<double, 3, 4> pose0, pose1;
 	pose0.block(0, 0, 3, 3) = R0 * 1.0;
 	pose0.block(0, 3, 3, 1) = t0 * 1.0;
@@ -73,9 +67,6 @@ bool triangulatePoint(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<double, 3, 
 }
 
 
-
-
-
 /**
  * @brief Solve pose by observed 3d point in 2d image.
  * @param qua_ini  initial quaternion
@@ -86,7 +77,7 @@ bool triangulatePoint(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<double, 3, 
  * @param dist_coeff distort coefficient matrix.
  * @return
  */
-bool solvePosePnp(Eigen::Quaterniond &qua_ini,
+inline bool solvePosePnp(Eigen::Quaterniond &qua_ini,
                   Eigen::Vector3d &t_ini,
                   std::vector<cv::Point2f> &ob_pt,
                   std::vector<cv::Point3f> &pts3,
@@ -117,7 +108,7 @@ bool solvePosePnp(Eigen::Quaterniond &qua_ini,
 		cv::Rodrigues(rvec, trvec);
 		cv::cv2eigen(trvec, r);
 		cv::cv2eigen(tvec, t);
-		qua_ini = Eigen::Quaterniond(r);
+		qua_ini = Eigen::Matrix3d(r);
 		t_ini = t;
 		return true;
 	}

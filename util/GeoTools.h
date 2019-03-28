@@ -230,15 +230,21 @@ struct ProjectionKnowCamFactor {
 			const T *const pt,
 			T *residuals
 	) const {
+		T pr[3];
 		T p[3];
 		T q[4];
 		for (int i = 0; i < 4; ++i) {
 			q[i] = T(q0_[i]);
 		}
-		ceres::QuaternionRotatePoint(q, pt, p);
-		p[0] += T(t0_[0]);
-		p[1] += T(t0_[1]);
-		p[2] += T(t0_[2]);
+
+		pr[0] -= pt[0];
+		pr[1] -= pt[1];
+		pr[2] -= pt[2];
+
+		ceres::QuaternionRotatePoint(q, pr, p);
+//		p[0] += T(t0_[0]);
+//		p[1] += T(t0_[1]);
+//		p[2] += T(t0_[2]);
 
 		T xp = p[0] / p[2];
 		T yp = p[1] / p[2];
@@ -248,8 +254,18 @@ struct ProjectionKnowCamFactor {
 		T cx = T(cx_);
 		T cy = T(cy_);
 
-		T pre_x = fx * xp - cx;
-		T pre_y = fy * yp - cy;
+		T pre_x = fx * xp + cx;
+		T pre_y = fy * yp + cy;
+
+		if (ceres::IsNaN(pre_x) || ceres::IsNaN(pre_y)) {
+			std::cout << " p :" << p[0] << "," << p[1] << "," << p[2] << std::endl;
+			std::cout << " xp:" << xp << "\n yp:" << yp << std::endl;
+			std::cout << "pre x:" << pre_x << " \npre y:" << pre_y << std::endl;
+
+			std::cout << "residula:" << pre_x - T(obx_) << ";"
+			          << pre_y - T(oby_) << std::endl;
+
+		}
 
 		residuals[0] = pre_x - T(obx_);
 		residuals[1] = pre_y - T(oby_);
@@ -309,19 +325,29 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 	yp = (pt0.y() - cy) / fy;
 
 	double Z = 10.0;
-	if(abs(t0.x()-t1.x())>0.2){
+	if (abs(t0.x() - t1.x()) > 0.2) {
 
-		Z =  (t0-t1).norm() * fx / (pt0-pt1).norm();
-	}else{
-		Z = 10.0;
+		Z = (t0 - t1).norm() * sqrt(fx * fx + fy * fy) / (pt0 - pt1).norm();
+	} else {
+//		Z = 10.0;
 
+	}
+
+	if(Z > 50.0){
+		Z = 50.0;
 	}
 
 	double X = xp * Z;
 	double Y = yp * Z;
 
-	 pt3d = q0.inverse() * ( Eigen::Vector3d(X,Y,Z) - t0);
-
+	pt3d = q0.inverse() * (Eigen::Vector3d(X, Y, Z) - t0);
+	std::cout << "-----------Pre estimated-------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
 
 	problem.AddResidualBlock(
 			ProjectionKnowCamFactor::Create(
@@ -353,8 +379,8 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 			pt3d.data()
 	);
 
-	ceres::Solve(option, &problem, &summary);
-	std::cout << summary.FullReport() << std::endl;
+//	ceres::Solve(option, &problem, &summary);
+//	std::cout << summary.FullReport() << std::endl;
 	std::cout << "------------------------\n"
 	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
 	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
@@ -366,10 +392,10 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 //		return false;
 //	}
 
-	if ((pt3d - t1).norm() > 200.0 || (pt3d - t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
-		std::cout << "ERROR in calculate trianglulaer" << std::endl;
-		return false;
-	}
+//	if ((pt3d - t1).norm() > 200.0 || (pt3d - t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
+//		std::cout << "ERROR in calculate trianglulaer" << std::endl;
+//		return false;
+//	}
 
 	return true;
 }

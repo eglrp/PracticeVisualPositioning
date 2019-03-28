@@ -54,7 +54,7 @@ int main() {
 
 	config_ptr->left_bodyTocam = Eigen::Matrix4d::Identity();
 	config_ptr->right_bodyTocam = Eigen::Matrix4d::Identity();
-	config_ptr->right_bodyTocam(1, 3) = 0.53715065326792;//*100.0;
+	config_ptr->right_bodyTocam(0, 3) = 0.53715065326792;//*100.0;
 
 
 	StereoOdometryServer odometry;

@@ -21,6 +21,7 @@ public:
 	StereoOdometryServer(){
 		config_ptr_ = StereoConfigServer::getInstance();
 
+		trace_file.open("/home/steve/temp/pose.csv", std::ios::out);
 	}
 
 	bool addNewFrame(cv::Mat &left_img, cv::Mat &right_img);
@@ -39,6 +40,9 @@ public:
 	StereoConfigServer * config_ptr_ ;//= StereoConfigServer::getInstance();
 
 	BaseSLAM::SLAMVisualServer * visualizer_ptr_ = new BaseSLAM::SLAMVisualServer("VO WIN");
+
+
+	std::ofstream trace_file;
 
 
 

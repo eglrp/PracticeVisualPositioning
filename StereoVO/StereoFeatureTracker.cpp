@@ -6,6 +6,9 @@
 
 
 bool StereoFeatureTracker::addNewFrame(cv::Mat &l_img, cv::Mat &r_img) {
+	cur_frame_id_++;
+
+
 	//region calculate pyramid for current frame
 	std::vector<cv::Mat> t_l_img_pyr, t_r_img_pyr;
 	if (config_ptr_->use_pyramid) {

@@ -103,6 +103,8 @@ bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
 }
 
 bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
+	key_frame_id_vec_.push_back(cur_frame.frame_id);
+
 	// record all new feature id in sw_feature_id_set_
 	for (int i = 0; i < cur_frame.feature_id_vec_.size(); ++i) {
 		int feature_id = cur_frame.feature_id_vec_[i];
@@ -129,7 +131,7 @@ bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
 
 
 	// calculate initial pose of each new key frame.
-	if (key_frame_id_vec_.size() < 1) {
+	if (key_frame_id_vec_.size() < 2) {
 		// initial
 		cur_frame.initialized_pose = true;
 
@@ -165,6 +167,8 @@ bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
 
 		if (solvePosePnp(cur_frame.qua, cur_frame.pos,
 		                 ob_pt, pts3, config_ptr_->left_cam_mat, config_ptr_->left_dist_coeff)) {
+			std::cout << "solved pnp and get position:" << cur_frame.pos
+			<< " quat:" << cur_frame.qua.matrix() << std::endl;
 			cur_frame.initialized_pose = true;
 
 		} else {
@@ -305,6 +309,10 @@ bool StereoFeatureManager::UpdateVisualization(int frame_id) {
 	FramePreId * frame_ptr = &(
 			frame_map_.find(frame_id)->second
 			);
+
+	std::cout << "cur frame id[key frame]:"<< frame_ptr->frame_id
+	<< " is initialized:" << frame_ptr->initialized_pose << std::endl;
+
 	transform.block(0,0,3,3) = frame_ptr->qua.toRotationMatrix();
 	transform.block(0,3,3,1) = frame_ptr->pos;
 

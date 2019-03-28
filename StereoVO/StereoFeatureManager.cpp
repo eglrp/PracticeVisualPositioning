@@ -276,7 +276,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 	// optimization
-	Optimization();
+//	Optimization();
 
 
 
@@ -393,9 +393,9 @@ bool StereoFeatureManager::Optimization() {
 
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
 
-//					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
-//					          << pt_ptr_read[1] << ","
-//					          << pt_ptr_read[2] << std::endl;
+					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
+					          << pt_ptr_read[1] << ","
+					          << pt_ptr_read[2] << std::endl;
 
 					auto left_itea = cur_frame.id_pt_map.find(cur_feature_id);
 					if (left_itea != cur_frame.id_pt_map.end()) {

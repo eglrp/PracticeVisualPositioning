@@ -406,58 +406,65 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	pt3d = q0.inverse() * (Eigen::Vector3d(X, Y, Z) - t0);
 
-//	std::cout << "-----------Pre estimated-------------\n"
-//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-//	          << pt0(0) << "," << pt0(1) << "\n"
-//	          << pt1(0) << "," << pt1(1) << "\n"
-//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-//	          << "\n-----------------------\n" << std::endl;
-//
-//	problem.AddResidualBlock(
-//			ProjectionKnowCamFactor::Create(
-//					qua0,
-//					t0.data(),
-//					fx,
-//					fy,
-//					cx,
-//					cy,
-//					pt0.x(),
-//					pt0.y()
-//			),
-//			NULL,
-//			pt3d.data()
-//	);
-//
-//	problem.AddResidualBlock(
-//			ProjectionKnowCamFactor::Create(
-//					qua1,
-//					t1.data(),
-//					fx,
-//					fy,
-//					cx,
-//					cy,
-//					pt1.x(),
-//					pt1.y()
-//			),
-//			NULL,
-//			pt3d.data()
-//	);
+	std::cout << "-----------Pre estimated-------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
 
-	triangulatePointEigen(q0, t0, q1, t1, cam_mat, pt0, pt1, pt3d);
-//	ceres::Solve(option, &problem, &summary);
+	problem.AddResidualBlock(
+			ProjectionKnowCamFactor::Create(
+					qua0,
+					t0.data(),
+					fx,
+					fy,
+					cx,
+					cy,
+					pt0.x(),
+					pt0.y()
+			),
+			NULL,
+			pt3d.data()
+	);
+
+	problem.AddResidualBlock(
+			ProjectionKnowCamFactor::Create(
+					qua1,
+					t1.data(),
+					fx,
+					fy,
+					cx,
+					cy,
+					pt1.x(),
+					pt1.y()
+			),
+			NULL,
+			pt3d.data()
+	);
+
+
+	ceres::Solve(option, &problem, &summary);
 //	std::cout << summary.FullReport() << std::endl;
-//	std::cout << "------------------------\n"
-//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-//	          << pt0(0) << "," << pt0(1) << "\n"
-//	          << pt1(0) << "," << pt1(1) << "\n"
-//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-//	          << "\n-----------------------\n" << std::endl;
+	std::cout << "------------------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
 //	if(!summary.C){
 //		return false;
 //	}
-
+	triangulatePointEigen(q0, t0, q1, t1, cam_mat, pt0, pt1, pt3d);
+	std::cout << "------------Eigen------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
 //	if ((pt3d - t1).norm() > 200.0 || (pt3d - t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
 //		std::cout << "ERROR in calculate trianglulaer" << std::endl;
 //		return false;

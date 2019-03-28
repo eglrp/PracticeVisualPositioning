@@ -38,8 +38,8 @@ struct SimpleReprojectionError {
 //		          << "p[2]:" << p[2] << std::endl;
 
 
-		T xp = p[0] / p[2];
-		T yp = p[1] / p[2];
+		T xp =- p[0] / p[2];
+		T yp = -p[1] / p[2];
 
 
 
@@ -48,6 +48,9 @@ struct SimpleReprojectionError {
 //			std::cout << "q:" << q[0] << "," << q[1] << "," << q[2] << "," << q[3] << std::endl;
 //			std::cout << "t:"  << t[0] << "," << t[1] << "," << t[2] << std::endl;
 //			std::cout << "SOME ERROR HAPPEND:!" << std::endl;
+			residuals[0]  = T(0.0);
+			residuals[1] = T(0.0);
+			return false;
 
 		}else{
 //			xp = p[0];
@@ -65,6 +68,7 @@ struct SimpleReprojectionError {
 
 		residuals[0] = pre_x - T(obx_);
 		residuals[1] = pre_y - T(oby_);
+		return true;
 
 
 	}

@@ -54,7 +54,8 @@ public:
 	int tracked_counter;
 
 	bool initialized = false;
-	Eigen::Vector3d pt = Eigen::Vector3d::Zero();
+	Eigen::Vector3d pt = Eigen::Vector3d(1000.0,1000.0,1000.0);
+
 	// may not be using.
 	double inv_depth;
 	int depth_frame_id;

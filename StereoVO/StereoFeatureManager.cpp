@@ -212,7 +212,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 			Eigen::Vector2d right_ob(cur_frame.id_r_pt_map[cur_feature_id].x, cur_frame.id_r_pt_map[cur_feature_id].y);
 
 			if ((left_ob - right_ob).norm() > config_ptr_->min_ob_distance) {
-				Eigen::Vector3d out_pt3(0,0,0);
+				Eigen::Vector3d out_pt3(0, 0, 0);
 
 				if (triangulatePointCeres(
 						Eigen::Quaterniond(left_R),
@@ -244,14 +244,15 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
 				                       cur_frame.id_pt_map[cur_feature_id].y);
 
-				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance  &&  (pre_key_frame->pos-cur_frame.pos).norm() > 0.5) {
+				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance &&
+				    (pre_key_frame->pos - cur_frame.pos).norm() > 0.5) {
 					Eigen::Matrix3d pre_R =
 							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
 					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
 					                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
 
 
-					Eigen::Vector3d out_pt3(0,0,0);
+					Eigen::Vector3d out_pt3(0, 0, 0);
 					if (triangulatePointCeres(
 							Eigen::Quaterniond(pre_R),
 							pre_t,
@@ -331,6 +332,130 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 bool StereoFeatureManager::Optimization() {
 
+	if (key_frame_id_vec_.size() > 5) {
+		ceres::Problem problem;
+		ceres::Solver::Options options;
+		ceres::Solver::Summary summary;
+
+		double qua_array[key_frame_id_vec_.size() * 4];
+		double pos_array[key_frame_id_vec_.size() * 4];
+
+		double fx(config_ptr_->left_cam_mat.at<float>(0, 0));
+		double fy(config_ptr_->left_cam_mat.at<float>(1, 1));
+		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
+		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
+		double dx(0.53715065326792);
+
+		std::map<int, double *> kp_map;
+
+		for (int i = 0; i < key_frame_id_vec_.size(); ++i) {
+			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
+			qua_array[i * 4 + 0] = cur_frame.qua.w();
+			qua_array[i * 4 + 1] = cur_frame.qua.x();
+			qua_array[i * 4 + 2] = cur_frame.qua.y();
+			qua_array[i * 4 + 3] = cur_frame.qua.z();
+
+			pos_array[i * 3 + 0] = cur_frame.pos.x();
+			pos_array[i * 3 + 1] = cur_frame.pos.y();
+			pos_array[i * 3 + 2] = cur_frame.pos.z();
+
+			problem.AddParameterBlock(qua_array + i * 4, 4, new ceres::QuaternionParameterization);
+			problem.AddParameterBlock(pos_array + i * 3, 3);
+
+			for (int j = 0; j < cur_frame.feature_id_vec_.size(); ++j) {
+				int cur_feature_id = cur_frame.feature_id_vec_[j];
+
+				if (sw_feature_id_set_.find(cur_feature_id) != sw_feature_id_set_.end() &&
+				    feature_map_.find(cur_feature_id)->second.initialized == true) {
+
+					if (kp_map.find(cur_feature_id) == kp_map.end()) {
+						kp_map.insert(std::make_pair(
+								cur_feature_id, new double[3]
+						));
+//						memcpy(&(kp_map.find(feature_map_)->second),
+//								feature_map_.find(cur_feature_id)->second.pt.data(),
+//								3* sizeof(double));
+						double *pt_ptr = kp_map.find(cur_feature_id)->second;
+						memcpy(pt_ptr,
+						       feature_map_.find(cur_feature_id)->second.pt.data(),
+						       3 * sizeof(double));
+
+						std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr[0] << ","
+						          << pt_ptr[1] << ","
+						          << pt_ptr[2] << std::endl;
+
+						problem.AddParameterBlock(pt_ptr, 3);
+					}
+
+
+					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
+
+					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
+					          << pt_ptr_read[1] << ","
+					          << pt_ptr_read[2] << std::endl;
+
+					auto left_itea = cur_frame.id_pt_map.find(cur_feature_id);
+					if (left_itea != cur_frame.id_pt_map.end()) {
+						problem.AddResidualBlock(
+								SimpleReprojectionError::Create(
+										fx, fy, cx, cy, 0.0,
+										double(left_itea->second.x),
+										double(left_itea->second.y)
+								),
+								NULL,
+//								feature_map_.find(cur_feature_id)->second.pt.data(),
+								pt_ptr_read,
+								qua_array + i * 4,
+								pos_array + i * 3
+						);
+
+
+					}
+					auto right_itea = cur_frame.id_r_pt_map.find(cur_feature_id);
+
+					if (right_itea != cur_frame.id_r_pt_map.end()) {
+						problem.AddResidualBlock(
+								SimpleReprojectionError::Create(
+										fx, fy, cx, cy, dx,
+										double(right_itea->second.x),
+										double(right_itea->second.y)
+								),
+								NULL,
+//								feature_map_.find(cur_feature_id)->second.pt.data(),
+								pt_ptr_read,
+								qua_array + i * 4,
+								pos_array + i * 3
+						);
+					}
+
+
+					if (i < 2) {
+						problem.SetParameterBlockConstant(qua_array + i * 4);
+						problem.SetParameterBlockConstant(pos_array + i * 3);
+					}
+
+
+				}
+
+			}
+		}
+
+		options.linear_solver_type = ceres::DENSE_SCHUR;
+		options.trust_region_strategy_type = ceres::DOGLEG;
+//		options.check_gradients = true;
+
+
+		ceres::Solve(options, &problem, &summary);
+		std::cout << summary.FullReport() << std::endl;
+
+		for (int i = 0; i < key_frame_id_vec_.size(); ++i) {
+			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
+			cur_frame.pos = Eigen::Vector3d(pos_array[i * 3], pos_array[i * 3 + 1], pos_array[i * 3 + 2]);
+			cur_frame.qua = Eigen::Quaterniond(qua_array[i * 4], qua_array[i * 4 + 1], qua_array[i * 4 + 2],
+			                                   qua_array[i * 4 + 3]);
+		}
+
+	}
 
 
 }
@@ -352,8 +477,6 @@ bool StereoFeatureManager::UpdateVisualization(int frame_id) {
 	transform.block(0, 0, 3, 3) = frame_ptr->qua.toRotationMatrix() * 1.0;
 	transform.block(0, 3, 3, 1) = frame_ptr->pos * 1.0;
 
-//	std::cout << " transfrom:\n"
-//	          << transform << std::endl;
 	pose_deque.push_back(transform.inverse());
 
 }

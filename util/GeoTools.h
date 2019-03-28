@@ -336,19 +336,19 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 	);
 
 	ceres::Solve(option, &problem, &summary);
-	std::cout << summary.FullReport() << std::endl;
-	std::cout << "------------------------\n"
-	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-	          << pt0(0) << "," << pt0(1) << "\n"
-	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-	          << "\n-----------------------\n" << std::endl;
+//	std::cout << summary.FullReport() << std::endl;
+//	std::cout << "------------------------\n"
+//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+//	          << pt0(0) << "," << pt0(1) << "\n"
+//	          << pt1(0) << "," << pt1(1) << "\n"
+//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+//	          << "\n-----------------------\n" << std::endl;
 //	if(!summary.C){
 //		return false;
 //	}
 
-	if ((pt3d - t1).norm() > 200.0) {//|| pt3d.norm()< 1.0){
+	if ((pt3d - t1).norm() > 200.0 || (pt3d-t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
 		std::cout << "ERROR in calculate trianglulaer" << std::endl;
 		return false;
 	}

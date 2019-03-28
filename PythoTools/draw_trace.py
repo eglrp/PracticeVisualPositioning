@@ -26,4 +26,6 @@ if __name__ == '__main__':
 	plt.plot(pose[:,0],pose[:,1],'+')
 	plt.grid()
 
+	print(pose.shape)
+
 	plt.show()

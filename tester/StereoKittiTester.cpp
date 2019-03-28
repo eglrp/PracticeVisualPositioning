@@ -67,13 +67,13 @@ int main() {
 		cv::Mat right_img = cv::imread(dir_name + right_sub_dir_name + "/" + img_name,
 		                               cv::IMREAD_GRAYSCALE);
 
-		cv::imshow("left", left_img);
-		cv::imshow("right", right_img);
+//		cv::imshow("left", left_img);
+//		cv::imshow("right", right_img);
 
 		odometry.addNewFrame(left_img, right_img);
 
 
-		cv::waitKey(10);
+		cv::waitKey();
 	}
 
 

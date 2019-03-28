@@ -54,9 +54,9 @@ public:
 	int pyr_patch_size = 21;
 	int pyr_levels = 3;
 
-	int max_features = 200;
+	int max_features = 300;
 	int min_feature_dis = 20;
-	double feature_quality = 0.01;
+	double feature_quality = 0.1;
 
 	int lk_patch_size = 21;
 	int lk_itea_count = 30;
@@ -82,8 +82,10 @@ public:
 	 */
 	int slide_windows_size = 20; //
 
-	int min_covisible_feature = 100;// lower bound of tracked feature number.
-	float min_parallex = 10.0; // average moving distance of all features.
+	int min_covisible_feature = 50;// lower bound of tracked feature number.
+	float min_parallex = 20.0; // average moving distance of all features.
+
+	float min_ob_distance = 10.0;//
 
 
 	/**

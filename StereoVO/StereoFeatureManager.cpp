@@ -67,7 +67,8 @@ bool StereoFeatureManager::addNewFrame(int frame_id,
 
 
 bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
-	if (cur_frame.frame_id < 2 || key_frame_id_vec_.size() < 2) {
+//	if (cur_frame.frame_id < 1 ){//|| key_frame_id_vec_.size() < 2) {
+	if (key_frame_id_vec_.size() < 1) {
 		return true;// add first two cur_frame. (Maybe just could be adopted in Stereo Visual Odometry)
 	}
 
@@ -92,10 +93,12 @@ bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
 	}
 
 	if (co_cnt < config_ptr_->min_covisible_feature) {
+		std::cout << "co cnt:" << co_cnt << std::endl;
 		return true;
 	}
 
 	if (co_dis_sum / double(co_cnt) > config_ptr_->min_parallex) {
+		std::cout << "avg dis:" << co_dis_sum / double(co_cnt) << std::endl;
 		return true;
 	}
 
@@ -162,20 +165,24 @@ bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
 
 		// initial cur quaternion and pos based on latest key frame's pose.
 		// TODO:Maybe need performence improvement....
-		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.qua;
-		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.pos;
+		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.qua.normalized();
+		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.pos * 1.0;
 
-		if (solvePosePnp(cur_frame.qua, cur_frame.pos,
-		                 ob_pt, pts3, config_ptr_->left_cam_mat, config_ptr_->left_dist_coeff)) {
+		if (solvePosePnp(cur_frame.qua,
+		                 cur_frame.pos,
+		                 ob_pt,
+		                 pts3,
+		                 config_ptr_->left_cam_mat,
+		                 config_ptr_->left_dist_coeff)) {
 			std::cout << "solved pnp and get position:" << cur_frame.pos
-			<< " quat:" << cur_frame.qua.matrix() << std::endl;
+			          << " quat:" << cur_frame.qua.matrix() << " used points:" << ob_pt.size() << std::endl;
 			cur_frame.initialized_pose = true;
 
 		} else {
 			printf("Some error when trying to calculate pnp\n");
 //			cur_frame.qua = frame_map_[key_frame_id_vec_[key_frame_id_vec_.size() - 1]].qua;
 //			cur_frame.pos = frame_map_[key_frame_id_vec_[key_frame_id_vec_.size() - 1]].pos;
-			return false;// return false or continue next step?
+//			return false;// return false or continue next step?
 		}
 
 	}
@@ -202,13 +209,21 @@ bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
 			Eigen::Vector2d left_ob(cur_frame.id_pt_map[cur_feature_id].x, cur_frame.id_pt_map[cur_feature_id].y);
 			Eigen::Vector2d right_ob(cur_frame.id_r_pt_map[cur_feature_id].x, cur_frame.id_r_pt_map[cur_feature_id].y);
 
-			Eigen::Vector3d out_pt3(0, 0, 0);
+			if ((left_ob - right_ob).norm() > config_ptr_->min_ob_distance) {
+				Eigen::Vector3d out_pt3(0, 0, 0);
 
-			if (triangulatePointRt(left_R, left_t, right_R, right_t,
-			                       left_ob, right_ob, out_pt3)) {
-				feature_ptr->initialized = true;
-				feature_ptr->pt = out_pt3 * 1.0;
+				if (triangulatePointRt(left_R, left_t,
+				                       right_R, right_t,
+				                       config_ptr_->left_cam_mat,
+				                       config_ptr_->left_dist_coeff,
+				                       left_ob,
+
+				                       right_ob, out_pt3)) {
+					feature_ptr->initialized = true;
+					feature_ptr->pt = out_pt3 * 1.0;
+				}
 			}
+
 
 		}
 
@@ -217,29 +232,35 @@ bool StereoFeatureManager::AddNewKeyFrame(FramePreId &cur_frame) {
 		    !feature_ptr->initialized &&
 		    feature_ptr->key_frame_id_set.size() > 1) {
 
-			FramePreId *pre_key_frame = &(frame_map_.find(feature_ptr->key_frame_id_set[
-					                                              feature_ptr->key_frame_id_set.size() - 1])->second);
+			for (auto pre_key_id:feature_ptr->key_frame_id_set) {
+				FramePreId *pre_key_frame = &(frame_map_.find(pre_key_id)->second);
+				Eigen::Vector2d pre_ob(pre_key_frame->id_pt_map[cur_feature_id].x,
+				                       pre_key_frame->id_pt_map[cur_feature_id].y);
+				Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
+				                       cur_frame.id_pt_map[cur_feature_id].y);
 
-			Eigen::Matrix3d pre_R =
-					pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
-			Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
-			                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
+				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance) {
+					Eigen::Matrix3d pre_R =
+							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
+					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
+					                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
 
-			Eigen::Vector2d pre_ob(pre_key_frame->id_pt_map[cur_feature_id].x,
-			                       pre_key_frame->id_pt_map[cur_feature_id].y);
-			Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
-			                       cur_frame.id_pt_map[cur_feature_id].y);
 
-			Eigen::Vector3d out_pt3(0, 0, 0);
-			if (triangulatePointRt(pre_R, pre_t, left_R, left_t, pre_ob, cur_ob, out_pt3)) {
-				feature_ptr->initialized = true;
-				feature_ptr->pt = out_pt3 * 1.0;
+					Eigen::Vector3d out_pt3(0, 0, 0);
+					if (triangulatePointRt(pre_R, pre_t, left_R, left_t,
+					                       config_ptr_->left_cam_mat, config_ptr_->left_dist_coeff,
+					                       pre_ob, cur_ob, out_pt3)) {
+						feature_ptr->initialized = true;
+						feature_ptr->pt = out_pt3 * 1.0;
+						continue;
+					}
+
+				}
+
 			}
 
 		}
 	}
-
-
 
 
 	// optimization
@@ -306,16 +327,18 @@ bool StereoFeatureManager::Optimization() {
 bool StereoFeatureManager::UpdateVisualization(int frame_id) {
 
 	Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-	FramePreId * frame_ptr = &(
+	FramePreId *frame_ptr = &(
 			frame_map_.find(frame_id)->second
-			);
+	);
 
-	std::cout << "cur frame id[key frame]:"<< frame_ptr->frame_id
-	<< " is initialized:" << frame_ptr->initialized_pose << std::endl;
+	std::cout << "cur frame id[key frame]:" << frame_ptr->frame_id
+	          << " is initialized:" << frame_ptr->initialized_pose << std::endl;
 
-	transform.block(0,0,3,3) = frame_ptr->qua.toRotationMatrix();
-	transform.block(0,3,3,1) = frame_ptr->pos;
+	transform.block(0, 0, 3, 3) = frame_ptr->qua.toRotationMatrix() * 1.0;
+	transform.block(0, 3, 3, 1) = frame_ptr->pos * 1.0;
 
+	std::cout << " transfrom:\n"
+	          << transform << std::endl;
 	pose_deque.push_back(transform);
 
 }

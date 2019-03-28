@@ -39,8 +39,8 @@ int main() {
 	cam_mat.at<float>(1, 2) = float(1.831104000000e+02);//cy
 	cam_mat.at<float>(2, 2) = float(1.0);
 
-	coeff_mat.at<float>(0, 0) = 0.0;//-0.467;
-	coeff_mat.at<float>(1, 0) = 0.0;//0.168
+	coeff_mat.at<float>(0, 0) = 0.0;
+	coeff_mat.at<float>(1, 0) = 0.0;
 	coeff_mat.at<float>(2, 0) = 0.0;
 	coeff_mat.at<float>(3, 0) = 0.0;
 	coeff_mat.at<float>(4, 0) = 0.0;
@@ -54,7 +54,7 @@ int main() {
 
 	config_ptr->left_bodyTocam = Eigen::Matrix4d::Identity();
 	config_ptr->right_bodyTocam = Eigen::Matrix4d::Identity();
-	config_ptr->right_bodyTocam(0, 3) = 0.53715065326792;
+	config_ptr->right_bodyTocam(1, 3) = 0.53715065326792;//*100.0;
 
 
 	StereoOdometryServer odometry;
@@ -73,7 +73,7 @@ int main() {
 		odometry.addNewFrame(left_img, right_img);
 
 
-		cv::waitKey();
+		cv::waitKey(1);
 	}
 
 

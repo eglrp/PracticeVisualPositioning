@@ -28,7 +28,7 @@ public:
 	FramePreId(int id) : frame_id(id) {
 	}
 
-	long frame_id;
+	int frame_id;
 	bool key_frame_flag = false;
 
 	bool initialized_pose = false;
@@ -93,7 +93,7 @@ public:
 	bool CheckKeyFrameCondition(FramePreId &cur_frame);
 
 
-	bool AddNewKeyFrame(FramePreId &cur_frame);
+	bool AddNewKeyFrame(int frame_id);
 
 	bool Optimization();
 

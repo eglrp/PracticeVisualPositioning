@@ -58,6 +58,7 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 	std::cout << "  frame id:       " << tracker_ptr_->cur_frame_id_
 	          << "  feature num:    " << tracker_ptr_->ids_.size()
 	          << "  max feature id :" << tracker_ptr_->ids_[tracker_ptr_->ids_.size() - 1] << std::endl;
+	assert(tracker_ptr_->ids_.size() == tracker_ptr_->forw_pts_.size());
 
 	feature_manager_ptr_->addNewFrame(
 			tracker_ptr_->cur_frame_id_,
@@ -76,9 +77,6 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 			           << "0.0,0.0,0.0" << std::endl;
 
 			cv::Mat R(3,3,CV_64F), t(3,1,CV_64F);
-//			cv::eigen2cv(Eigen::Matrix3d(pose.block(0, 0, 3, 3)), R);
-//			cv::eigen2cv(Eigen::Vector3d(pose.block(0, 3, 3, 1)), t);
-//			std::cout << "pose:\n" << t<< std::endl;
 			for(int x(0);x<3;++x){
 				for(int y(0);y<3;++y){
 					R.at<double>(x,y) = (pose(x,y));
@@ -86,7 +84,7 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 				t.at<double>(x,0) = (pose(x,3));
 			}
 
-			std::cout << "pose:" << pose << std::endl;
+//			std::cout << "pose:" << pose << std::endl;
 			std::cout << "t:" << t << std::endl;
 
 			cv::Affine3d affine_3d(R, t);

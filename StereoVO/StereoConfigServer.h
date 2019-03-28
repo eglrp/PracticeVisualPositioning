@@ -41,7 +41,7 @@ public:
 	 * @brief Image preprocess parameters.
 	 */
 
-	bool use_clahe = false;
+	bool use_clahe = true;
 	float clahe_para = 3.0;
 	int clahe_patch_size = 21;
 
@@ -56,7 +56,7 @@ public:
 
 	int max_features = 300;
 	int min_feature_dis = 20;
-	double feature_quality = 0.1;
+	double feature_quality = 0.05;
 
 	int lk_patch_size = 21;
 	int lk_itea_count = 30;
@@ -82,8 +82,8 @@ public:
 	 */
 	int slide_windows_size = 20; //
 
-	int min_covisible_feature = 50;// lower bound of tracked feature number.
-	float min_parallex = 20.0; // average moving distance of all features.
+	int min_covisible_feature = 100;// lower bound of tracked feature number.
+	float min_parallex = 10.0; // average moving distance of all features.
 
 	float min_ob_distance = 10.0;//
 

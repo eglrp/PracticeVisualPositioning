@@ -13,6 +13,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
 
+#include <ceres/ceres.h>
+#include <ceres/rotation.h>
 
 /**
  * @brief
@@ -83,41 +85,65 @@ inline bool triangulatePointRt(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<do
 
 
 	cv::Mat C0(3, 4, CV_32F), C1(3, 4, CV_32F);
-	cv::Mat cvpt0(2, 1, CV_32F), cvpt1(2, 1, CV_32F);
-	cv::Mat p4d;
+//	cv::Mat cvpt0(2, 1, CV_32F), cvpt1(2, 1, CV_32F);
+	cv::Mat p4d(4, 1, CV_32F);
 
 
-	for (int i(0); i < 2; ++i) {
-		cvpt0.at<float>(i, 0) = float(pt0(i));
-		cvpt1.at<float>(i, 0) = float(pt1(i));
-	}
+	std::vector<cv::Point2f> pts0, pts1;
+	std::vector<cv::Point2f> unpts0, unpts1;
+	pts0.push_back(cv::Point2f(pt0.x(), pt0.y()));
+	pts1.push_back(cv::Point2f(pt1.x(), pt1.y()));
+
+//	cv::Mat icam(3,3, CV_32F,cv::Scalar(0.0));
+//	icam.at<float>(0,0) = 1.0;
+//	icam.at<float>(1,1) = 1.0;
+//	icam.at<float>(0,2) = 0.0;
+//	icam.at<float>(1,2) = 0.0;
+//	icam.at<float>(2,2) = 1.0;
+
+	cv::undistortPoints(pts0, unpts0, cam_mat, dist_coeff);//,icam);
+	cv::undistortPoints(pts1, unpts1, cam_mat, dist_coeff);//,icam);
+
 
 	for (int i(0); i < 3; ++i) {
-		for (int j(0); j < 4; ++j) {
-
-			C0.at<float>(i, j) = 0.0;
-			C1.at<float>(i, j) = 0.0;
-			for (int k(0); k < 3; ++k) {
-				C0.at<float>(i, j) += (cam_mat.at<float>(i, k) * float(pose0(k, j)));
-				C1.at<float>(i, j) += (cam_mat.at<float>(i, k) * float(pose1(k, j)));
-
-			}
+		for (int j(0); j < 3; ++j) {
+//			C0.at<float>(i, j) = 0.0;
+//			C1.at<float>(i, j) = 0.0;
+//			for (int k(0); k < 3; ++k) {
+//				C0.at<float>(i, j) += (cam_mat.at<float>(i, k) * float(pose0(k, j)));
+//				C1.at<float>(i, j) += (cam_mat.at<float>(i, k) * float(pose1(k, j)));
+//			}
+			C0.at<float>(i, j) = float(R0(i, j));
+			C1.at<float>(i, j) = float(R1(i, j));
 		}
+		C0.at<float>(i, 3) = float(t0(i, 0));
+		C1.at<float>(i, 3) = float(t1(i, 0));
 	}
 	cv::triangulatePoints(
-			C0, C1, cvpt0, cvpt1, p4d
+			C0, C1, unpts0, unpts1, p4d
 	);
 
 	for (int i = 0; i < 3; ++i) {
-		pt3d(i) = double(p4d.at<float>(i, 0));
+		pt3d(i) = double(p4d.at<float>(i, 0) / double(p4d.at<float>(3, 0)));// / p4d.at<float>(3,0));
 	}
+
+	if (pt3d(2) < 0.0) {
+		pt3d *= -1.0;
+	}
+
+	if (pt3d(2) > 3000.0) {
+		return false;
+
+	}
+//	std::cout << C0 << std::endl;
+//	std::cout << C1 << std::endl;
 
 	std::cout << "------------------------\n"
 	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
 	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
 	          << pt0(0) << "," << pt0(1) << "\n"
 	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2)
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "," << p4d.at<float>(3, 0) << "\n"
 	          << "\n-----------------------\n" << std::endl;
 
 	return true;
@@ -157,16 +183,17 @@ inline bool solvePosePnp(Eigen::Quaterniond &qua_ini,
 	cv::eigen2cv(t_ini, tvec);
 
 
-	pnp_succ = cv::solvePnPRansac(pts3, ob_pt, cam_mat, dist_coeff,
-	                              rvec, tvec,
-	                              false,
-	                              100,
-	                              8.0,
-	                              0.99);
-//	pnp_succ = cv::solvePnP(
-//			pts3, ob_pt, cam_mat, dist_coeff, rvec, tvec
-//	);
+//	pnp_succ = cv::solvePnPRansac(pts3, ob_pt, cam_mat, dist_coeff,
+//	                              rvec, tvec,
+//	                              false,
+//	                              100,
+//	                              8.0,
+//	                              0.99);
+	pnp_succ = cv::solvePnP(
+			pts3, ob_pt, cam_mat, dist_coeff, rvec, tvec
+	);
 	if (!pnp_succ) {
+
 
 		return false;
 	} else {
@@ -178,8 +205,155 @@ inline bool solvePosePnp(Eigen::Quaterniond &qua_ini,
 		cv::cv2eigen(tvec, t);
 		qua_ini = Eigen::Matrix3d(r);
 		t_ini = t;
+
+		std::cout << "pns t:" << t_ini << std::endl;
 		return true;
 	}
+}
+
+struct ProjectionKnowCamFactor {
+	ProjectionKnowCamFactor(double *q0,
+	                        double *t0,
+	                        double fx,
+	                        double fy,
+	                        double cx,
+	                        double cy,
+	                        double obx,
+	                        double oby) :
+			fx_(fx), fy_(fy), cx_(cx), cy_(cy), obx_(obx), oby_(oby) {
+		q0_ = q0;
+		t0_ = t0;
+	}
+
+	template<typename T>
+	bool operator()(
+			const T *const pt,
+			T *residuals
+	) const {
+		T p[3];
+		T q[4];
+		for (int i = 0; i < 4; ++i) {
+			q[i] = T(q0_[i]);
+		}
+		ceres::QuaternionRotatePoint(q, pt, p);
+		p[0] += T(t0_[0]);
+		p[1] += T(t0_[1]);
+		p[2] += T(t0_[2]);
+
+		T xp = p[0] / p[2];
+		T yp = p[1] / p[2];
+
+		T fx = T(fx_);
+		T fy = T(fy_);
+		T cx = T(cx_);
+		T cy = T(cy_);
+
+		T pre_x = fx * xp + cx;
+		T pre_y = fy * yp + cy;
+
+		residuals[0] = pre_x - T(obx_);
+		residuals[1] = pre_y - T(oby_);
+
+
+	}
+
+	static ceres::CostFunction *Create(double *q0,
+	                                   double *t0,
+	                                   double fx,
+	                                   double fy,
+	                                   double cx,
+	                                   double cy,
+	                                   double obx,
+	                                   double oby) {
+		return (new ceres::AutoDiffCostFunction<ProjectionKnowCamFactor, 2, 3>(
+				new ProjectionKnowCamFactor(q0, t0, fx, fy, cx, cy, obx, oby)
+		));
+	}
+
+
+	double *q0_;
+	double *t0_;
+	double fx_, fy_, cx_, cy_, obx_, oby_;
+
+};
+
+
+inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3, 1> t0,
+                                  Eigen::Quaterniond q1, Eigen::Matrix<double, 3, 1> t1,
+                                  cv::Mat cam_mat,
+                                  Eigen::Vector2d &pt0, Eigen::Vector2d &pt1,
+                                  Eigen::Vector3d &pt3d) {
+	ceres::Problem problem;
+	ceres::Solver::Options option;
+	ceres::Solver::Summary summary;
+
+	option.linear_solver_type = ceres::DENSE_QR;
+//	 q0 = q0.inverse();
+//	 q1 = q1.inverse();
+//	 t0 *= -1.0;
+//	 t1 *= -1.0;
+
+	double qua0[4] = {q0.w(), q0.x(), q0.y(), q0.z()};
+	double qua1[4] = {q1.w(), q1.x(), q1.y(), q1.z()};
+//	for(int i=0;i<4;++i){
+//		qua0[i] = q0(i);
+//		qua1[i] = q1(i);
+//	}
+
+//	pt3d = t0 + q0 * Eigen::Vector3d(0.1, 0.2, 10.0);
+//	pt3d = q0.inverse() * (Eigen::Vector3d(0,0,10.0)-t0);
+//	pt3d = 0.5 * (t0 + t1) + Eigen::Vector3d(1.0,1.0,1.0);
+
+
+	problem.AddResidualBlock(
+			ProjectionKnowCamFactor::Create(
+					qua0,
+					t0.data(),
+					double(cam_mat.at<float>(0, 0)),
+					double(cam_mat.at<float>(1, 1)),
+					double(cam_mat.at<float>(0, 2)),
+					double(cam_mat.at<float>(1, 2)),
+					pt0.x(),
+					pt0.y()
+			),
+			NULL,
+			pt3d.data()
+	);
+
+	problem.AddResidualBlock(
+			ProjectionKnowCamFactor::Create(
+					qua1,
+					t1.data(),
+					double(cam_mat.at<float>(0, 0)),
+					double(cam_mat.at<float>(1, 1)),
+					double(cam_mat.at<float>(0, 2)),
+					double(cam_mat.at<float>(1, 2)),
+					pt1.x(),
+					pt1.y()
+			),
+			NULL,
+			pt3d.data()
+	);
+
+	ceres::Solve(option, &problem, &summary);
+	std::cout << summary.FullReport() << std::endl;
+	std::cout << "------------------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
+//	if(!summary.C){
+//		return false;
+//	}
+
+	if ((pt3d - t1).norm() > 200.0) {//|| pt3d.norm()< 1.0){
+		std::cout << "ERROR in calculate trianglulaer" << std::endl;
+		return false;
+	}
+
+	return true;
 }
 
 #endif //PRACTICEVISUALPOSITIONING_GEOTOOLS_H

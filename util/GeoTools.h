@@ -183,15 +183,15 @@ inline bool solvePosePnp(Eigen::Quaterniond &qua_ini,
 	cv::eigen2cv(t_ini, tvec);
 
 
-//	pnp_succ = cv::solvePnPRansac(pts3, ob_pt, cam_mat, dist_coeff,
-//	                              rvec, tvec,
-//	                              false,
-//	                              100,
-//	                              8.0,
-//	                              0.99);
-	pnp_succ = cv::solvePnP(
-			pts3, ob_pt, cam_mat, dist_coeff, rvec, tvec
-	);
+	pnp_succ = cv::solvePnPRansac(pts3, ob_pt, cam_mat, dist_coeff,
+	                              rvec, tvec,
+	                              false,
+	                              100,
+	                              8.0,
+	                              0.99);
+//	pnp_succ = cv::solvePnP(
+//			pts3, ob_pt, cam_mat, dist_coeff, rvec, tvec
+//	);
 	if (!pnp_succ) {
 
 
@@ -269,6 +269,7 @@ struct ProjectionKnowCamFactor {
 
 		residuals[0] = pre_x - T(obx_);
 		residuals[1] = pre_y - T(oby_);
+		return true;
 
 
 	}
@@ -457,7 +458,7 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 //	if(!summary.C){
 //		return false;
 //	}
-	triangulatePointEigen(q0, t0, q1, t1, cam_mat, pt0, pt1, pt3d);
+//	triangulatePointEigen(q0, t0, q1, t1, cam_mat, pt0, pt1, pt3d);
 	std::cout << "------------Eigen------------\n"
 	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
 	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"

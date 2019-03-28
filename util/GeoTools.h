@@ -293,6 +293,70 @@ struct ProjectionKnowCamFactor {
 
 };
 
+inline bool triangulatePointEigen(Eigen::Quaterniond q0, Eigen::Matrix<double, 3, 1> t0,
+                                  Eigen::Quaterniond q1, Eigen::Matrix<double, 3, 1> t1,
+                                  cv::Mat cam_mat,
+                                  Eigen::Vector2d &pt0, Eigen::Vector2d &pt1, Eigen::Vector3d &pt3d) {
+
+	Eigen::Matrix<double, 6, 4> designed_matrix;
+	Eigen::Matrix<double, 6, 1> designed_vec;
+
+	designed_vec(0) = pt0.x();
+	designed_vec(1) = pt0.y();
+	designed_vec(2) = 1.0;
+	designed_vec(3) = pt1.x();
+	designed_vec(4) = pt1.y();
+	designed_vec(5) = 1.0;
+
+
+	Eigen::Matrix<double, 3, 3> K;
+	for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			K(i, j) = double(cam_mat.at<float>(i, j));
+		}
+	}
+
+	designed_matrix.block(0, 0, 3, 3) = q0.toRotationMatrix();
+	designed_matrix.block(0, 3, 3, 1) = t0;
+
+	designed_matrix.block(3, 0, 3, 3) = q1.toRotationMatrix();
+	designed_matrix.block(3, 3, 3, 1) = t1;
+
+
+	designed_matrix.block(0, 0, 3, 4) = K * designed_matrix.block(0, 0, 3, 4);
+	designed_matrix.block(3, 0, 3, 4) = K * designed_matrix.block(3, 0, 3, 4);
+
+	Eigen::JacobiSVD<Eigen::MatrixXd> svd(designed_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);//M=USV*
+	double pinvtoler = 1.e-8; //tolerance
+	int row = designed_matrix.rows();
+	int col = designed_matrix.cols();
+	int k = std::min(row, col);
+	Eigen::MatrixXd X = Eigen::MatrixXd::Zero(col, row);
+	Eigen::MatrixXd singularValues_inv = svd.singularValues();//奇异值
+	Eigen::MatrixXd singularValues_inv_mat = Eigen::MatrixXd::Zero(col, row);
+	for (long i = 0; i < k; ++i) {
+		if (singularValues_inv(i) > pinvtoler)
+			singularValues_inv(i) = 1.0 / singularValues_inv(i);
+		else singularValues_inv(i) = 0;
+	}
+	for (long i = 0; i < k; ++i) {
+		singularValues_inv_mat(i, i) = singularValues_inv(i);
+	}
+	X = (svd.matrixV()) * (singularValues_inv_mat) * (svd.matrixU().transpose());//X=VS+U*
+	Eigen::Vector4d s_pts = X * designed_vec;
+
+	pt3d(0) = s_pts(0) / s_pts(3);
+	pt3d(1) = s_pts(1) / s_pts(3);
+	pt3d(2) = s_pts(2) / s_pts(3);
+
+	if ((q0 * pt3d + t0)(2) < 0.0) {
+		pt3d = q0.inverse() * (q0 * pt3d + t0) * -1.0 - t0;
+	}
+
+	return true;
+
+
+}
 
 inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3, 1> t0,
                                   Eigen::Quaterniond q1, Eigen::Matrix<double, 3, 1> t1,
@@ -333,7 +397,7 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	}
 
-	if(Z > 50.0){
+	if (Z > 50.0) {
 		Z = 50.0;
 	}
 
@@ -341,53 +405,55 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 	double Y = yp * Z;
 
 	pt3d = q0.inverse() * (Eigen::Vector3d(X, Y, Z) - t0);
-	std::cout << "-----------Pre estimated-------------\n"
-	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-	          << pt0(0) << "," << pt0(1) << "\n"
-	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-	          << "\n-----------------------\n" << std::endl;
 
-	problem.AddResidualBlock(
-			ProjectionKnowCamFactor::Create(
-					qua0,
-					t0.data(),
-					fx,
-					fy,
-					cx,
-					cy,
-					pt0.x(),
-					pt0.y()
-			),
-			NULL,
-			pt3d.data()
-	);
+//	std::cout << "-----------Pre estimated-------------\n"
+//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+//	          << pt0(0) << "," << pt0(1) << "\n"
+//	          << pt1(0) << "," << pt1(1) << "\n"
+//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+//	          << "\n-----------------------\n" << std::endl;
+//
+//	problem.AddResidualBlock(
+//			ProjectionKnowCamFactor::Create(
+//					qua0,
+//					t0.data(),
+//					fx,
+//					fy,
+//					cx,
+//					cy,
+//					pt0.x(),
+//					pt0.y()
+//			),
+//			NULL,
+//			pt3d.data()
+//	);
+//
+//	problem.AddResidualBlock(
+//			ProjectionKnowCamFactor::Create(
+//					qua1,
+//					t1.data(),
+//					fx,
+//					fy,
+//					cx,
+//					cy,
+//					pt1.x(),
+//					pt1.y()
+//			),
+//			NULL,
+//			pt3d.data()
+//	);
 
-	problem.AddResidualBlock(
-			ProjectionKnowCamFactor::Create(
-					qua1,
-					t1.data(),
-					fx,
-					fy,
-					cx,
-					cy,
-					pt1.x(),
-					pt1.y()
-			),
-			NULL,
-			pt3d.data()
-	);
-
+	triangulatePointEigen(q0, t0, q1, t1, cam_mat, pt0, pt1, pt3d);
 //	ceres::Solve(option, &problem, &summary);
 //	std::cout << summary.FullReport() << std::endl;
-	std::cout << "------------------------\n"
-	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-	          << pt0(0) << "," << pt0(1) << "\n"
-	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-	          << "\n-----------------------\n" << std::endl;
+//	std::cout << "------------------------\n"
+//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+//	          << pt0(0) << "," << pt0(1) << "\n"
+//	          << pt1(0) << "," << pt1(1) << "\n"
+//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+//	          << "\n-----------------------\n" << std::endl;
 //	if(!summary.C){
 //		return false;
 //	}
@@ -399,5 +465,6 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	return true;
 }
+
 
 #endif //PRACTICEVISUALPOSITIONING_GEOTOOLS_H

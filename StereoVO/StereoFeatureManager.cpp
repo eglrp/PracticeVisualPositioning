@@ -276,7 +276,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 	// optimization
-//	Optimization();
+	Optimization();
 
 
 
@@ -372,30 +372,18 @@ bool StereoFeatureManager::Optimization() {
 						kp_map.insert(std::make_pair(
 								cur_feature_id, new double[3]
 						));
-//						memcpy(&(kp_map.find(feature_map_)->second),
-//								feature_map_.find(cur_feature_id)->second.pt.data(),
-//								3* sizeof(double));
 						double *pt_ptr = kp_map.find(cur_feature_id)->second;
 						memcpy(pt_ptr,
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
-
-//						std::cout << "feature pointsss " << cur_feature_id << " 3d:" << pt_ptr[0] << ","
-//						          << pt_ptr[1] << ","
-//						          << pt_ptr[2] << std::endl;
-//						pt_ptr[0] = 1.0;
-//						pt_ptr[1] = 1.0;
-//						pt_ptr[2] = 10.0;
-
 						problem.AddParameterBlock(pt_ptr, 3);
 					}
 
-
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
 
-					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
-					          << pt_ptr_read[1] << ","
-					          << pt_ptr_read[2] << std::endl;
+//					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
+//					          << pt_ptr_read[1] << ","
+//					          << pt_ptr_read[2] << std::endl;
 
 					auto left_itea = cur_frame.id_pt_map.find(cur_feature_id);
 					if (left_itea != cur_frame.id_pt_map.end()) {
@@ -456,6 +444,17 @@ bool StereoFeatureManager::Optimization() {
 			cur_frame.pos = Eigen::Vector3d(pos_array[i * 3], pos_array[i * 3 + 1], pos_array[i * 3 + 2]);
 			cur_frame.qua = Eigen::Quaterniond(qua_array[i * 4], qua_array[i * 4 + 1], qua_array[i * 4 + 2],
 			                                   qua_array[i * 4 + 3]);
+		}
+
+		for (auto &itea:kp_map) {
+			feature_map_.find(itea.first)->second.pt = Eigen::Vector3d(
+					itea.second[0],
+					itea.second[1],
+					itea.second[2]
+			);
+			std::cout << "feature " << itea.first
+			<< ":" << itea.second[0] << "," << itea.second[1] << ","<< itea.second[2] << std::endl;
+			free(itea.second);
 		}
 
 	}

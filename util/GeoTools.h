@@ -138,13 +138,13 @@ inline bool triangulatePointRt(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<do
 //	std::cout << C0 << std::endl;
 //	std::cout << C1 << std::endl;
 
-	std::cout << "------------------------\n"
-	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-	          << pt0(0) << "," << pt0(1) << "\n"
-	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "," << p4d.at<float>(3, 0) << "\n"
-	          << "\n-----------------------\n" << std::endl;
+//	std::cout << "------------------------\n"
+//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+//	          << pt0(0) << "," << pt0(1) << "\n"
+//	          << pt1(0) << "," << pt1(1) << "\n"
+//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "," << p4d.at<float>(3, 0) << "\n"
+//	          << "\n-----------------------\n" << std::endl;
 
 	return true;
 
@@ -406,14 +406,14 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 	double Y = yp * Z;
 
 	pt3d = q0.inverse() * (Eigen::Vector3d(X, Y, Z) - t0);
-
-	std::cout << "-----------Pre estimated-------------\n"
-	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-	          << pt0(0) << "," << pt0(1) << "\n"
-	          << pt1(0) << "," << pt1(1) << "\n"
-	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-	          << "\n-----------------------\n" << std::endl;
+//
+//	std::cout << "-----------Pre estimated-------------\n"
+//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+//	          << pt0(0) << "," << pt0(1) << "\n"
+//	          << pt1(0) << "," << pt1(1) << "\n"
+//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+//	          << "\n-----------------------\n" << std::endl;
 
 	problem.AddResidualBlock(
 			ProjectionKnowCamFactor::Create(
@@ -447,7 +447,10 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 
 	ceres::Solve(option, &problem, &summary);
-//	std::cout << summary.FullReport() << std::endl;
+
+
+
+	std::cout << summary.FullReport() << std::endl;
 	std::cout << "------------------------\n"
 	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
 	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"

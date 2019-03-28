@@ -33,31 +33,17 @@ struct SimpleReprojectionError {
 		p[0] += T(dx_);
 		p[1] += t[1];
 		p[2] += t[2];
-//		std::cout << "p[0]:" << p[0]
-//		          << "p[1]:" << p[1]
-//		          << "p[2]:" << p[2] << std::endl;
+
+		T xp = p[0] / p[2];
+		T yp = p[1] / p[2];
 
 
-		T xp =- p[0] / p[2];
-		T yp = -p[1] / p[2];
-
-
-
-		if (!ceres::IsNormal(xp) || !ceres::IsNormal(yp)) {
-//			std::cout << "pt:" << pt[0] << "," << pt[1] << "," << pt[1] << std::endl;
-//			std::cout << "q:" << q[0] << "," << q[1] << "," << q[2] << "," << q[3] << std::endl;
-//			std::cout << "t:"  << t[0] << "," << t[1] << "," << t[2] << std::endl;
-//			std::cout << "SOME ERROR HAPPEND:!" << std::endl;
-			residuals[0]  = T(0.0);
-			residuals[1] = T(0.0);
-			return false;
-
-		}else{
-//			xp = p[0];
-//			yp = p[1];
-		}
-//		std::cout << "xp:" << xp << "yp:" << yp << std::endl;
-
+//		if (!ceres::IsNormal(xp) || !ceres::IsNormal(yp)) {
+//			residuals[0] = T(0.0);
+//			residuals[1] = T(0.0);
+//			return false;
+//
+//		}
 		T fx = T(fx_);
 		T fy = T(fy_);
 		T cx = T(cx_);

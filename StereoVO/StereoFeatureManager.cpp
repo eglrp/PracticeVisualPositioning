@@ -253,20 +253,20 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-					if (triangulatePointCeres(
-							Eigen::Quaterniond(pre_R),
-							pre_t,
-							Eigen::Quaterniond(left_R),
-							left_t,
-							config_ptr_->left_cam_mat,
-							pre_ob, cur_ob,
-							out_pt3
-					)) {
-						feature_ptr->initialized = true;
-						feature_ptr->pt = out_pt3 * 1.0;
-						break;
-					}
-
+//					if (triangulatePointCeres(
+//							Eigen::Quaterniond(pre_R),
+//							pre_t,
+//							Eigen::Quaterniond(left_R),
+//							left_t,
+//							config_ptr_->left_cam_mat,
+//							pre_ob, cur_ob,
+//							out_pt3
+//					)) {
+//						feature_ptr->initialized = true;
+//						feature_ptr->pt = out_pt3 * 1.0;
+//						break;
+//					}
+//
 				}
 
 			}
@@ -276,7 +276,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 	// optimization
-	Optimization();
+//	Optimization();
 
 
 
@@ -380,9 +380,12 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 
-						std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr[0] << ","
+						std::cout << "feature pointsss " << cur_feature_id << " 3d:" << pt_ptr[0] << ","
 						          << pt_ptr[1] << ","
 						          << pt_ptr[2] << std::endl;
+						pt_ptr[0] = 1.0;
+						pt_ptr[1] = 1.0;
+						pt_ptr[2] = 10.0;
 
 						problem.AddParameterBlock(pt_ptr, 3);
 					}

@@ -248,8 +248,8 @@ struct ProjectionKnowCamFactor {
 		T cx = T(cx_);
 		T cy = T(cy_);
 
-		T pre_x = fx * xp + cx;
-		T pre_y = fy * yp + cy;
+		T pre_x = fx * xp - cx;
+		T pre_y = fy * yp - cy;
 
 		residuals[0] = pre_x - T(obx_);
 		residuals[1] = pre_y - T(oby_);
@@ -299,20 +299,38 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 //		qua0[i] = q0(i);
 //		qua1[i] = q1(i);
 //	}
+	double fx = double(cam_mat.at<float>(0, 0));
+	double fy = double(cam_mat.at<float>(1, 1));
+	double cx = double(cam_mat.at<float>(0, 2));
+	double cy = double(cam_mat.at<float>(1, 2));
 
-//	pt3d = t0 + q0 * Eigen::Vector3d(0.1, 0.2, 10.0);
-//	pt3d = q0.inverse() * (Eigen::Vector3d(0,0,10.0)-t0);
-//	pt3d = 0.5 * (t0 + t1) + Eigen::Vector3d(1.0,1.0,1.0);
+	double xp, yp;
+	xp = (pt0.x() - cx) / fx;
+	yp = (pt0.y() - cy) / fy;
+
+	double Z = 10.0;
+	if(abs(t0.x()-t1.x())>0.2){
+
+		Z =  (t0-t1).norm() * fx / (pt0-pt1).norm();
+	}else{
+		Z = 10.0;
+
+	}
+
+	double X = xp * Z;
+	double Y = yp * Z;
+
+	 pt3d = q0.inverse() * ( Eigen::Vector3d(X,Y,Z) - t0);
 
 
 	problem.AddResidualBlock(
 			ProjectionKnowCamFactor::Create(
 					qua0,
 					t0.data(),
-					double(cam_mat.at<float>(0, 0)),
-					double(cam_mat.at<float>(1, 1)),
-					double(cam_mat.at<float>(0, 2)),
-					double(cam_mat.at<float>(1, 2)),
+					fx,
+					fy,
+					cx,
+					cy,
 					pt0.x(),
 					pt0.y()
 			),
@@ -324,10 +342,10 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 			ProjectionKnowCamFactor::Create(
 					qua1,
 					t1.data(),
-					double(cam_mat.at<float>(0, 0)),
-					double(cam_mat.at<float>(1, 1)),
-					double(cam_mat.at<float>(0, 2)),
-					double(cam_mat.at<float>(1, 2)),
+					fx,
+					fy,
+					cx,
+					cy,
 					pt1.x(),
 					pt1.y()
 			),
@@ -336,19 +354,19 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 	);
 
 	ceres::Solve(option, &problem, &summary);
-//	std::cout << summary.FullReport() << std::endl;
-//	std::cout << "------------------------\n"
-//	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
-//	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
-//	          << pt0(0) << "," << pt0(1) << "\n"
-//	          << pt1(0) << "," << pt1(1) << "\n"
-//	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
-//	          << "\n-----------------------\n" << std::endl;
+	std::cout << summary.FullReport() << std::endl;
+	std::cout << "------------------------\n"
+	          << t0(0) << "," << t0(1) << "," << t0(2) << "\n"
+	          << t1(0) << "," << t1(1) << "," << t1(2) << "\n"
+	          << pt0(0) << "," << pt0(1) << "\n"
+	          << pt1(0) << "," << pt1(1) << "\n"
+	          << pt3d(0) << "," << pt3d(1) << "," << pt3d(2) << "\n"
+	          << "\n-----------------------\n" << std::endl;
 //	if(!summary.C){
 //		return false;
 //	}
 
-	if ((pt3d - t1).norm() > 200.0 || (pt3d-t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
+	if ((pt3d - t1).norm() > 200.0 || (pt3d - t1).norm() < 0.5) {//|| pt3d.norm()< 1.0){
 		std::cout << "ERROR in calculate trianglulaer" << std::endl;
 		return false;
 	}

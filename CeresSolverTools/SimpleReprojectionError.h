@@ -33,9 +33,9 @@ struct SimpleReprojectionError {
 		p[0] += T(dx_);
 		p[1] += t[1];
 		p[2] += t[2];
-		std::cout << "p[0]:" << p[0]
-		          << "p[1]:" << p[1]
-		          << "p[2]:" << p[2] << std::endl;
+//		std::cout << "p[0]:" << p[0]
+//		          << "p[1]:" << p[1]
+//		          << "p[2]:" << p[2] << std::endl;
 
 
 		T xp = p[0] / p[2];
@@ -53,7 +53,7 @@ struct SimpleReprojectionError {
 //			xp = p[0];
 //			yp = p[1];
 		}
-		std::cout << "xp:" << xp << "yp:" << yp << std::endl;
+//		std::cout << "xp:" << xp << "yp:" << yp << std::endl;
 
 		T fx = T(fx_);
 		T fy = T(fy_);

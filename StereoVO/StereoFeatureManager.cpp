@@ -244,7 +244,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
 				                       cur_frame.id_pt_map[cur_feature_id].y);
 
-				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance) {
+				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance  &&  (pre_key_frame->pos-cur_frame.pos).norm() > 0.5) {
 					Eigen::Matrix3d pre_R =
 							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
 					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
@@ -330,6 +330,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 }
 
 bool StereoFeatureManager::Optimization() {
+
+
 
 }
 

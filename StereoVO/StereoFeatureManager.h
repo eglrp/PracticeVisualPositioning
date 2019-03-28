@@ -18,6 +18,9 @@
 
 
 #include <ceres/ceres.h>
+#include <ceres/rotation.h>
+
+#include <CeresSolverTools/SimpleReprojectionError.h>
 
 #include <StereoVO/StereoConfigServer.h>
 

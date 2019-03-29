@@ -41,7 +41,6 @@ if (CSPARSE_FOUND)
 endif (CSPARSE_FOUND)
 
 
-
 find_package(Ceres REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS}
@@ -72,13 +71,12 @@ aux_source_directory(
 )
 
 
-aux_source_directory( ./StereoVO StereoVO_FILES)
+aux_source_directory(./StereoVO StereoVO_FILES)
 
 #aux_source_directory(
 #		./CeresSolverTools
 #		CERESTOOL
 #)
-
 
 
 add_executable(feature_track_server_test tester/feature_tracker_server_tester.cpp)
@@ -106,13 +104,22 @@ target_link_libraries(mono_slam_tester
 					  ${Boost_LIBRARIES}
 					  )
 
-add_executable(StereoKittiTester tester/StereoKittiTester.cpp ${StereoVO_FILES} )
+add_executable(StereoKittiTester tester/StereoKittiTester.cpp ${StereoVO_FILES})
 target_link_libraries(
 		StereoKittiTester
 		${OpenCV_LIBS}
 		${Boost_LIBRARIES}
 		${CERES_LIBRARIES}
 
+)
+
+
+add_executable(SimDataTester tester/SimDataTester.cpp ${StereoVO_FILES})
+target_link_libraries(
+		SimDataTester
+		${OpenCV_LIBS}
+		${Boost_LIBRARIES}
+		${CERES_LIBRARIES}
 )
 
 #add_executable(trajectory_tester tester/wtrajectory_test.cpp)

@@ -9,7 +9,20 @@ from ImuTools import *
 
 from array import array
 
+from numba import jit, njit, prange
 
+
+@jit
+def get_zoffset(z_offset, z_sign):
+	z_offset = z_offset + (z_sign * 1.0 / 180.0)
+	if z_offset > 2.0:
+		z_sign = -1.0  # z_sign * -1.0
+	if z_offset < -2.0:
+		z_sign = 1.0  # z_sign * -1.0
+	return z_offset, z_sign
+
+
+@jit
 def generate_trace():
 	'''
 	Retern 8 trace .
@@ -24,14 +37,6 @@ def generate_trace():
 
 	z_offset = 0.0
 	z_sign = 1.0
-
-	def get_zoffset(z_offset, z_sign):
-		z_offset = z_offset + (z_sign * 1.0 / 180.0)
-		if z_offset > 2.0:
-			z_sign = -1.0  # z_sign * -1.0
-		if z_offset < -2.0:
-			z_sign = 1.0  # z_sign * -1.0
-		return z_offset, z_sign
 
 	for i in range(1800):
 		angle = dcm2euler(q2dcm(init_q))
@@ -84,6 +89,7 @@ def generate_trace():
 	return pos_array, qua_array, angle_array
 
 
+@jit(cache=True)
 def generate_feature(x_min,
                      x_max,
                      y_min,
@@ -93,15 +99,6 @@ def generate_feature(x_min,
                      x_step=10.0,
                      y_step=10.0,
                      z_step=1.5):
-	# x_max = np.max(pos_array[:, 0])
-	# x_min = np.min(pos_array[:, 0])
-	#
-	# y_max = np.max(pos_array[:, 1])
-	# y_min = np.min(pos_array[:, 1])
-	#
-	# z_max = np.max(pos_array[:, 2])
-	# z_min = np.min(pos_array[:, 2])
-
 	kp_buf = array('d')
 
 	for xp in np.arange(x_min - 30.0, x_max + 30.0, x_step):
@@ -116,8 +113,17 @@ def generate_feature(x_min,
 	return kp_array
 
 
+@jit
+def r(p, k1, k2):
+	# return 1.0 + k1 * (np.linalg.norm(p) ** 2.0) + k2 * (np.linalg.norm(p) ** 4.0)
+	return 1.0
+
+
+@jit(cache=True)
 def project_to_frame(t,
                      q,
+                     r_t,
+                     r_q,
                      kp,
                      cam_size,
                      fx,
@@ -128,19 +134,42 @@ def project_to_frame(t,
                      k2=0.0,
                      p1=0.0,
                      p2=0.0):
-	P = q2dcm(q) @ kp + t
-	p = P / P[2]
+	# P = np.linalg.inv(q2dcm(q)) @ (kp  t)
+	P = ((q2dcm(q)) @ (kp - t))
+	P = (q2dcm(r_q) @ (P - r_t))
+	p = -1.0 * P / P[2]
 
-	def r(p, k1, k2):
-		return 1.0 + k1 * (np.linalg.norm(p) ** 2.0) + k1 * (np.linalg.norm(p) ** 4.0)
+	xp = fx * r(p, k1, k2) * p[0] + cx
+	yp = fy * r(p, k1, k2) * p[1] + cy
 
-	xp = fx * r(p, k1, k2) + cx
-	yp = fy * r(p, k1, k2) + cy
-
+	# return xp,yp
 	if xp > 0 and xp < cam_size[0] and yp > 0 and yp < cam_size[1]:
 		return xp, yp
 	else:
 		return -10.0, -10.0
+
+
+@jit(parallel=True)
+def project_all_frame(pos_array, qua_array, kp_array):
+	frame_array = np.zeros([pos_array.shape[0], kp_array.shape[0], 2])
+	r_frame_array = np.zeros([pos_array.shape[0], kp_array.shape[0], 2])
+	for i in prange(frame_array.shape[0]):
+		for j in range(frame_array.shape[1]):
+			xp, yp = project_to_frame(pos_array[i, :], qua_array[i, :],
+			                          np.asarray((0.0, 0.0, 0.0)), np.asarray((1.0, 0.0, 0.0, 0.0)),
+			                          kp_array[j, :],
+			                          np.asarray((1280, 720)),
+			                          500.0, 500.0, 640.0, 360.0)
+			rxp, ryp = project_to_frame(pos_array[i, :], qua_array[i, :],
+			                            np.asarray((0.5, 0.0, 0.0)), np.asarray((1.0, 0.0, 0.0, 0.0)),
+			                            kp_array[j, :],
+			                            np.asarray((1280, 720)),
+			                            500.0, 500.0, 640.0, 360.0)
+			frame_array[i, j, 0] = xp
+			frame_array[i, j, 1] = yp
+			r_frame_array[i, j, 0] = rxp
+			r_frame_array[i, j, 1] = ryp
+	return frame_array, r_frame_array
 
 
 if __name__ == '__main__':
@@ -169,20 +198,40 @@ if __name__ == '__main__':
 	ax.plot(pos_array[:, 0], pos_array[:, 1], pos_array[:, 2], '-+')
 	ax.grid()
 
-	kp_array = generate_feature(np.min(pos_array[:, 0]),
-	                            np.max(pos_array[:, 0]),
-	                            np.min(pos_array[:, 1]),
-	                            np.max(pos_array[:, 1]),
-	                            np.min(pos_array[:, 2]),
-	                            np.max(pos_array[:, 2]),
-	                            20.0, 20.0, 2.0)
+	kp_array = generate_feature(np.min(pos_array[:, 0]) - 30.0,
+	                            np.max(pos_array[:, 0]) + 30.0,
+	                            np.min(pos_array[:, 1]) - 30.0,
+	                            np.max(pos_array[:, 1]) + 30.0,
+	                            np.min(pos_array[:, 2]) - 10.0,
+	                            np.max(pos_array[:, 2]) + 10.0,
+	                            10.0, 10.0, 1.0)
 
-	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], 'Dr')
+	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], '+y')
+
+	frame_array, r_frame_array = project_all_frame(pos_array, qua_array, kp_array)
 
 	print('feature number:', kp_array.shape[0])
 
+	# plt.figure()
+	# plt.title('frame'+str(i))
+	# plt.plot(frame_array[i,:,0],frame_array[i,:,1],'y+',label='left')
+	# plt.plot(r_frame_array[i,:,0],r_frame_array[i,:,1],'r+',label='right')
+	# plt.axis('equal')
+	# plt.grid()
+	# plt.legend()
+	# plt.show()
 
-
-
+	np.savetxt('/home/steve/temp/sim_frame_kpts.csv',
+	           frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
+	           delimiter=',')
+	np.savetxt('/home/steve/temp/sim_rframe_kpts.csv',
+	           r_frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
+	           delimiter=',')
+	np.savetxt('/home/steve/temp/sim_qua.csv',
+	           qua_array,
+	           delimiter=',')
+	np.savetxt('/home/steve/temp/sim_pos.csv',
+	           pos_array,
+	           delimiter=',')
 
 	plt.show()

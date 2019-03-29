@@ -54,6 +54,7 @@ include_directories(${OpenCV_INCLUDE_DIRS}
 					${CSPARSE_INCLUDE_DIR}
 					/home/steve/Code/googletest/googletest/include
 					${CERES_INCLUDE_DIRS}
+					/home/steve/Code/AlgorithmWorkFlowTools/
 					)
 
 
@@ -64,6 +65,10 @@ link_directories(
 		/usr/lib/x86_64-linux-gnu
 		${BLAS_LIBRARIES}
 		${LAPACK_LIBRARIES}
+)
+set(AWF_LIBRARY /home/steve/Code/AlgorithmWorkFlowTools/lib/libAWF.so)
+link_libraries(
+		${AWF_LIBRARY}
 )
 
 aux_source_directory(

@@ -10,9 +10,12 @@
 #include <Eigen/Geometry>
 #include <util/GeoTools.h>
 
+#include "AWF.h"
+
 int main(){
 	std::string dir_name = "/home/steve/temp/";
 
+	AWF::FileReader sim_frame
 
 
 

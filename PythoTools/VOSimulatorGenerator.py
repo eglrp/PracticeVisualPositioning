@@ -107,13 +107,40 @@ def generate_feature(x_min,
 	for xp in np.arange(x_min - 30.0, x_max + 30.0, x_step):
 		for yp in np.arange(y_min - 30.0, y_max + 30.0, y_step):
 			for zp in np.arange(z_min - 1.0, z_max + 1.0, z_step):
-				no = np.random.normal(0.0, 0.1, 3)
-				kp_buf.append(xp + no[0])
-				kp_buf.append(yp + no[1])
+				no = np.random.normal(0.0, 2.0, 3)
+				kp_buf.append(xp + no[0] * 3)
+				kp_buf.append(yp + no[1] * 3)
 				kp_buf.append(zp + no[2])
 
 	kp_array = np.frombuffer(kp_buf, dtype=np.float).reshape([-1, 3])
 	return kp_array
+
+
+def project_to_frame(t,
+                     q,
+                     kp,
+                     cam_size,
+                     fx,
+                     fy,
+                     cx,
+                     cy,
+                     k1=0.0,
+                     k2=0.0,
+                     p1=0.0,
+                     p2=0.0):
+	P = q2dcm(q) @ kp + t
+	p = P / P[2]
+
+	def r(p, k1, k2):
+		return 1.0 + k1 * (np.linalg.norm(p) ** 2.0) + k1 * (np.linalg.norm(p) ** 4.0)
+
+	xp = fx * r(p, k1, k2) + cx
+	yp = fy * r(p, k1, k2) + cy
+
+	if xp > 0 and xp < cam_size[0] and yp > 0 and yp < cam_size[1]:
+		return xp, yp
+	else:
+		return -10.0, -10.0
 
 
 if __name__ == '__main__':
@@ -148,10 +175,14 @@ if __name__ == '__main__':
 	                            np.max(pos_array[:, 1]),
 	                            np.min(pos_array[:, 2]),
 	                            np.max(pos_array[:, 2]),
-	                            20.0,20.0,3.0)
+	                            20.0, 20.0, 2.0)
 
 	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], 'Dr')
 
 	print('feature number:', kp_array.shape[0])
+
+
+
+
 
 	plt.show()

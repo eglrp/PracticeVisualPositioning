@@ -11,6 +11,11 @@
 #include <util/GeoTools.h>
 
 int main(){
+	std::string dir_name = "/home/steve/temp/";
+
+
+
+
 
 
 

@@ -57,7 +57,8 @@ int main() {
 				                   sim_qua(i, 1),
 				                   sim_qua(i, 2),
 				                   sim_qua(i, 3)),
-				"ground truch"
+				"ground truch",
+				false
 		);
 
 //		cv::waitKey(0);

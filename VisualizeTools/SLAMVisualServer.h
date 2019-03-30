@@ -7,6 +7,8 @@
 
 #include <iostream>
 
+#include <unistd.h>
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
@@ -31,10 +33,30 @@ namespace BaseSLAM {
 		std::map<std::string, std::vector<cv::Affine3d>> named_trace_;
 		std::map<std::string, bool> name_flag_;
 
+		bool running_state = true;
+
+		std::thread running_thread;
+
 		SLAMVisualServer(std::string windows_name) {
 			windows_name_ = windows_name;
 			windows_ = cv::viz::Viz3d(windows_name_);
 
+			running_thread = std::thread([&](){
+				while(running_state){
+
+					refreshDisplay();
+					sleep(1);
+				}
+			});
+
+
+
+
+		}
+
+		~SLAMVisualServer(){
+			running_state = false;
+			running_thread.join();
 		}
 
 
@@ -42,11 +64,11 @@ namespace BaseSLAM {
 		 * Refresh display windows based data saved in named_trace
 		 */
 		bool refreshDisplay() {
-			if (named_trace_.size() < 1) {
-				printf("%s:%s:Size of named_trace is 0, maybe some error generated!\n",
-				       __FILE__, __LINE__);
-				return false;
-			}
+//			if (named_trace_.size() < 1) {
+//				printf("%s:%s:Size of named_trace is 0, maybe some error generated!\n",
+//				       __FILE__, __LINE__);
+//				return false;
+//			}
 			for (auto &itea:named_trace_) {
 				if (name_flag_[itea.first] == true) {
 					windows_.showWidget(

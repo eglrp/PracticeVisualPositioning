@@ -31,17 +31,15 @@ int main() {
 			sim_qua_file(dir_name + "sim_qua.csv"),
 			kpts_file(dir_name + "kp_points.csv");
 
-//	Eigen::MatrixXd sim_frame = sim_frame_file.extractDoulbeMatrix(",");
-//	Eigen::MatrixXd sim_rframe = sim_rframe_file.extractDoulbeMatrix(",");
 	Eigen::MatrixXd sim_pos = sim_pos_file.extractDoulbeMatrix(",");
 	Eigen::MatrixXd sim_qua = sim_qua_file.extractDoulbeMatrix(",");
 	Eigen::MatrixXd kpts3 = kpts_file.extractDoulbeMatrix(",");
 
-//	std::cout << "frame size:" << sim_frame.rows() << " ," << sim_frame.cols() << std::endl;
-//	std::cout << "rframe size:" << sim_rframe.rows() << "," << sim_rframe.cols() << std::endl;
 	std::cout << "pos size:" << sim_pos.rows() << "," << sim_pos.cols() << std::endl;
 	std::cout << "qua size:" << sim_qua.rows() << "," << sim_qua.cols() << std::endl;
 	std::cout << "kpts3 size:" << kpts3.rows() << "," << kpts3.cols() << std::endl;
+
+
 
 
 	for (int i = 0; i < sim_pos.rows(); ++i) {

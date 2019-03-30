@@ -19,6 +19,7 @@
 #include <opencv2/core/eigen.hpp>
 
 #include <thread>
+#include <mutex>
 
 namespace BaseSLAM {
 	class SLAMVisualServer {
@@ -30,6 +31,7 @@ namespace BaseSLAM {
 
 //		std::vector<cv::Affine3d> pose_vec_;
 
+		std::mutex trace_mutex;
 		std::map<std::string, std::vector<cv::Affine3d>> named_trace_;
 		std::map<std::string, bool> name_flag_;
 
@@ -63,8 +65,6 @@ namespace BaseSLAM {
 		 * Refresh display windows based data saved in named_trace
 		 */
 		bool refreshDisplay() {
-//				return false;
-//			}
 
 			windows_.removeAllWidgets();
 			for (auto &itea:named_trace_) {
@@ -102,12 +102,8 @@ namespace BaseSLAM {
 			}
 			itea->second.push_back(pose);
 
-			if (refresh) {
+			return true;
 
-				return refreshDisplay();
-			} else {
-				return true;
-			}
 		}
 
 		/**
@@ -115,8 +111,7 @@ namespace BaseSLAM {
 		 */
 		bool addOdometryNewPose(const Eigen::Vector3d &t,
 		                        const Eigen::Matrix3d &R,
-		                        const std::string &trace_name = "odo",
-		                        bool refresh = true) {
+		                        const std::string &trace_name = "odo") {
 			cv::Mat cvR(3, 3, CV_64F), cvt(3, 1, CV_64F);
 			for (int x(0); x < 3; ++x) {
 				for (int y(0); y < 3; ++y) {
@@ -125,7 +120,7 @@ namespace BaseSLAM {
 				cvt.at<double>(x, 0) = t(x);
 			}
 
-			return addOdometryNewPose(cv::Affine3d(cvR, cvt), trace_name, refresh);
+			return addOdometryNewPose(cv::Affine3d(cvR, cvt), trace_name);
 
 
 		}
@@ -140,10 +135,13 @@ namespace BaseSLAM {
 		 */
 		bool addOdometryNewPose(const Eigen::Vector3d &t,
 		                        const Eigen::Quaterniond &qua,
-		                        const std::string &trace_name = "odo",
-		                        bool refresh = true) {
-			return addOdometryNewPose(t, qua.toRotationMatrix(), trace_name, refresh);
+		                        const std::string &trace_name = "odo") {
+			return addOdometryNewPose(t, qua.toRotationMatrix(), trace_name);
+		}
 
+
+		bool deleteOdometryPose(std::string trace_name,
+		                        int delete_num) {
 
 		}
 

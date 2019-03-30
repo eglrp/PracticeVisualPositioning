@@ -221,17 +221,19 @@ if __name__ == '__main__':
 	# plt.legend()
 	# plt.show()
 
-	np.savetxt('/home/steve/temp/sim_frame_kpts.csv',
-	           frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
-	           delimiter=',')
-	np.savetxt('/home/steve/temp/sim_rframe_kpts.csv',
-	           r_frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
-	           delimiter=',')
+	# np.savetxt('/home/steve/temp/sim_frame_kpts.csv',
+	#            frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
+	#            delimiter=',')
+	# np.savetxt('/home/steve/temp/sim_rframe_kpts.csv',
+	#            r_frame_array.reshape([pos_array.shape[0], kp_array.shape[0] * 2]),
+	#            delimiter=',')
 	np.savetxt('/home/steve/temp/sim_qua.csv',
 	           qua_array,
 	           delimiter=',')
 	np.savetxt('/home/steve/temp/sim_pos.csv',
 	           pos_array,
 	           delimiter=',')
+	np.savetxt('/home/steve/temp/kp_points.csv',
+	           kp_array, delimiter=',')
 
 	plt.show()

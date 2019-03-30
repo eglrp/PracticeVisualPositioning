@@ -7,8 +7,14 @@
 
 #include <iostream>
 
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/viz.hpp>
+
+#include <opencv2/core/eigen.hpp>
 
 #include <thread>
 
@@ -20,7 +26,10 @@ namespace BaseSLAM {
 		cv::viz::Viz3d windows_;//(windows_name_);
 //		cv::viz::WTrajectory *wTrajectory_ptr_ = nullptr;//default trajectory.
 
-		std::vector<cv::Affine3d> pose_vec_;
+//		std::vector<cv::Affine3d> pose_vec_;
+
+		std::map<std::string, std::vector<cv::Affine3d>> named_trace_;
+		std::map<std::string, bool> name_flag_;
 
 		SLAMVisualServer(std::string windows_name) {
 			windows_name_ = windows_name;
@@ -29,22 +38,93 @@ namespace BaseSLAM {
 		}
 
 
+		/**
+		 * Refresh display windows based data saved in named_trace
+		 */
+		bool refreshDisplay() {
+			if (named_trace_.size() < 1) {
+				printf("%s:%s:Size of named_trace is 0, maybe some error generated!\n",
+				       __FILE__, __LINE__);
+				return false;
+			}
+			for (auto &itea:named_trace_) {
+				if (name_flag_[itea.first] == true) {
+					windows_.showWidget(
+							itea.first,
+							cv::viz::WTrajectory(itea.second, cv::viz::WTrajectory::BOTH)
+					);
+				}
+
+			}
+			windows_.spinOnce();
+			return true;
+
+		}
+
 
 		/**
 		 * @brief add new pose to odometry trajectory, which will not larger than 1000.
 		 * @param pose
 		 * @return
 		 */
-		bool addOdometryNewPose(cv::Affine3d pose) {
-			pose_vec_.push_back(pose);
-			windows_.showWidget("odometry_trajectory",
-			                    cv::viz::WTrajectory(pose_vec_, 3));
-			windows_.spinOnce();
+		bool addOdometryNewPose(cv::Affine3d pose, std::string trace_name = "odo", bool refresh = true) {
 
-			if (pose_vec_.size() > 1000) {
-				pose_vec_.erase(pose_vec_.begin(), pose_vec_.begin() + 10);
+			auto itea = named_trace_.find(trace_name);
+			if (itea == named_trace_.end()) {
+				named_trace_.insert(
+						std::make_pair(trace_name, std::vector<cv::Affine3d>())
+				);
+
+				name_flag_.insert(
+						std::make_pair(trace_name, true)
+				);
+				itea = named_trace_.find(trace_name);
 			}
-			return true;
+			itea->second.push_back(pose);
+
+			if (refresh) {
+
+				return refreshDisplay();
+			} else {
+				return true;
+			}
+		}
+
+		/**
+		 *
+		 */
+		bool addOdometryNewPose(const Eigen::Vector3d &t,
+		                        const Eigen::Matrix3d &R,
+		                        const std::string &trace_name = "odo",
+		                        bool refresh = true) {
+			cv::Mat cvR(3, 3, CV_64F), cvt(3, 1, CV_64F);
+			for (int x(0); x < 3; ++x) {
+				for (int y(0); y < 3; ++y) {
+					cvR.at<double>(x, y) = R(x, y);
+				}
+				cvt.at<double>(x, 0) = t(x);
+			}
+
+			return addOdometryNewPose(cv::Affine3d(cvR, cvt), trace_name, refresh);
+
+
+		}
+
+
+		/**
+		 * @brief
+		 * @param t
+		 * @param qua
+		 * @param trace_name
+		 * @return
+		 */
+		bool addOdometryNewPose(const Eigen::Vector3d &t,
+		                        const Eigen::Quaterniond &qua,
+		                        const std::string &trace_name = "odo",
+		                        bool refresh = true) {
+			return addOdometryNewPose(t, qua.toRotationMatrix(), trace_name, refresh);
+
+
 		}
 
 

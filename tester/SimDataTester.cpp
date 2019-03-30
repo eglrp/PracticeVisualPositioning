@@ -62,7 +62,7 @@ int main() {
 		);
 
 //		cv::waitKey(100);
-		usleep(100000);
+		usleep(10000);
 	}
 
 

@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
 	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], '+y')
 
-	frame_array, r_frame_array = project_all_frame(pos_array, qua_array, kp_array)
+	# frame_array, r_frame_array = project_all_frame(pos_array, qua_array, kp_array)
 
 	print('feature number:', kp_array.shape[0])
 

@@ -41,20 +41,19 @@ namespace BaseSLAM {
 			windows_name_ = windows_name;
 			windows_ = cv::viz::Viz3d(windows_name_);
 
-			running_thread = std::thread([&](){
-				while(running_state){
+			running_thread = std::thread([&]() {
+				while (running_state) {
 
 					refreshDisplay();
-					sleep(1);
+//					sleep(1);
+					usleep(100);
 				}
 			});
 
 
-
-
 		}
 
-		~SLAMVisualServer(){
+		~SLAMVisualServer() {
 			running_state = false;
 			running_thread.join();
 		}
@@ -64,11 +63,10 @@ namespace BaseSLAM {
 		 * Refresh display windows based data saved in named_trace
 		 */
 		bool refreshDisplay() {
-//			if (named_trace_.size() < 1) {
-//				printf("%s:%s:Size of named_trace is 0, maybe some error generated!\n",
-//				       __FILE__, __LINE__);
 //				return false;
 //			}
+
+			windows_.removeAllWidgets();
 			for (auto &itea:named_trace_) {
 				if (name_flag_[itea.first] == true) {
 					windows_.showWidget(

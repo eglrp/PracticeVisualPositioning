@@ -6,6 +6,7 @@
 #define BASESLAM_SLAMVISUALSERVER_H
 
 #include <iostream>
+#include <stdlib.h>
 
 #include <unistd.h>
 
@@ -32,8 +33,12 @@ namespace BaseSLAM {
 //		std::vector<cv::Affine3d> pose_vec_;
 
 		std::mutex trace_mutex;
-		std::map<std::string, std::vector<cv::Affine3d>> named_trace_;
 		std::map<std::string, bool> name_flag_;
+		std::map<std::string, std::vector<cv::Affine3d>> named_trace_;
+
+		std::map<std::string, bool> cloud_name_cloud_;
+		std::map<std::string, std::vector<cv::Point3d>> named_cloud_;
+
 
 		bool running_state = true;
 
@@ -48,7 +53,7 @@ namespace BaseSLAM {
 
 					refreshDisplay();
 //					sleep(1);
-					usleep(100);
+					usleep(300);
 				}
 			});
 
@@ -74,8 +79,16 @@ namespace BaseSLAM {
 							cv::viz::WTrajectory(itea.second, cv::viz::WTrajectory::BOTH)
 					);
 				}
-
 			}
+
+
+			for(auto &itea:named_cloud_){
+				windows_.showWidget(
+						itea.first,
+						cv::viz::WCloud(itea.second)
+						);
+			}
+
 			windows_.spinOnce();
 			return true;
 
@@ -139,10 +152,84 @@ namespace BaseSLAM {
 			return addOdometryNewPose(t, qua.toRotationMatrix(), trace_name);
 		}
 
+		/**
+		 * @brief  delete all pose in the named trace(saved in a vector).
+		 * @param trace_name
+		 * @return
+		 */
+		bool deleteOdometryPose(std::string trace_name) {
+			auto itea = named_trace_.find(trace_name);
+			if (itea == named_trace_.end()) {
+				return false;
+			} else {
+				name_flag_.erase(trace_name);
+				named_trace_.erase(trace_name);
+				return true;
+			}
 
+		}
+
+		/**
+		 * @brief delete number of element in the named trace
+		 * @param trace_name
+		 * @param delete_num  >0: delete latest n elements, <0: delete first n elements.
+		 * @param pop_front
+		 * @return
+		 */
 		bool deleteOdometryPose(std::string trace_name,
 		                        int delete_num) {
+			auto itea = named_trace_.find(trace_name);
+			if (itea == named_trace_.end()) {
+				// the trace name not contained in named_trace
+				return false;
+			} else {
+				std::string tmp_name = itea->first;
+				int vec_size = itea->second.size();
+				if ((itea->second.size()) > std::abs(delete_num)) {
 
+					// delete all element
+					printf("deleted all elements in %s because the number of delete_num[%d] is larger than"
+					       "size of vector[%d].\n", tmp_name.c_str(), std::abs(delete_num), vec_size);
+					return deleteOdometryPose(trace_name);
+				} else {
+
+					auto &trace_vec = itea->second;
+					if (delete_num > 0) {
+						try {
+							for (int i = 0; i < delete_num; ++i) {
+								trace_vec.pop_back();
+							}
+						} catch (std::exception &e) {
+							std::cout << __FILE__ << ":"
+							          << __LINE__ << ":" << e.what() << std::endl;
+						}
+
+
+					} else {
+						try {
+
+							trace_vec.erase(trace_vec.begin(), trace_vec.begin() - delete_num);
+						} catch (std::exception &e) {
+							std::cout << __FILE__ << ":"
+							          << __LINE__ << ":" << e.what() << std::endl;
+							return false;
+						}
+					}
+
+					return true;
+
+				}
+
+			}
+
+		}
+
+		bool addNewCloud(std::string cloud_name,
+		                 std::vector<cv::Point3d> cloud_mat) {
+			named_cloud_.insert(
+					std::make_pair(cloud_name, cloud_mat)
+			);
+			return true;
 		}
 
 

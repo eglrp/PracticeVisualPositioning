@@ -42,6 +42,14 @@ int main() {
 	std::cout << "qua size:" << sim_qua.rows() << "," << sim_qua.cols() << std::endl;
 	std::cout << "kpts3 size:" << kpts3.rows() << "," << kpts3.cols() << std::endl;
 
+//	cv::Mat cloud(3,kpts3.rows(),CV_32F);
+	std::vector<cv::Point3d> cloud;
+
+	for(int i=0;i<kpts3.rows();++i){
+		std::cout << kpts3.block<1,3>(i,0) << std::endl;
+		cloud.push_back(cv::Point3f(kpts3(i,0),kpts3(i,1),kpts3(i,2)));
+	}
+	slam_visulizer.addNewCloud("gt_points",cloud);
 
 
 

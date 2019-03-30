@@ -16,6 +16,9 @@
 
 #include <opencv2/opencv.hpp>
 
+
+#include <VOSimulator/CameraProject.h>
+
 int main() {
 
 	auto logger_ptr = AWF::AlgorithmLogger::getInstance();

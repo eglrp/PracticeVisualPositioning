@@ -45,12 +45,16 @@ int main() {
 //	cv::Mat cloud(3,kpts3.rows(),CV_32F);
 	std::vector<cv::Point3d> cloud;
 
-	for(int i=0;i<kpts3.rows();++i){
-		std::cout << kpts3.block<1,3>(i,0) << std::endl;
-		cloud.push_back(cv::Point3f(kpts3(i,0),kpts3(i,1),kpts3(i,2)));
+	for (int i = 0; i < kpts3.rows(); ++i) {
+		std::cout << kpts3.block<1, 3>(i, 0) << std::endl;
+		cloud.push_back(cv::Point3f(kpts3(i, 0),
+		                            kpts3(i, 1),
+		                            kpts3(i, 2)));
 	}
-	slam_visulizer.addNewCloud("gt_points",cloud);
+	slam_visulizer.addNewCloud("gt_points", cloud);
 
+
+	CameraProject cameraProject(300.0, 300.0, 1280, 720);
 
 
 	for (int i = 0; i < sim_pos.rows(); ++i) {
@@ -69,8 +73,18 @@ int main() {
 				"ground truch"
 		);
 
+		Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
+//		cameraProject.projectToimage(
+//				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
+//				sim_pos.block<1, 3>(i, 0).transpose(),
+//				kpts3,
+//				pts_cam
+//		);
+
+
+
 //		cv::waitKey(100);
-		usleep(10000);
+//		usleep(10000);
 	}
 
 

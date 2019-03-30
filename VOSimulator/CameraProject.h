@@ -8,6 +8,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+//#include "omp.h"
 
 class CameraProject {
 public:
@@ -76,10 +77,41 @@ public:
 
 
 	bool projectToimage(
+			const Eigen::Quaterniond &qua,
+			const Eigen::Vector3d &t,
+			const Eigen::MatrixXd &pts3d,
+			Eigen::MatrixXd &pts_cam
+	) {
+
+//#pragma omp parallel for
+		for (int i = 0; i < pts3d.size(); ++i) {
+			pts_cam(i,2) = -1.0;
+			pts_cam.block<1,3>(i,0) = projectOnePoint(
+					qua,t,pts3d.block<1,3>(i,0)
+					);
+		}
+
+
+	}
+
+	Eigen::Vector3d projectOnePoint(
 			Eigen::Quaterniond qua,
 			Eigen::Vector3d t,
-			Eigen::MatrixXd pts3d
-	);
+			Eigen::Vector3d pt
+	) {
+		Eigen::Vector3d p_cam(0, 0, 1.0);
+		p_cam = qua.toRotationMatrix().inverse() * (pt - t);
+		if(p_cam(2) <1.0){
+			return Eigen::Vector3d(0,0,-1.0);
+		}
+		p_cam(0) = p_cam(0)/p_cam(2);
+		p_cam(1) = p_cam(1)/p_cam(2);
+
+		p_cam(0) = p_cam(0) * fx_ + cx_;
+		p_cam(1) = p_cam(1) * fy_ + cy_;
+		return p_cam;
+
+	}
 
 protected:
 	// camera matrix

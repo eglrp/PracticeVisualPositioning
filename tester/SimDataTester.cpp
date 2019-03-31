@@ -54,7 +54,8 @@ int main() {
 	slam_visulizer.addNewCloud("gt_points", cloud);
 
 
-	CameraProject cameraProject(300.0, 300.0, 1280, 720);
+	CameraProject left_cameraProject(300.0, 300.0, 720, 1280);
+	CameraProject right_cameraProject(300.0,300.0, 720,1280);
 
 
 	for (int i = 0; i < sim_pos.rows(); ++i) {
@@ -73,24 +74,49 @@ int main() {
 				"ground truch"
 		);
 
-		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
-		memcpy(
-				pt_3d.data(),
-				pt_3d.data(),
-				(pt_3d.rows() * pt_3d.cols()) * sizeof(double)
-		);
+//		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
 		Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
+//		memcpy(
+//				pt_3d.data(),
+//				pt_3d.data(),
+//				(pt_3d.rows() * pt_3d.cols()) * sizeof(double)
+//		);
+		pts_cam.setZero();
 		cameraProject.projectToimage(
 				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
 				sim_pos.block<1, 3>(i, 0).transpose(),
-//				kpts3,
-				pt_3d,
+				kpts3,
 				pts_cam
 		);
 
+		cv::Mat f_mat(cameraProject.height_,
+		              cameraProject.width_,
+		              CV_8UC3,
+		              cv::Scalar(0, 0, 0));
+		std::cout << "i:" << i <<
+		          "/" << sim_pos.rows() << std::endl;
+		for (int r = 0; r < pts_cam.rows(); ++r) {
+
+			if (pts_cam(r, 2) > 0.0) {
+				cv::circle(
+						f_mat,
+						cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
+						5,
+						cv::Scalar(0, 0, 250));
+				cv::putText(f_mat,
+				            std::to_string(r),
+				            cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
+				            1,
+				            1.0,
+				            cv::Scalar(100, 100, 0));
+			}
+
+		}
 
 
-//		cv::waitKey(100);
+		cv::imshow("test", f_mat);
+
+		cv::waitKey(10);
 //		usleep(10000);
 	}
 

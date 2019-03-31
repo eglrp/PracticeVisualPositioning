@@ -83,13 +83,17 @@ public:
 			Eigen::MatrixXd &pts_cam
 	) {
 
+//		printf("pts cam rows:%d cols:%d\n",
+//				pts_cam.rows(),
+//				pts_cam.cols());
 //#pragma omp parallel for
-		for (int i = 0; i < pts3d.size(); ++i) {
-			pts_cam(i,2) = -1.0;
-			pts_cam.block<1,3>(i,0) = projectOnePoint(
-					qua,t,pts3d.block<1,3>(i,0)
-					);
+		for (int i = 0; i < pts3d.rows(); ++i) {
+			pts_cam(i, 2) = -1.0;
+			pts_cam.block<1, 3>(i, 0) = projectOnePoint(
+					qua, t, pts3d.block<1, 3>(i, 0)
+			);
 		}
+		return true;
 
 
 	}
@@ -101,19 +105,25 @@ public:
 	) {
 		Eigen::Vector3d p_cam(0, 0, 1.0);
 		p_cam = qua.toRotationMatrix().inverse() * (pt - t);
-		if(p_cam(2) <1.0){
-			return Eigen::Vector3d(0,0,-1.0);
+		if (p_cam(2) < 1.0) {
+			return Eigen::Vector3d(0, 0, -1.0);
 		}
-		p_cam(0) = p_cam(0)/p_cam(2);
-		p_cam(1) = p_cam(1)/p_cam(2);
+		p_cam(0) = p_cam(0) / p_cam(2);
+		p_cam(1) = p_cam(1) / p_cam(2);
 
 		p_cam(0) = p_cam(0) * fx_ + cx_;
 		p_cam(1) = p_cam(1) * fy_ + cy_;
-		return p_cam;
+//		std::cout << p_cam.transpose() << std::endl;
+		if (p_cam(0) > 0 && p_cam(0) < width_ && p_cam(1) > 0 && p_cam(1) < height_) {
+
+			return p_cam;
+		} else {
+			return Eigen::Vector3d(0, 0, -1.0);
+		}
 
 	}
 
-protected:
+//protected:
 	// camera matrix
 	double fx_ = 1.0;
 	double fy_ = 1.0;
@@ -123,6 +133,9 @@ protected:
 	// image size
 	int width_ = 720;
 	int height_ = 480;
+
+	Eigen::Quaterniond qua_bc = Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0);
+	Eigen::Vector3d t_bc = Eigen::Vector3d(0.0, 0.0, 0.0);
 
 
 };

@@ -45,7 +45,7 @@ def generate_trace():
 		angle_buf.append(angle[2])
 
 		init_q = quaternion_right_update(init_q,
-		                                 np.asarray((0, 0, np.pi)), 1.0 / 900.0)
+		                                 np.asarray((0, 0.0, np.pi)), 1.0 / 900.0)
 		pos = pos + (q2dcm(init_q).dot(np.asarray((0.1, 0, 0))))
 
 		z_offset, z_sign = get_zoffset(z_offset, z_sign)
@@ -67,7 +67,7 @@ def generate_trace():
 		angle_buf.append(angle[2])
 
 		init_q = quaternion_right_update(init_q,
-		                                 np.asarray((0, 0, np.pi)), -1.0 / 900.0)
+		                                 np.asarray((0, 0.0, np.pi)), -1.0 / 900.0)
 		pos = pos + (q2dcm(init_q).dot(np.asarray((0.1, 0, 0))))
 
 		z_offset, z_sign = get_zoffset(z_offset, z_sign)

@@ -57,6 +57,10 @@ int main() {
 	CameraProject left_cameraProject(300.0, 300.0, 720, 1280);
 	CameraProject right_cameraProject(300.0,300.0, 720,1280);
 
+	left_cameraProject.setBody2Cam(
+
+			)
+
 
 	for (int i = 0; i < sim_pos.rows(); ++i) {
 		logger_ptr->addTrace3dEvent(

@@ -75,6 +75,14 @@ public:
 		}
 	}
 
+	bool setBody2Cam(Eigen::Quaterniond qua_b2c,
+	                 Eigen::Vector3d t_b2c) {
+		qua_bc = Eigen::Quaterniond(qua_b2c);
+		qua_bc = qua_b2c.normalized();
+		t_bc = Eigen::Vector3d(t_b2c(0), t_b2c(1), t_b2c(2));
+		return true;
+	}
+
 
 	bool projectToimage(
 			const Eigen::Quaterniond &qua,

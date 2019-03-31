@@ -83,10 +83,7 @@ public:
 			Eigen::MatrixXd &pts_cam
 	) {
 
-//		printf("pts cam rows:%d cols:%d\n",
-//				pts_cam.rows(),
-//				pts_cam.cols());
-//#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < pts3d.rows(); ++i) {
 			pts_cam(i, 2) = -1.0;
 			pts_cam.block<1, 3>(i, 0) = projectOnePoint(

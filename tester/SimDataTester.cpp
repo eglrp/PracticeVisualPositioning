@@ -76,21 +76,16 @@ int main() {
 
 //		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
 		Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
-//		memcpy(
-//				pt_3d.data(),
-//				pt_3d.data(),
-//				(pt_3d.rows() * pt_3d.cols()) * sizeof(double)
-//		);
 		pts_cam.setZero();
-		cameraProject.projectToimage(
+		left_cameraProject.projectToimage(
 				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
 				sim_pos.block<1, 3>(i, 0).transpose(),
 				kpts3,
 				pts_cam
 		);
 
-		cv::Mat f_mat(cameraProject.height_,
-		              cameraProject.width_,
+		cv::Mat f_mat(left_cameraProject.height_,
+		              left_cameraProject.width_,
 		              CV_8UC3,
 		              cv::Scalar(0, 0, 0));
 		std::cout << "i:" << i <<

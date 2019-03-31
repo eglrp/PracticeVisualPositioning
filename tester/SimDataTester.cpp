@@ -73,13 +73,20 @@ int main() {
 				"ground truch"
 		);
 
+		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
+		memcpy(
+				pt_3d.data(),
+				pt_3d.data(),
+				(pt_3d.rows() * pt_3d.cols()) * sizeof(double)
+		);
 		Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
-//		cameraProject.projectToimage(
-//				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
-//				sim_pos.block<1, 3>(i, 0).transpose(),
+		cameraProject.projectToimage(
+				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
+				sim_pos.block<1, 3>(i, 0).transpose(),
 //				kpts3,
-//				pts_cam
-//		);
+				pt_3d,
+				pts_cam
+		);
 
 
 

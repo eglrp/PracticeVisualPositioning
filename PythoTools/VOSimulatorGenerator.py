@@ -104,7 +104,7 @@ def generate_feature(x_min,
 	for xp in np.arange(x_min - 30.0, x_max + 30.0, x_step):
 		for yp in np.arange(y_min - 30.0, y_max + 30.0, y_step):
 			for zp in np.arange(z_min - 1.0, z_max + 1.0, z_step):
-				no = np.random.normal(0.0, 2.0, 3)
+				no = np.random.normal(0.0, 5.0, 3)
 				kp_buf.append(xp + no[0] * 3)
 				kp_buf.append(yp + no[1] * 3)
 				kp_buf.append(zp + no[2])
@@ -198,13 +198,13 @@ if __name__ == '__main__':
 	ax.plot(pos_array[:, 0], pos_array[:, 1], pos_array[:, 2], '-+')
 	ax.grid()
 
-	kp_array = generate_feature(np.min(pos_array[:, 0]) - 30.0,
-	                            np.max(pos_array[:, 0]) + 30.0,
-	                            np.min(pos_array[:, 1]) - 30.0,
-	                            np.max(pos_array[:, 1]) + 30.0,
-	                            np.min(pos_array[:, 2]) - 10.0,
-	                            np.max(pos_array[:, 2]) + 10.0,
-	                            10.0, 10.0, 1.0)
+	kp_array = generate_feature(np.min(pos_array[:, 0]) - 50.0,
+	                            np.max(pos_array[:, 0]) + 50.0,
+	                            np.min(pos_array[:, 1]) - 50.0,
+	                            np.max(pos_array[:, 1]) + 50.0,
+	                            np.min(pos_array[:, 2]) - 50.0,
+	                            np.max(pos_array[:, 2]) + 50.0,
+	                            25.0, 25.0, 20.0)
 
 	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], '+y')
 

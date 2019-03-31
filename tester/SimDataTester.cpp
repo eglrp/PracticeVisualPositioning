@@ -55,69 +55,94 @@ int main() {
 
 
 	CameraProject left_cameraProject(300.0, 300.0, 720, 1280);
-	CameraProject right_cameraProject(300.0,300.0, 720,1280);
+	CameraProject right_cameraProject(300.0, 300.0, 720, 1280);
+
+	Eigen::Quaterniond left_bc = Eigen::AngleAxisd(-M_PI / 2.0, Eigen::Vector3d::UnitY()) *
+	                             Eigen::AngleAxisd(M_PI / 2.0, Eigen::Vector3d::UnitX());
 
 	left_cameraProject.setBody2Cam(
+			left_bc, Eigen::Vector3d(0, 0, 0)
+	);
+	right_cameraProject.setBody2Cam(
+			left_bc, Eigen::Vector3d(0.5, 0.0, 0.0)
+	);
 
-			)
 
+	for (int kk(0); kk < 100; ++kk)
+		for (int i = 0; i < sim_pos.rows(); ++i) {
+			logger_ptr->addTrace3dEvent(
+					"src_trace",
+					"gt_trace",
+					sim_pos.block<1, 3>(i, 0)
+			);
 
-	for (int i = 0; i < sim_pos.rows(); ++i) {
-		logger_ptr->addTrace3dEvent(
-				"src_trace",
-				"gt_trace",
-				sim_pos.block<1, 3>(i, 0)
-		);
-
-		slam_visulizer.addOdometryNewPose(
-				sim_pos.block<1, 3>(i, 0).transpose(),
-				Eigen::Quaterniond(sim_qua(i, 0),
-				                   sim_qua(i, 1),
-				                   sim_qua(i, 2),
-				                   sim_qua(i, 3)),
-				"ground truch"
-		);
+			slam_visulizer.addOdometryNewPose(
+					sim_pos.block<1, 3>(i, 0).transpose(),
+					Eigen::Quaterniond(sim_qua(i, 0),
+					                   sim_qua(i, 1),
+					                   sim_qua(i, 2),
+					                   sim_qua(i, 3)),
+					"ground truch"
+			);
 
 //		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
-		Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
-		pts_cam.setZero();
-		left_cameraProject.projectToimage(
-				Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
-				sim_pos.block<1, 3>(i, 0).transpose(),
-				kpts3,
-				pts_cam
-		);
+			Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
+			Eigen::MatrixXd r_pts_cam(kpts3.rows(), kpts3.cols());
+			pts_cam.setZero();
+			left_cameraProject.projectToimage(
+					Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
+					sim_pos.block<1, 3>(i, 0).transpose(),
+					kpts3,
+					pts_cam
+			);
 
-		cv::Mat f_mat(left_cameraProject.height_,
-		              left_cameraProject.width_,
-		              CV_8UC3,
-		              cv::Scalar(0, 0, 0));
-		std::cout << "i:" << i <<
-		          "/" << sim_pos.rows() << std::endl;
-		for (int r = 0; r < pts_cam.rows(); ++r) {
+			right_cameraProject.projectToimage(
+					Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3)),
+					sim_pos.block<1, 3>(i, 0).transpose(),
+					kpts3,
+					r_pts_cam
+			);
 
-			if (pts_cam(r, 2) > 0.0) {
-				cv::circle(
-						f_mat,
-						cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
-						5,
-						cv::Scalar(0, 0, 250));
-				cv::putText(f_mat,
-				            std::to_string(r),
-				            cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
-				            1,
-				            1.0,
-				            cv::Scalar(100, 100, 0));
+			cv::Mat f_mat(left_cameraProject.height_,
+			              left_cameraProject.width_,
+			              CV_8UC3,
+			              cv::Scalar(0, 0, 0));
+			std::cout << "i:" << i <<
+			          "/" << sim_pos.rows() << std::endl;
+			for (int r = 0; r < pts_cam.rows(); ++r) {
+
+				if (pts_cam(r, 2) > 0.0) {
+					cv::circle(
+							f_mat,
+							cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
+							5,
+							cv::Scalar(0, 0, 250));
+
+					cv::putText(f_mat,
+					            std::to_string(r),
+					            cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)),
+					            1,
+					            1.0,
+					            cv::Scalar(100, 100, 0));
+				}
+
+				if (r_pts_cam(r, 2) > 0.0) {
+					cv::circle(
+							f_mat,
+							cv::Point2f(r_pts_cam(r, 0), r_pts_cam(r, 1)),
+							5,
+							cv::Scalar(0, 250, 0)
+					);
+				}
+
 			}
 
-		}
 
+			cv::imshow("test", f_mat);
 
-		cv::imshow("test", f_mat);
-
-		cv::waitKey(10);
+			cv::waitKey(10);
 //		usleep(10000);
-	}
+		}
 
 
 	logger_ptr->outputAllEvent(true);

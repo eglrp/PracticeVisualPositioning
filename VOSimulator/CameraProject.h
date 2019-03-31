@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-//#include "omp.h"
+#include "omp.h"
 
 class CameraProject {
 public:
@@ -109,7 +109,7 @@ public:
 			Eigen::Vector3d pt
 	) {
 		Eigen::Vector3d p_cam(0, 0, 1.0);
-		p_cam = qua.toRotationMatrix().inverse() * (pt - t);
+		p_cam = qua_bc.toRotationMatrix() * (qua.toRotationMatrix().inverse() * (pt - t)) + t_bc;
 		if (p_cam(2) < 1.0) {
 			return Eigen::Vector3d(0, 0, -1.0);
 		}

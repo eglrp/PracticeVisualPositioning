@@ -238,14 +238,11 @@ struct ProjectionKnowCamFactor {
 			q[i] = T(q0_[i]);
 		}
 
-		pr[0] -= pt[0];
-		pr[1] -= pt[1];
-		pr[2] -= pt[2];
 
-		ceres::QuaternionRotatePoint(q, pr, p);
-//		p[0] += T(t0_[0]);
-//		p[1] += T(t0_[1]);
-//		p[2] += T(t0_[2]);
+		ceres::QuaternionRotatePoint(q, pt, p);
+		p[0] += T(t0_[0]);
+		p[1] += T(t0_[1]);
+		p[2] += T(t0_[2]);
 
 		T xp = p[0] / p[2];
 		T yp = p[1] / p[2];
@@ -399,9 +396,9 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	}
 
-	if (Z > 50.0) {
-		Z = 50.0;
-	}
+//	if (Z > 50.0) {
+//		Z = 50.0;
+//	}
 
 	double X = xp * Z;
 	double Y = yp * Z;

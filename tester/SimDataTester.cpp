@@ -49,7 +49,7 @@ int main() {
 	std::vector<cv::Point3d> cloud;
 
 	for (int i = 0; i < kpts3.rows(); ++i) {
-		std::cout << kpts3.block<1, 3>(i, 0) << std::endl;
+//		std::cout << kpts3.block<1, 3>(i, 0) << std::endl;
 		cloud.push_back(cv::Point3f(kpts3(i, 0),
 		                            kpts3(i, 1),
 		                            kpts3(i, 2)));
@@ -71,30 +71,29 @@ int main() {
 	);
 
 	StereoConfigServer *config_ptr_ = StereoConfigServer::getInstance();
-	cv::Mat cam_mat(3,3,CV_32F,cv::Scalar(0.0));
-	cam_mat.at<float>(0,0) = left_cameraProject.fx_;
-	cam_mat.at<float>(1,1) = left_cameraProject.fy_;
-	cam_mat.at<float>(0,2) = left_cameraProject.cx_;
-	cam_mat.at<float>(1,2) = left_cameraProject.cy_;
-	cam_mat.at<float>(2,2) = 1.0;
+	cv::Mat cam_mat(3, 3, CV_32F, cv::Scalar(0.0));
+	cam_mat.at<float>(0, 0) = left_cameraProject.fx_;
+	cam_mat.at<float>(1, 1) = left_cameraProject.fy_;
+	cam_mat.at<float>(0, 2) = left_cameraProject.cx_;
+	cam_mat.at<float>(1, 2) = left_cameraProject.cy_;
+	cam_mat.at<float>(2, 2) = 1.0;
 	cam_mat.copyTo(config_ptr_->left_cam_mat);
 	cam_mat.copyTo(config_ptr_->right_cam_mat);
-	cv::Mat dist_coeff(5,1,CV_32F,cv::Scalar(0.0));
+	cv::Mat dist_coeff(5, 1, CV_32F, cv::Scalar(0.0));
 	dist_coeff.copyTo(config_ptr_->left_dist_coeff);
 	dist_coeff.copyTo(config_ptr_->right_dist_coeff);
 
-	Eigen::Matrix4d left_b2c= Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d left_b2c = Eigen::Matrix4d::Identity();
 	Eigen::Matrix4d right_b2c = Eigen::Matrix4d::Identity();
 
-	left_b2c.block<3,3>(0,0) = left_cameraProject.qua_bc.toRotationMatrix() * 1.0;
-	left_b2c.block<3,1>(0,3) = left_cameraProject.t_bc * 1.0;
+	left_b2c.block<3, 3>(0, 0) = left_cameraProject.qua_bc.toRotationMatrix() * 1.0;
+	left_b2c.block<3, 1>(0, 3) = left_cameraProject.t_bc * 1.0;
 
-	right_b2c.block<3,3>(0,0) = right_cameraProject.qua_bc.toRotationMatrix() * 1.0;
-	right_b2c.block<3,1>(0,3) = right_cameraProject.t_bc * 1.0;
+	right_b2c.block<3, 3>(0, 0) = right_cameraProject.qua_bc.toRotationMatrix() * 1.0;
+	right_b2c.block<3, 1>(0, 3) = right_cameraProject.t_bc * 1.0;
 
 	config_ptr_->left_bodyTocam = left_b2c * 1.0;
 	config_ptr_->right_bodyTocam = right_b2c * 1.0;
-
 
 
 	auto feature_manager_ptr_ = new StereoFeatureManager();
@@ -188,6 +187,41 @@ int main() {
 					if (r_pts_cam(r, 2) > 0) {
 						r_ids.push_back(r);
 						r_feature_pts.push_back(cv::Point2f(r_pts_cam(r, 0), r_pts_cam(r, 1)));
+						// test triangulation function
+						if ((r_pts_cam.block<1, 2>(r, 0) - pts_cam.block<1, 2>(r, 0)).norm() > 10.0) {
+							Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) *
+							                         Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2),
+							                                            sim_qua(i, 3)).inverse().toRotationMatrix();
+							Eigen::Matrix3d right_R = config_ptr_->right_bodyTocam.block<3, 3>(0, 0) *
+							                          Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2),
+							                                             sim_qua(i, 3)).inverse().toRotationMatrix();
+
+							Eigen::Vector3d left_t = left_R * sim_pos.block<1, 3>(i, 0).transpose() +
+							                         config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
+							Eigen::Vector3d right_t = right_R * sim_pos.block<1, 3>(i, 0).transpose() +
+							                          config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
+
+							Eigen::Vector2d left_ob(pts_cam(r,0),pts_cam(r,1)),right_ob(r_pts_cam(r,0),r_pts_cam(r,1));
+							Eigen::Vector3d pt3d(0,0,0);
+							if(triangulatePointCeres(
+									Eigen::Quaterniond(left_R),left_t,
+									Eigen::Quaterniond(right_R), right_t,
+									config_ptr_->right_cam_mat,left_ob,right_ob,
+									pt3d
+									)){
+								std::cout <<"estp:" << pt3d.transpose() << std::endl;
+								std::cout<<"real:" << kpts3.block<1,3>(r,0) << std::endl;
+
+							}else{
+								std::cout << "faild to calculate:"
+								<< left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
+							}
+
+
+
+						}
+
+
 					} else {
 						r_ids.push_back(-1);
 						r_feature_pts.push_back(cv::Point2f(-1.0, -1.0));
@@ -197,8 +231,8 @@ int main() {
 
 			assert(feature_pts.size() == r_feature_pts.size());
 
-			feature_manager_ptr_->addNewFrame(i,
-			                                  ids, feature_pts, r_ids, r_feature_pts);
+//			feature_manager_ptr_->addNewFrame(i,
+//			                                  ids, feature_pts, r_ids, r_feature_pts);
 
 
 			// tracking

@@ -543,6 +543,8 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	ceres::Solve(option, &problem, &summary);
 
+	std::cout << "triangulated:"<< pt3d.transpose() << std::endl;
+
 
 
 //	std::cout << summary.FullReport() << std::endl;

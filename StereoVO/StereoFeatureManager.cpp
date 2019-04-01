@@ -198,8 +198,6 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		} else {
 			printf("Some error when trying to calculate pnp\n");
 			std::cout << "pnp used points number:" << ob_pt.size() << std::endl;
-//			cur_frame.qua = frame_map_[key_frame_id_vec_[key_frame_id_vec_.size() - 1]].qua;
-//			cur_frame.pos = frame_map_[key_frame_id_vec_[key_frame_id_vec_.size() - 1]].pos;
 			return false;// return false or continue next step?
 		}
 

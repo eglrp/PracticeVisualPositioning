@@ -53,7 +53,7 @@ namespace BaseSLAM {
 
 					refreshDisplay();
 //					sleep(1);
-					usleep(300);
+					usleep(3000);
 				}
 			});
 
@@ -72,27 +72,35 @@ namespace BaseSLAM {
 		bool refreshDisplay() {
 
 			windows_.removeAllWidgets();
-			trace_mutex.lock();
-			for (auto &itea:named_trace_) {
-				if (name_flag_[itea.first] == true) {
+
+			if (named_trace_.size() > 0) {
+				for (auto &itea:named_trace_) {
+					if (name_flag_[itea.first] == true) {
+						windows_.showWidget(
+								itea.first,
+								cv::viz::WTrajectory(itea.second, cv::viz::WTrajectory::BOTH)
+						);
+					}
+				}
+
+			}
+
+			if (named_cloud_.size() > 0) {
+				for (auto &itea:named_cloud_) {
 					windows_.showWidget(
 							itea.first,
-							cv::viz::WTrajectory(itea.second, cv::viz::WTrajectory::BOTH)
+							cv::viz::WCloud(itea.second)
 					);
 				}
+
+			}
+
+			if (named_cloud_.size() > 0 || named_trace_.size() > 0) {
+
+				windows_.spinOnce();
 			}
 
 
-			for(auto &itea:named_cloud_){
-				windows_.showWidget(
-						itea.first,
-						cv::viz::WCloud(itea.second)
-						);
-			}
-
-			trace_mutex.unlock();
-
-			windows_.spinOnce();
 			return true;
 
 		}
@@ -105,7 +113,6 @@ namespace BaseSLAM {
 		 */
 		bool addOdometryNewPose(cv::Affine3d pose, std::string trace_name = "odo", bool refresh = true) {
 
-			trace_mutex.lock();
 			auto itea = named_trace_.find(trace_name);
 			if (itea == named_trace_.end()) {
 				named_trace_.insert(
@@ -119,7 +126,6 @@ namespace BaseSLAM {
 			}
 			itea->second.push_back(pose);
 
-			trace_mutex.unlock();
 			return true;
 
 		}
@@ -163,15 +169,12 @@ namespace BaseSLAM {
 		 * @return
 		 */
 		bool deleteOdometryPose(std::string trace_name) {
-			trace_mutex.lock();
 			auto itea = named_trace_.find(trace_name);
 			if (itea == named_trace_.end()) {
-				trace_mutex.unlock();
 				return false;
 			} else {
 				name_flag_.erase(trace_name);
 				named_trace_.erase(trace_name);
-				trace_mutex.unlock();
 				return true;
 			}
 
@@ -187,11 +190,9 @@ namespace BaseSLAM {
 		 */
 		bool deleteOdometryPose(std::string trace_name,
 		                        int delete_num) {
-			trace_mutex.lock();
 			auto itea = named_trace_.find(trace_name);
 			if (itea == named_trace_.end()) {
 				// the trace name not contained in named_trace
-				trace_mutex.unlock();
 				return false;
 			} else {
 				std::string tmp_name = itea->first;
@@ -201,7 +202,6 @@ namespace BaseSLAM {
 					// delete all element
 					printf("deleted all elements in %s because the number of delete_num[%d] is larger than"
 					       "size of vector[%d].\n", tmp_name.c_str(), std::abs(delete_num), vec_size);
-					trace_mutex.unlock();
 					return deleteOdometryPose(trace_name);
 				} else {
 
@@ -224,12 +224,10 @@ namespace BaseSLAM {
 						} catch (std::exception &e) {
 							std::cout << __FILE__ << ":"
 							          << __LINE__ << ":" << e.what() << std::endl;
-							trace_mutex.unlock();
 							return false;
 						}
 					}
 
-					trace_mutex.unlock();
 					return true;
 
 				}

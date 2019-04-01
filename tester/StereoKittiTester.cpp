@@ -58,6 +58,12 @@ int main() {
 
 	config_ptr->min_ob_distance = 10.0;
 
+	config_ptr->max_features = 350;
+	config_ptr->min_feature_dis  = 25;
+
+
+	config_ptr->slide_windows_size = 20;
+
 
 	StereoOdometryServer odometry;
 
@@ -77,6 +83,8 @@ int main() {
 
 		cv::waitKey(1);
 	}
+
+	cv::waitKey();
 
 
 }

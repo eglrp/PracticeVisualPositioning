@@ -88,7 +88,7 @@ bool StereoOdometryServer::addNewFrame(cv::Mat &left_img, cv::Mat &right_img) {
 			std::cout << "t:" << t << std::endl;
 
 			cv::Affine3d affine_3d(R, t);
-			visualizer_ptr_->addOdometryNewPose(affine_3d);
+			visualizer_ptr_->addOdometryNewPose(affine_3d,"odometry");
 		}
 
 		feature_manager_ptr_->pose_deque.clear();

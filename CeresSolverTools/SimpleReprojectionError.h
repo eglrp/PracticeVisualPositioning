@@ -14,12 +14,11 @@ struct SimpleReprojectionError {
 			double fy,
 			double cx,
 			double cy,
-			double dx,
 			double obx,
 			double oby,
 			double *q_bc,
 			double *t_bc) :
-			fx_(fx), dx_(dx), fy_(fy), cx_(cx), cy_(cy), obx_(obx), oby_(oby) {
+			fx_(fx), fy_(fy), cx_(cx), cy_(cy), obx_(obx), oby_(oby) {
 		q_bc_ = q_bc;
 		t_bc_ = t_bc;
 	}
@@ -31,23 +30,37 @@ struct SimpleReprojectionError {
 			const T *const t,
 			T *residuals
 	) const {
+
 		T p[3];
-		ceres::QuaternionRotatePoint(q, pt, p);
-		p[0] += t[0];
-		p[0] += T(dx_);
-		p[1] += t[1];
-		p[2] += t[2];
+		p[0] = pt[0] - t[0];
+		p[1] = pt[1] - t[1];
+		p[2] = pt[2] - t[2];
 
-		T xp = p[0] / p[2];
-		T yp = p[1] / p[2];
+		T pb[3];
+		ceres::QuaternionRotatePoint(q, p, pb);
+		T pc[3];
+
+		T q_bc[4];
+		q_bc[0] = T(q_bc_[0]);
+		q_bc[1] = T(q_bc_[1]);
+		q_bc[2] = T(q_bc_[2]);
+		q_bc[3] = T(q_bc_[3]);
+
+		T t_bc[3];
+		t_bc[0] = T(t_bc_[0]);
+		t_bc[1] = T(t_bc_[1]);
+		t_bc[2] = T(t_bc_[2]);
+
+		ceres::QuaternionRotatePoint(q_bc, pb, pc);
+		pc[0] += t_bc[0];
+		pc[1] += t_bc[1];
+		pc[2] += t_bc[2];
 
 
-//		if (!ceres::IsNormal(xp) || !ceres::IsNormal(yp)) {
-//			residuals[0] = T(0.0);
-//			residuals[1] = T(0.0);
-//			return false;
-//
-//		}
+		T xp = pc[0] / pc[2];
+		T yp = pc[1] / pc[2];
+
+
 		T fx = T(fx_);
 		T fy = T(fy_);
 		T cx = T(cx_);
@@ -68,18 +81,17 @@ struct SimpleReprojectionError {
 			double fy,
 			double cx,
 			double cy,
-			double dx,
 			double obx,
 			double oby,
 			double *q_bc,
 			double *t_bc) {
 		return (new ceres::AutoDiffCostFunction<SimpleReprojectionError, 2, 3, 4, 3>(
-				new SimpleReprojectionError(fx, fy, cx, cy, dx, obx, oby, q_bc,q_bc)
+				new SimpleReprojectionError(fx, fy, cx, cy, obx, oby, q_bc, q_bc)
 		));
 	}
 
 
-	double fx_, fy_, cx_, cy_, obx_, oby_, dx_;
+	double fx_, fy_, cx_, cy_, obx_, oby_;
 	double *q_bc_;
 	double *t_bc_;
 };

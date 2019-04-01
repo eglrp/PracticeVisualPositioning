@@ -235,8 +235,8 @@ inline bool solvePosePnpCeres(
 						double(ob_pt[i].y),
 						ob3d_array + i * 3
 				),
-//				ceres::CauchyLoss(1.0),
-				NULL,
+				new ceres::CauchyLoss(1.0),
+//				NULL,
 				qua_array,
 				t0.data()
 		);

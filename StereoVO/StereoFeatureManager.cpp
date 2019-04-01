@@ -247,9 +247,6 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 						right_ob,
 						out_pt3
 				)) {
-
-//					std::cout << "triangulated by stereo:" << out_pt3.transpose() << std::endl;
-
 					feature_ptr->initialized = true;
 					feature_ptr->pt = out_pt3 * 1.0;
 				}
@@ -293,8 +290,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 							)) {
 						feature_ptr->initialized = true;
 						feature_ptr->pt = out_pt3 * 1.0;
-						break;
-//						continue;
+						continue;
 					}
 //
 				}
@@ -306,7 +302,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 // optimization
-//	Optimization();
+	Optimization();
 
 
 
@@ -373,16 +369,49 @@ bool StereoFeatureManager::Optimization() {
 		double fy(config_ptr_->left_cam_mat.at<float>(1, 1));
 		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
 		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
-		double dx(0.53715065326792);
+
+		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3,3>(0,0));
+		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3,3>(0,0));
+
+		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3,1>(0,3));
+		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3,1>(0,3));
+
+		double left_q_bc_array[4];
+		double right_q_bc_array[4];
+		double left_t_bc_array[3];
+		double right_t_bc_array[3];
+
+		left_q_bc_array[0] = left_q_bc.w();
+		left_q_bc_array[1] = left_q_bc.x();
+		left_q_bc_array[2] = left_q_bc.y();
+		left_q_bc_array[3] = left_q_bc.z();
+		right_q_bc_array[0] = right_q_bc.w();
+		right_q_bc_array[1] = right_q_bc.x();
+		right_q_bc_array[2] = right_q_bc.y();
+		right_q_bc_array[3] = right_q_bc.z();
+
+
+		for(int i=0;i<3;++i){
+			left_t_bc_array[i] = left_t_bc(i);
+			right_t_bc_array[i] = right_t_bc(i);
+		}
+
+
+
 
 		std::map<int, double *> kp_map;
 
 		for (int i = 0; i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
-			qua_array[i * 4 + 0] = cur_frame.qua.w();
-			qua_array[i * 4 + 1] = cur_frame.qua.x();
-			qua_array[i * 4 + 2] = cur_frame.qua.y();
-			qua_array[i * 4 + 3] = cur_frame.qua.z();
+
+			Eigen::Quaterniond q_inv = cur_frame.qua.inverse();
+
+
+
+			qua_array[i * 4 + 0] = q_inv.w();
+			qua_array[i * 4 + 1] = q_inv.x();
+			qua_array[i * 4 + 2] = q_inv.y();
+			qua_array[i * 4 + 3] = q_inv.z();
 
 			pos_array[i * 3 + 0] = cur_frame.pos.x();
 			pos_array[i * 3 + 1] = cur_frame.pos.y();
@@ -416,36 +445,40 @@ bool StereoFeatureManager::Optimization() {
 
 					auto left_itea = cur_frame.id_pt_map.find(cur_feature_id);
 					if (left_itea != cur_frame.id_pt_map.end()) {
-//						problem.AddResidualBlock(
-//								SimpleReprojectionError::Create(
-//										fx, fy, cx, cy, 0.0,
-//										double(left_itea->second.x),
-//										double(left_itea->second.y)
-//								),
+						problem.AddResidualBlock(
+								SimpleReprojectionError::Create(
+										fx, fy, cx, cy,
+										double(left_itea->second.x),
+										double(left_itea->second.y),
+										left_q_bc_array,
+										left_t_bc_array
+								),
 //								NULL,
-////								feature_map_.find(cur_feature_id)->second.pt.data(),
-//								pt_ptr_read,
-//								qua_array + i * 4,
-//								pos_array + i * 3
-//						);
+								new ceres::CauchyLoss(5.0),
+								pt_ptr_read,
+								qua_array + i * 4,
+								pos_array + i * 3
+						);
 
 
 					}
 					auto right_itea = cur_frame.id_r_pt_map.find(cur_feature_id);
 
 					if (right_itea != cur_frame.id_r_pt_map.end()) {
-//						problem.AddResidualBlock(
-//								SimpleReprojectionError::Create(
-//										fx, fy, cx, cy, dx,
-//										double(right_itea->second.x),
-//										double(right_itea->second.y)
-//								),
+						problem.AddResidualBlock(
+								SimpleReprojectionError::Create(
+										fx, fy, cx, cy,
+										double(right_itea->second.x),
+										double(right_itea->second.y),
+										right_q_bc_array,
+										right_t_bc_array
+								),
 //								NULL,
-////								feature_map_.find(cur_feature_id)->second.pt.data(),
-//								pt_ptr_read,
-//								qua_array + i * 4,
-//								pos_array + i * 3
-//						);
+								new ceres::CauchyLoss(5.0),
+								pt_ptr_read,
+								qua_array + i * 4,
+								pos_array + i * 3
+						);
 					}
 
 
@@ -472,7 +505,7 @@ bool StereoFeatureManager::Optimization() {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 			cur_frame.pos = Eigen::Vector3d(pos_array[i * 3], pos_array[i * 3 + 1], pos_array[i * 3 + 2]);
 			cur_frame.qua = Eigen::Quaterniond(qua_array[i * 4], qua_array[i * 4 + 1], qua_array[i * 4 + 2],
-			                                   qua_array[i * 4 + 3]);
+			                                   qua_array[i * 4 + 3]).inverse();
 		}
 
 		for (auto &itea:kp_map) {

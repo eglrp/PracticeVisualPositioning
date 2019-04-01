@@ -188,7 +188,7 @@ int main() {
 						r_ids.push_back(r);
 						r_feature_pts.push_back(cv::Point2f(r_pts_cam(r, 0), r_pts_cam(r, 1)));
 						// test triangulation function
-						if ((r_pts_cam.block<1, 2>(r, 0) - pts_cam.block<1, 2>(r, 0)).norm() > 10.0) {
+						if ((r_pts_cam.block<1, 2>(r, 0) - pts_cam.block<1, 2>(r, 0)).norm() > 5.0) {
 							Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) *
 							                         Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2),
 							                                            sim_qua(i, 3)).inverse().toRotationMatrix();
@@ -196,9 +196,9 @@ int main() {
 							                          Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2),
 							                                             sim_qua(i, 3)).inverse().toRotationMatrix();
 
-							Eigen::Vector3d left_t = left_R * sim_pos.block<1, 3>(i, 0).transpose() +
+							Eigen::Vector3d left_t = left_R * sim_pos.block<1, 3>(i, 0).transpose()  * -1.0+
 							                         config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
-							Eigen::Vector3d right_t = right_R * sim_pos.block<1, 3>(i, 0).transpose() +
+							Eigen::Vector3d right_t = right_R * sim_pos.block<1, 3>(i, 0).transpose() * -1.0 +
 							                          config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
 							Eigen::Vector2d left_ob(pts_cam(r,0),pts_cam(r,1)),right_ob(r_pts_cam(r,0),r_pts_cam(r,1));
@@ -217,8 +217,6 @@ int main() {
 								<< left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
 							}
 
-
-
 						}
 
 
@@ -226,6 +224,10 @@ int main() {
 						r_ids.push_back(-1);
 						r_feature_pts.push_back(cv::Point2f(-1.0, -1.0));
 					}
+
+
+					// test solve pnp.
+
 				}
 			}
 

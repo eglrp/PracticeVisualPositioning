@@ -191,22 +191,14 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	// initial feature points by stereo observed.
 	// TODO: Check the transfrom.
-//	Eigen::Matrix3d left_R = cur_frame.qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
 	Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
 
-//	Eigen::Matrix3d right_R = cur_frame.qua.toRotationMatrix() * config_ptr_->right_bodyTocam.block(0, 0, 3, 3);
 	Eigen::Matrix3d right_R =
 			config_ptr_->right_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
 
-//	Eigen::Vector3d left_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
-//	                         config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
+	Eigen::Vector3d left_t = left_R * cur_frame.pos * -1.0 + config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
 
-	Eigen::Vector3d left_t = left_R * cur_frame.pos + config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
-
-
-//	Eigen::Vector3d right_t = config_ptr_->right_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
-//	                          config_ptr_->right_bodyTocam.block(0, 3, 3, 1);
-	Eigen::Vector3d right_t = right_R * cur_frame.pos + config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
+	Eigen::Vector3d right_t = right_R * cur_frame.pos * -1.0 + config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
 	for (int i = 0; i < cur_frame.feature_id_vec_.size(); ++i) {
 		// feature not been initialized. and could be observed in stereo
@@ -256,26 +248,31 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance &&
 				    (pre_key_frame->pos - cur_frame.pos).norm() > 0.5) {
+//					Eigen::Matrix3d pre_R =
+//							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
+//					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
+//					                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
 					Eigen::Matrix3d pre_R =
-							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
-					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
-					                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
+							config_ptr_->left_bodyTocam.block<3, 3>(0, 0) *
+							pre_key_frame->qua.inverse().toRotationMatrix();
+					Eigen::Vector3d pre_t =
+							pre_R * (pre_key_frame->pos * -1.0) + config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-//					if (triangulatePointCeres(
-//							Eigen::Quaterniond(pre_R),
-//							pre_t,
-//							Eigen::Quaterniond(left_R),
-//							left_t,
-//							config_ptr_->left_cam_mat,
-//							pre_ob, cur_ob,
-//							out_pt3
-//					)) {
-//						feature_ptr->initialized = true;
-//						feature_ptr->pt = out_pt3 * 1.0;
-//						break;
-//					}
+					if (triangulatePointCeres(
+							Eigen::Quaterniond(pre_R),
+							pre_t,
+							Eigen::Quaterniond(left_R),
+							left_t,
+							config_ptr_->left_cam_mat,
+							pre_ob, cur_ob,
+							out_pt3
+					)) {
+						feature_ptr->initialized = true;
+						feature_ptr->pt = out_pt3 * 1.0;
+						break;
+					}
 //
 				}
 

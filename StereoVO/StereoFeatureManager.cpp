@@ -191,12 +191,22 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	// initial feature points by stereo observed.
 	// TODO: Check the transfrom.
-	Eigen::Matrix3d left_R = cur_frame.qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
-	Eigen::Matrix3d right_R = cur_frame.qua.toRotationMatrix() * config_ptr_->right_bodyTocam.block(0, 0, 3, 3);
-	Eigen::Vector3d left_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
-	                         config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
-	Eigen::Vector3d right_t = config_ptr_->right_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
-	                          config_ptr_->right_bodyTocam.block(0, 3, 3, 1);
+//	Eigen::Matrix3d left_R = cur_frame.qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
+	Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
+
+//	Eigen::Matrix3d right_R = cur_frame.qua.toRotationMatrix() * config_ptr_->right_bodyTocam.block(0, 0, 3, 3);
+	Eigen::Matrix3d right_R =
+			config_ptr_->right_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
+
+//	Eigen::Vector3d left_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
+//	                         config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
+
+	Eigen::Vector3d left_t = left_R * cur_frame.pos + config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
+
+
+//	Eigen::Vector3d right_t = config_ptr_->right_bodyTocam.block(0, 0, 3, 3) * cur_frame.pos +
+//	                          config_ptr_->right_bodyTocam.block(0, 3, 3, 1);
+	Eigen::Vector3d right_t = right_R * cur_frame.pos + config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
 	for (int i = 0; i < cur_frame.feature_id_vec_.size(); ++i) {
 		// feature not been initialized. and could be observed in stereo
@@ -253,19 +263,19 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-					if (triangulatePointCeres(
-							Eigen::Quaterniond(pre_R),
-							pre_t,
-							Eigen::Quaterniond(left_R),
-							left_t,
-							config_ptr_->left_cam_mat,
-							pre_ob, cur_ob,
-							out_pt3
-					)) {
-						feature_ptr->initialized = true;
-						feature_ptr->pt = out_pt3 * 1.0;
-						break;
-					}
+//					if (triangulatePointCeres(
+//							Eigen::Quaterniond(pre_R),
+//							pre_t,
+//							Eigen::Quaterniond(left_R),
+//							left_t,
+//							config_ptr_->left_cam_mat,
+//							pre_ob, cur_ob,
+//							out_pt3
+//					)) {
+//						feature_ptr->initialized = true;
+//						feature_ptr->pt = out_pt3 * 1.0;
+//						break;
+//					}
 //
 				}
 
@@ -453,7 +463,7 @@ bool StereoFeatureManager::Optimization() {
 					itea.second[2]
 			);
 			std::cout << "feature " << itea.first
-			<< ":" << itea.second[0] << "," << itea.second[1] << ","<< itea.second[2] << std::endl;
+			          << ":" << itea.second[0] << "," << itea.second[1] << "," << itea.second[2] << std::endl;
 			free(itea.second);
 		}
 

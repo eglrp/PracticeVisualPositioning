@@ -210,19 +210,19 @@ int main() {
 							Eigen::Vector2d left_ob(pts_cam(r, 0), pts_cam(r, 1)), right_ob(r_pts_cam(r, 0),
 							                                                                r_pts_cam(r, 1));
 							Eigen::Vector3d pt3d(0, 0, 0);
-//							if (triangulatePointCeres(
-//									Eigen::Quaterniond(left_R), left_t,
-//									Eigen::Quaterniond(right_R), right_t,
-//									config_ptr_->right_cam_mat, left_ob, right_ob,
-//									pt3d
-//							)) {
-////								std::cout << "estp:" << pt3d.transpose() << std::endl;
-////								std::cout << "real:" << kpts3.block<1, 3>(r, 0) << std::endl;
-//
-//							} else {
-//								std::cout << "faild to calculate:"
-//								          << left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
-//							}
+							if (triangulatePointCeres(
+									Eigen::Quaterniond(left_R), left_t,
+									Eigen::Quaterniond(right_R), right_t,
+									config_ptr_->right_cam_mat, left_ob, right_ob,
+									pt3d
+							)) {
+								std::cout << "estp:" << pt3d.transpose() << std::endl;
+								std::cout << "real:" << kpts3.block<1, 3>(r, 0) << std::endl;
+
+							} else {
+								std::cout << "faild to calculate:"
+								          << left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
+							}
 
 						}
 

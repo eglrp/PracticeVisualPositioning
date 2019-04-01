@@ -143,8 +143,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	if (key_frame_id_vec_.size() < 2) {
 		// initial
 		cur_frame.initialized_pose = true;
-		cur_frame.pos = Eigen::Vector3d(0,0,0);
-		cur_frame.qua = Eigen::Quaterniond(1.0,0.0,0.0,0.0);
+		cur_frame.pos = Eigen::Vector3d(0, 0, 0);
+		cur_frame.qua = Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0);
 
 	} else {
 		// solve new pose by pnp
@@ -205,10 +205,11 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	// initial feature points by stereo observed.
 	// TODO: Check the transfrom.
-	Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
+	Eigen::Matrix3d left_R =
+			config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.inverse().toRotationMatrix();
 
 	Eigen::Matrix3d right_R =
-			config_ptr_->right_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
+			config_ptr_->right_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.inverse().toRotationMatrix();
 
 	Eigen::Vector3d left_t = left_R * cur_frame.pos * -1.0 + config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
 
@@ -229,7 +230,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 			Eigen::Vector2d right_ob(cur_frame.id_r_pt_map[cur_feature_id].x, cur_frame.id_r_pt_map[cur_feature_id].y);
 
 			if ((left_ob - right_ob).norm() > config_ptr_->min_ob_distance) {
-				Eigen::Vector3d out_pt3(0, 0, 0);
+				Eigen::Vector3d out_pt3(cur_frame.pos);
 				if (triangulatePointCeres(
 						Eigen::Quaterniond(left_R),
 						left_t,

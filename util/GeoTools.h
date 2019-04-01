@@ -251,6 +251,18 @@ inline bool solvePosePnpCeres(
 	qua_ini = qua.inverse() * q_bc;
 	t_ini = -1.0 * (qua.inverse().toRotationMatrix() * (t0 - t_bc));
 
+	if(t_ini.norm() > 1e4){
+		std::cout << "t_ini:" << t_ini.transpose() << std::endl;
+		std::cout << "qua_ini:" << qua_ini.matrix() << std::endl;
+
+		for(int i(0);i<pts3d.size();++i){
+			std::cout << pts3d[i] << " ===>" << ob_pt[i] << std::endl;
+		}
+
+
+		std::cout << "SOME ERROR HAPPEND " << std::endl;
+	}
+
 	return true;
 
 
@@ -504,12 +516,13 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 		Z = 10.0;
 
 	}
-
+//
 	double X = xp * Z;
 	double Y = yp * Z;
-
-	pt3d = q0.inverse() * (Eigen::Vector3d(X, Y, Z) - t0);
 //
+	pt3d = q0.inverse().toRotationMatrix() * (Eigen::Vector3d(X, Y, Z) - t0);
+//
+//	pt3d = q0.toRotationMatrix() * (Eigen::Vector3d(X,Y,Z) + t0);
 	problem.AddResidualBlock(
 			ProjectionKnowCamFactor::Create(
 					qua0,
@@ -543,7 +556,8 @@ inline bool triangulatePointCeres(Eigen::Quaterniond q0, Eigen::Matrix<double, 3
 
 	ceres::Solve(option, &problem, &summary);
 
-	std::cout << "triangulated:"<< pt3d.transpose() << std::endl;
+//	std::cout << "triangulated:"<< pt3d.transpose() << std::endl;
+//	Eigen::Vector3d rt_pt = q0.toRotationMatrix() *
 
 
 

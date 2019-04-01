@@ -95,7 +95,7 @@ int main() {
 	config_ptr_->left_bodyTocam = left_b2c * 1.0;
 	config_ptr_->right_bodyTocam = right_b2c * 1.0;
 
-	config_ptr_->min_ob_distance = 20.0;
+	config_ptr_->min_ob_distance = 5.0;
 
 
 	auto feature_manager_ptr_ = new StereoFeatureManager();
@@ -207,22 +207,28 @@ int main() {
 							Eigen::Vector3d right_t = right_R * sim_pos.block<1, 3>(i, 0).transpose() * -1.0 +
 							                          config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
-							Eigen::Vector2d left_ob(pts_cam(r, 0), pts_cam(r, 1)), right_ob(r_pts_cam(r, 0),
-							                                                                r_pts_cam(r, 1));
+							Eigen::Vector2d left_ob(pts_cam(r, 0),
+							                        pts_cam(r, 1)),
+									right_ob(r_pts_cam(r, 0),
+									         r_pts_cam(r, 1));
 							Eigen::Vector3d pt3d(0, 0, 0);
-							if (triangulatePointCeres(
-									Eigen::Quaterniond(left_R), left_t,
-									Eigen::Quaterniond(right_R), right_t,
-									config_ptr_->right_cam_mat, left_ob, right_ob,
-									pt3d
-							)) {
-								std::cout << "estp:" << pt3d.transpose() << std::endl;
-								std::cout << "real:" << kpts3.block<1, 3>(r, 0) << std::endl;
-
-							} else {
-								std::cout << "faild to calculate:"
-								          << left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
-							}
+//							if (triangulatePointCeres(
+//									Eigen::Quaterniond(left_R), left_t,
+//									Eigen::Quaterniond(right_R), right_t,
+//									config_ptr_->right_cam_mat, left_ob, right_ob,
+//									pt3d
+//							)) {
+//								if ((pt3d.transpose() - kpts3.block<1, 3>(r, 0)).norm() > 0.1) {
+//
+//									std::cout << "estp:" << pt3d.transpose() << std::endl;
+//									std::cout << "real:" << kpts3.block<1, 3>(r, 0) << std::endl;
+//								}
+//
+//
+//							} else {
+//								std::cout << "faild to calculate:"
+//								          << left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
+//							}
 
 						}
 
@@ -242,28 +248,28 @@ int main() {
 			Eigen::Vector3d ini_t(0, 0, 0);
 
 			ini_t = sim_pos.block<1, 3>(i, 0).transpose() * 1.0;
-			init_q = Eigen::Quaterniond(sim_qua(i, 0),
-			                            sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3));
+//			init_q = Eigen::Quaterniond(sim_qua(i, 0),
+//			                            sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3));
 
 
 			Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
 			Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
-			if (solvePosePnpCeres(
-					init_q,
-					ini_t,
-					q_bc,
-					t_bc,
-					pt2d_vec,
-					pt3d_vec,
-					config_ptr_->left_cam_mat,
-					config_ptr_->left_dist_coeff
-			)) {
-				std::cout << "get t:" << ini_t.transpose() << std::endl;
-				std::cout << "realt:" << sim_pos.block<1, 3>(i, 0) << std::endl;
-
-			} else {
-				std::cout << "Save pnp unsuccesed" << std::endl;
-			}
+//			if (solvePosePnpCeres(
+//					init_q,
+//					ini_t,
+//					q_bc,
+//					t_bc,
+//					pt2d_vec,
+//					pt3d_vec,
+//					config_ptr_->left_cam_mat,
+//					config_ptr_->left_dist_coeff
+//			)) {
+//				std::cout << "get t:" << ini_t.transpose() << std::endl;
+//				std::cout << "realt:" << sim_pos.block<1, 3>(i, 0) << std::endl;
+//
+//			} else {
+//				std::cout << "Save pnp unsuccesed" << std::endl;
+//			}
 			assert(feature_pts.size() == r_feature_pts.size());
 
 			feature_manager_ptr_->addNewFrame(i,

@@ -20,7 +20,7 @@
 
 int main() {
 
-	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/01/";
+	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/05/";
 	std::string left_sub_dir_name = "image_0";
 	std::string right_sub_dir_name = "image_1";
 
@@ -54,7 +54,9 @@ int main() {
 
 	config_ptr->left_bodyTocam = Eigen::Matrix4d::Identity();
 	config_ptr->right_bodyTocam = Eigen::Matrix4d::Identity();
-	config_ptr->right_bodyTocam(0, 3) = 0.53715065326792;//*100.0;
+	config_ptr->right_bodyTocam(0, 3) = -0.53715065326792;//*100.0;
+
+	config_ptr->min_ob_distance = 10.0;
 
 
 	StereoOdometryServer odometry;

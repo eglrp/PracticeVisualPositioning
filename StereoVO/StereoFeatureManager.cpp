@@ -165,7 +165,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 						auto pt_eigen = feature_ptr->pt;
 						std::cout << "getted pt:" << pt_eigen.transpose() << std::endl;
 						pts3.push_back(cv::Point3f(pt_eigen[0], pt_eigen[1], pt_eigen[2]));
-						ob_pt.push_back(cur_frame.id_pt_map[i]);
+						ob_pt.push_back(cv::Point2f(cur_frame.id_pt_map[feature_ptr->feature_id].x,
+						                            cur_frame.id_pt_map[feature_ptr->feature_id].y));
 					}
 				}
 
@@ -174,14 +175,17 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 		// initial cur quaternion and pos based on latest key frame's pose.
 		// TODO:Maybe need performence improvement....
-		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.qua.normalized();
-		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.pos * 1.0;
+		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 2])->second.qua.normalized();
+		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 2])->second.pos * 1.0;
 
 
 		Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
 		Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
 
 		std::cout << "found 3d points number:" << pts3.size() << std::endl;
+
+		std::cout << "result after initial:" << cur_frame.pos.transpose()
+		          << "\n cur quaternion:" << cur_frame.qua.toRotationMatrix() << std::endl;
 
 		if (solvePosePnpCeres(cur_frame.qua,
 		                      cur_frame.pos,
@@ -191,8 +195,9 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		                      pts3,
 		                      config_ptr_->left_cam_mat,
 		                      config_ptr_->left_dist_coeff)) {
-			std::cout << "solved pnp and get position:" << cur_frame.pos
-			          << " quat:" << cur_frame.qua.matrix() << " used points:" << ob_pt.size() << std::endl;
+			std::cout << "solved pnp and get position:" << cur_frame.pos.transpose()
+			          << "\n quat:" << cur_frame.qua.matrix()
+			          << " \nused points:" << ob_pt.size() << std::endl;
 			cur_frame.initialized_pose = true;
 
 		} else {
@@ -219,6 +224,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		// feature not been initialized. and could be observed in stereo
 		int cur_feature_id = cur_frame.feature_id_vec_[i];
 		FeaturePreId *feature_ptr = &(feature_map_.find(cur_feature_id)->second);
+//		std::cout << "stere left t:" << left_t.transpose() << std::endl;
 
 		// in slide windows  && not initialized && observed by right camera
 		if (feature_ptr->in_slide_windows_flag &&
@@ -241,6 +247,9 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 						right_ob,
 						out_pt3
 				)) {
+
+//					std::cout << "triangulated by stereo:" << out_pt3.transpose() << std::endl;
+
 					feature_ptr->initialized = true;
 					feature_ptr->pt = out_pt3 * 1.0;
 				}
@@ -272,19 +281,21 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-//					if (triangulatePointCeres(
-//									Eigen::Quaterniond(pre_R),
-//									pre_t,
-//									Eigen::Quaterniond(left_R),
-//									left_t,
-//									config_ptr_
-//											->left_cam_mat,
-//									pre_ob, cur_ob,
-//									out_pt3
-//							)) {
-//						feature_ptr->initialized = true;
-//						feature_ptr->pt = out_pt3 * 1.0;
-//					}
+					if (triangulatePointCeres(
+									Eigen::Quaterniond(pre_R),
+									pre_t,
+									Eigen::Quaterniond(left_R),
+									left_t,
+									config_ptr_
+											->left_cam_mat,
+									pre_ob, cur_ob,
+									out_pt3
+							)) {
+						feature_ptr->initialized = true;
+						feature_ptr->pt = out_pt3 * 1.0;
+						break;
+//						continue;
+					}
 //
 				}
 

@@ -107,14 +107,14 @@ int main() {
 					sim_pos.block<1, 3>(i, 0)
 			);
 
-			slam_visulizer.addOdometryNewPose(
-					sim_pos.block<1, 3>(i, 0).transpose(),
-					Eigen::Quaterniond(sim_qua(i, 0),
-					                   sim_qua(i, 1),
-					                   sim_qua(i, 2),
-					                   sim_qua(i, 3)),
-					"ground truch"
-			);
+//			slam_visulizer.addOdometryNewPose(
+//					sim_pos.block<1, 3>(i, 0).transpose(),
+//					Eigen::Quaterniond(sim_qua(i, 0),
+//					                   sim_qua(i, 1),
+//					                   sim_qua(i, 2),
+//					                   sim_qua(i, 3)),
+//					"ground truch"
+//			);
 
 //		Eigen::MatrixXd pt_3d(kpts3.rows(), kpts3.cols());
 			Eigen::MatrixXd pts_cam(kpts3.rows(), kpts3.cols());
@@ -179,8 +179,12 @@ int main() {
 			std::vector<cv::Point2f> r_feature_pts;
 			std::vector<int> ids;
 			std::vector<int> r_ids;
-
+			// test solve pnp.
+			std::vector<cv::Point3f> pt3d_vec;
+			std::vector<cv::Point2f> pt2d_vec;
 			for (int r(0); r < pts_cam.rows(); ++r) {
+
+
 				if (pts_cam(r, 2) > 0) {
 					ids.push_back(r);
 					feature_pts.push_back(cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)));
@@ -196,25 +200,26 @@ int main() {
 							                          Eigen::Quaterniond(sim_qua(i, 0), sim_qua(i, 1), sim_qua(i, 2),
 							                                             sim_qua(i, 3)).inverse().toRotationMatrix();
 
-							Eigen::Vector3d left_t = left_R * sim_pos.block<1, 3>(i, 0).transpose()  * -1.0+
+							Eigen::Vector3d left_t = left_R * sim_pos.block<1, 3>(i, 0).transpose() * -1.0 +
 							                         config_ptr_->left_bodyTocam.block<3, 1>(0, 3);
 							Eigen::Vector3d right_t = right_R * sim_pos.block<1, 3>(i, 0).transpose() * -1.0 +
 							                          config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
-							Eigen::Vector2d left_ob(pts_cam(r,0),pts_cam(r,1)),right_ob(r_pts_cam(r,0),r_pts_cam(r,1));
-							Eigen::Vector3d pt3d(0,0,0);
-							if(triangulatePointCeres(
-									Eigen::Quaterniond(left_R),left_t,
+							Eigen::Vector2d left_ob(pts_cam(r, 0), pts_cam(r, 1)), right_ob(r_pts_cam(r, 0),
+							                                                                r_pts_cam(r, 1));
+							Eigen::Vector3d pt3d(0, 0, 0);
+							if (triangulatePointCeres(
+									Eigen::Quaterniond(left_R), left_t,
 									Eigen::Quaterniond(right_R), right_t,
-									config_ptr_->right_cam_mat,left_ob,right_ob,
+									config_ptr_->right_cam_mat, left_ob, right_ob,
 									pt3d
-									)){
-								std::cout <<"estp:" << pt3d.transpose() << std::endl;
-								std::cout<<"real:" << kpts3.block<1,3>(r,0) << std::endl;
+							)) {
+//								std::cout << "estp:" << pt3d.transpose() << std::endl;
+//								std::cout << "real:" << kpts3.block<1, 3>(r, 0) << std::endl;
 
-							}else{
+							} else {
 								std::cout << "faild to calculate:"
-								<< left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
+								          << left_ob.transpose() << ":" << right_ob.transpose() << std::endl;
 							}
 
 						}
@@ -225,16 +230,51 @@ int main() {
 						r_feature_pts.push_back(cv::Point2f(-1.0, -1.0));
 					}
 
-
-					// test solve pnp.
-
+					pt3d_vec.push_back(cv::Point3f(kpts3(r, 0), kpts3(r, 1), kpts3(r, 2)));
+					pt2d_vec.push_back(cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)));
 				}
-			}
 
+
+			}
+			Eigen::Quaterniond init_q(1.0, 0.0, 0.0, 0.0);
+			Eigen::Vector3d ini_t(0, 0, 0);
+
+			ini_t = sim_pos.block<1, 3>(i, 0).transpose() * 1.0;
+			init_q = Eigen::Quaterniond(sim_qua(i, 0),
+			                            sim_qua(i, 1), sim_qua(i, 2), sim_qua(i, 3));
+
+
+			Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
+			Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
+			if (solvePosePnpCeres(
+					init_q,
+					ini_t,
+					q_bc,
+					t_bc,
+					pt2d_vec,
+					pt3d_vec,
+					config_ptr_->left_cam_mat,
+					config_ptr_->left_dist_coeff
+			)) {
+				std::cout << "get t:" << ini_t.transpose() << std::endl;
+				std::cout << "realt:" << sim_pos.block<1, 3>(i, 0) << std::endl;
+
+			} else {
+				std::cout << "Save pnp unsuccesed" << std::endl;
+			}
 			assert(feature_pts.size() == r_feature_pts.size());
 
-//			feature_manager_ptr_->addNewFrame(i,
-//			                                  ids, feature_pts, r_ids, r_feature_pts);
+			feature_manager_ptr_->addNewFrame(i,
+			                                  ids, feature_pts, r_ids, r_feature_pts);
+
+			for (int k = 0; k < feature_manager_ptr_->pose_deque.size(); ++k) {
+				slam_visulizer.addOdometryNewPose(
+						feature_manager_ptr_->pose_deque[k].block<3, 1>(0, 3),
+						feature_manager_ptr_->pose_deque[k].block<3, 3>(0, 0),
+						"est"
+				);
+			}
+			feature_manager_ptr_->pose_deque.clear();
 
 
 			// tracking

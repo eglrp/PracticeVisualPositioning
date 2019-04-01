@@ -123,16 +123,136 @@ inline bool triangulatePointRt(Eigen::Matrix<double, 3, 3> &R0, Eigen::Matrix<do
 
 }
 
+struct ProjectionPnPFactor {
+	ProjectionPnPFactor(
+			double fx,
+			double fy,
+			double cx,
+			double cy,
+			double obx,
+			double oby,
+			double *pt3d
+	) : fx_(fx), fy_(fy), cx_(cx), cy_(cy), obx_(obx), oby_(oby) {
+		pt3d_ = pt3d;
+	}
+
+
+	template<typename T>
+	bool operator()(
+			const T *const qwc,
+			const T *const twc,
+			T *residuals) const {
+		T p[3];
+		T pt3[3];
+		for (int i = 0; i < 3; ++i) {
+			pt3[i] = T(pt3d_[i]);
+		}
+		ceres::QuaternionRotatePoint(qwc, pt3, p);
+		p[0] += twc[0];
+		p[1] += twc[1];
+		p[2] += twc[2];
+
+
+		T xp = p[0] / p[2];
+		T yp = p[1] / p[2];
+
+		T fx = T(fx_);
+		T fy = T(fy_);
+		T cx = T(cx_);
+		T cy = T(cy_);
+
+		T pre_x = fx * xp + cx;
+		T pre_y = fy * yp + cy;
+
+		residuals[0] = pre_x - T(obx_);
+		residuals[1] = pre_y - T(oby_);
+		return true;
+	}
+
+	static ceres::CostFunction *Create(
+			double fx,
+			double fy,
+			double cx,
+			double cy,
+			double obx,
+			double oby,
+			double *pt3d
+	) {
+		return (new ceres::AutoDiffCostFunction<ProjectionPnPFactor, 2, 4, 3>(
+				new ProjectionPnPFactor(fx, fy, cx, cy, obx, oby, pt3d)
+		));
+	}
+
+
+	double *pt3d_;
+	double fx_, fy_, cx_, cy_, obx_, oby_;
+
+};
 
 
 inline bool solvePosePnpCeres(
 		Eigen::Quaterniond &qua_ini,
 		Eigen::Vector3d &t_ini,
+		Eigen::Quaterniond &q_bc,
+		Eigen::Vector3d &t_bc,
 		std::vector<cv::Point2f> &ob_pt,
 		std::vector<cv::Point3f> &pts3d,
 		cv::Mat &cam_mat,
 		cv::Mat &dist_coeff
-		){
+) {
+
+	Eigen::Quaterniond qua = q_bc * qua_ini.inverse();
+	Eigen::Vector3d t0 = (qua * (-1.0 * t_ini)) + t_bc;
+
+	ceres::Problem problem;
+	ceres::Solver::Options options;
+	ceres::Solver::Summary summary;
+
+	options.linear_solver_type = ceres::DENSE_QR;
+
+	double fx = double(cam_mat.at<float>(0, 0));
+	double fy = double(cam_mat.at<float>(1, 1));
+	double cx = double(cam_mat.at<float>(0, 2));
+	double cy = double(cam_mat.at<float>(1, 2));
+
+	double ob3d_array[3 * ob_pt.size()];
+
+	double qua_array[4] = {qua.w(), qua.x(), qua.y(), qua.z()};
+	problem.AddParameterBlock(
+			qua_array,
+			4,
+			new ceres::QuaternionParameterization()
+	);
+
+	for (int i = 0; i < ob_pt.size(); ++i) {
+		ob3d_array[i * 3 + 0] = double(pts3d[i].x);
+		ob3d_array[i * 3 + 1] = double(pts3d[i].y);
+		ob3d_array[i * 3 + 2] = double(pts3d[i].z);
+
+		problem.AddResidualBlock(
+				ProjectionPnPFactor::Create(
+						fx, fy, cx, cy, double(ob_pt[i].x),
+						double(ob_pt[i].y),
+						ob3d_array + i * 3
+				),
+//				ceres::CauchyLoss(1.0),
+				NULL,
+				qua_array,
+				t0.data()
+		);
+
+	}
+
+	ceres::Solve(options, &problem, &summary);
+	std::cout << summary.FullReport() << std::endl;
+
+	qua = Eigen::Quaterniond(qua_array[0], qua_array[1], qua_array[2], qua_array[3]).normalized();
+
+	qua_ini = qua.inverse() * q_bc;
+	t_ini = -1.0 * (qua.inverse().toRotationMatrix() * (t0 - t_bc));
+
+	return true;
+
 
 }
 

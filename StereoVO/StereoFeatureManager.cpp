@@ -169,12 +169,23 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.qua.normalized();
 		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.pos * 1.0;
 
-		if (solvePosePnp(cur_frame.qua,
-		                 cur_frame.pos,
-		                 ob_pt,
-		                 pts3,
-		                 config_ptr_->left_cam_mat,
-		                 config_ptr_->left_dist_coeff)) {
+		Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
+		Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
+
+//		if (solvePosePnp(cur_frame.qua,
+//		                 cur_frame.pos,
+//		                 ob_pt,
+//		                 pts3,
+//		                 config_ptr_->left_cam_mat,
+//		                 config_ptr_->left_dist_coeff)) {
+		if (solvePosePnpCeres(cur_frame.qua,
+		                      cur_frame.pos,
+		                      q_bc,
+		                      t_bc,
+		                      ob_pt,
+		                      pts3,
+		                      config_ptr_->left_cam_mat,
+		                      config_ptr_->left_dist_coeff)) {
 			std::cout << "solved pnp and get position:" << cur_frame.pos
 			          << " quat:" << cur_frame.qua.matrix() << " used points:" << ob_pt.size() << std::endl;
 			cur_frame.initialized_pose = true;
@@ -189,8 +200,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	}
 
-	// initial feature points by stereo observed.
-	// TODO: Check the transfrom.
+// initial feature points by stereo observed.
+// TODO: Check the transfrom.
 	Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
 
 	Eigen::Matrix3d right_R =
@@ -200,54 +211,90 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	Eigen::Vector3d right_t = right_R * cur_frame.pos * -1.0 + config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
-	for (int i = 0; i < cur_frame.feature_id_vec_.size(); ++i) {
-		// feature not been initialized. and could be observed in stereo
+	for (int i = 0;
+	     i < cur_frame.feature_id_vec_.size();
+	     ++i) {
+// feature not been initialized. and could be observed in stereo
 		int cur_feature_id = cur_frame.feature_id_vec_[i];
 		FeaturePreId *feature_ptr = &(feature_map_.find(cur_feature_id)->second);
 
-		// in slide windows  && not initialized && observed by right camera
+// in slide windows  && not initialized && observed by right camera
 		if (feature_ptr->in_slide_windows_flag &&
-		    !feature_ptr->initialized &&
-		    cur_frame.id_r_pt_map.find(cur_feature_id) != cur_frame.id_r_pt_map.end()) {
+		    !feature_ptr->
+				    initialized &&
+		    cur_frame
+				    .id_r_pt_map.
+				    find(cur_feature_id)
+		    != cur_frame.id_r_pt_map.
+
+				    end()
+
+				) {
 
 			Eigen::Vector2d left_ob(cur_frame.id_pt_map[cur_feature_id].x, cur_frame.id_pt_map[cur_feature_id].y);
 			Eigen::Vector2d right_ob(cur_frame.id_r_pt_map[cur_feature_id].x, cur_frame.id_r_pt_map[cur_feature_id].y);
 
-			if ((left_ob - right_ob).norm() > config_ptr_->min_ob_distance) {
+			if ((left_ob - right_ob).
+
+					norm()
+
+			    > config_ptr_->min_ob_distance) {
 				Eigen::Vector3d out_pt3(0, 0, 0);
 
-				if (triangulatePointCeres(
-						Eigen::Quaterniond(left_R),
-						left_t,
-						Eigen::Quaterniond(right_R),
-						right_t,
-						config_ptr_->left_cam_mat,
-						left_ob,
-						right_ob,
-						out_pt3
-				)) {
-					feature_ptr->initialized = true;
-					feature_ptr->pt = out_pt3 * 1.0;
+				if (
+						triangulatePointCeres(
+								Eigen::Quaterniond(left_R),
+								left_t,
+								Eigen::Quaterniond(right_R),
+								right_t,
+								config_ptr_
+										->left_cam_mat,
+								left_ob,
+								right_ob,
+								out_pt3
+						)) {
+					feature_ptr->
+							initialized = true;
+					feature_ptr->
+							pt = out_pt3 * 1.0;
 				}
 			}
 
 
 		}
 
-		// initial feature points by two frame observed.
+// initial feature points by two frame observed.
 		if (feature_ptr->in_slide_windows_flag &&
-		    !feature_ptr->initialized &&
-		    feature_ptr->key_frame_id_set.size() > 1) {
+		    !feature_ptr->
+				    initialized &&
+		    feature_ptr
+				    ->key_frame_id_set.
 
-			for (auto pre_key_id:feature_ptr->key_frame_id_set) {
+				    size()
+
+		    > 1) {
+
+			for (
+				auto pre_key_id
+					:feature_ptr->key_frame_id_set) {
 				FramePreId *pre_key_frame = &(frame_map_.find(pre_key_id)->second);
 				Eigen::Vector2d pre_ob(pre_key_frame->id_pt_map[cur_feature_id].x,
 				                       pre_key_frame->id_pt_map[cur_feature_id].y);
 				Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
 				                       cur_frame.id_pt_map[cur_feature_id].y);
 
-				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance &&
-				    (pre_key_frame->pos - cur_frame.pos).norm() > 0.5) {
+				if ((pre_ob - cur_ob).
+
+						norm()
+
+				    > config_ptr_->
+						min_ob_distance &&
+				    (pre_key_frame
+						     ->pos - cur_frame.pos).
+
+						    norm()
+
+				    > 0.5) {
 //					Eigen::Matrix3d pre_R =
 //							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
 //					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
@@ -260,17 +307,21 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-					if (triangulatePointCeres(
-							Eigen::Quaterniond(pre_R),
-							pre_t,
-							Eigen::Quaterniond(left_R),
-							left_t,
-							config_ptr_->left_cam_mat,
-							pre_ob, cur_ob,
-							out_pt3
-					)) {
-						feature_ptr->initialized = true;
-						feature_ptr->pt = out_pt3 * 1.0;
+					if (
+							triangulatePointCeres(
+									Eigen::Quaterniond(pre_R),
+									pre_t,
+									Eigen::Quaterniond(left_R),
+									left_t,
+									config_ptr_
+											->left_cam_mat,
+									pre_ob, cur_ob,
+									out_pt3
+							)) {
+						feature_ptr->
+								initialized = true;
+						feature_ptr->
+								pt = out_pt3 * 1.0;
 						break;
 					}
 //
@@ -282,39 +333,53 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	}
 
 
-	// optimization
+// optimization
 //	Optimization();
 
 
 
-	// update visulization.
-	UpdateVisualization(cur_frame.frame_id);
+// update visulization.
+	UpdateVisualization(cur_frame
+			                    .frame_id);
 
-	// delete oldest frame in key frame slide windows.
+// delete oldest frame in key frame slide windows.
 
-	if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
-		/**
-		 * FRAME:
-		 * 1. set key frame flag = false
-		 * 2. deleted from (key_frame_id_vec)
-		 */
+	if (key_frame_id_vec_.
+
+			size()
+
+	    > config_ptr_->slide_windows_size) {
+/**
+ * FRAME:
+ * 1. set key frame flag = false
+ * 2. deleted from (key_frame_id_vec)
+ */
 		FramePreId *oldest_frame_ptr = &(frame_map_.find(key_frame_id_vec_[0])->second);
-		key_frame_id_vec_.pop_front();
+		key_frame_id_vec_.
 
-		oldest_frame_ptr->key_frame_flag = false;
+				pop_front();
+
+		oldest_frame_ptr->
+				key_frame_flag = false;
 
 
 
-		/**
-		 * FEATURE:
-		 * 1. delete related feature's key_frame_id_deque.
-		 * 2. if size of (key frame id deque) < 2:
-		 * 		clear key frame id deque,
-		 * 		set in slide windows flag = false;
-		 * 		deleted from sw feature id set
-		 */
+/**
+ * FEATURE:
+ * 1. delete related feature's key_frame_id_deque.
+ * 2. if size of (key frame id deque) < 2:
+ * 		clear key frame id deque,
+ * 		set in slide windows flag = false;
+ * 		deleted from sw feature id set
+ */
 
-		for (int i = 0; i < oldest_frame_ptr->feature_id_vec_.size(); ++i) {
+		for (
+				int i = 0;
+				i < oldest_frame_ptr->feature_id_vec_.
+
+						size();
+
+				++i) {
 			FeaturePreId *feature_ptr =
 					&(feature_map_.find(oldest_frame_ptr->feature_id_vec_[i])->second);
 
@@ -324,10 +389,20 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				                         return t_id == oldest_frame_ptr->frame_id;
 			                         });
 
-			if (feature_ptr->key_frame_id_set.size() < 2) {
-				feature_ptr->in_slide_windows_flag = false;
-				feature_ptr->key_frame_id_set.clear();
-				sw_feature_id_set_.erase(feature_ptr->feature_id);
+			if (feature_ptr->key_frame_id_set.
+
+					size()
+
+			    < 2) {
+				feature_ptr->
+						in_slide_windows_flag = false;
+				feature_ptr->key_frame_id_set.
+
+						clear();
+
+				sw_feature_id_set_.
+						erase(feature_ptr
+								      ->feature_id);
 			}
 		}
 

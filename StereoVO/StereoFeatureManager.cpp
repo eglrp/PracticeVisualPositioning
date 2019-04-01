@@ -177,15 +177,12 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		cur_frame.qua = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.qua.normalized();
 		cur_frame.pos = frame_map_.find(key_frame_id_vec_[key_frame_id_vec_.size() - 1])->second.pos * 1.0;
 
+
 		Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
 		Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
 
-//		if (solvePosePnp(cur_frame.qua,
-//		                 cur_frame.pos,
-//		                 ob_pt,
-//		                 pts3,
-//		                 config_ptr_->left_cam_mat,
-//		                 config_ptr_->left_dist_coeff)) {
+		std::cout << "found 3d points number:" << pts3.size() << std::endl;
+
 		if (solvePosePnpCeres(cur_frame.qua,
 		                      cur_frame.pos,
 		                      q_bc,
@@ -308,20 +305,15 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 // delete oldest frame in key frame slide windows.
 
-	if (key_frame_id_vec_.size()
-	    > config_ptr_->slide_windows_size) {
+	if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
 		/**
 		 * FRAME:
 		 * 1. set key frame flag = false
 		 * 2. deleted from (key_frame_id_vec)
 		 */
-		FramePreId *oldest_frame_ptr = &(frame_map_.find(key_frame_id_vec_[0])->second);
-		key_frame_id_vec_.
-
-				pop_front();
-
-		oldest_frame_ptr->
-				key_frame_flag = false;
+		FramePreId &oldest_frame = (frame_map_.find(key_frame_id_vec_[0])->second);
+		key_frame_id_vec_.pop_front();
+		oldest_frame.key_frame_flag = false;
 
 
 
@@ -334,17 +326,17 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		 * 		deleted from sw feature id set
 		 */
 
-		for (int i = 0; i < oldest_frame_ptr->feature_id_vec_.size(); ++i) {
+		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
 			FeaturePreId *feature_ptr =
-					&(feature_map_.find(oldest_frame_ptr->feature_id_vec_[i])->second);
+					&(feature_map_.find(oldest_frame.feature_id_vec_[i])->second);
 
 			auto itea = std::find_if(feature_ptr->key_frame_id_set.begin(),
 			                         feature_ptr->key_frame_id_set.end(),
 			                         [&](int t_id) {
-				                         return t_id == oldest_frame_ptr->frame_id;
+				                         return t_id == oldest_frame.frame_id;
 			                         });
 
-			if (feature_ptr->key_frame_id_set.size() < 2) {
+			if (feature_ptr->key_frame_id_set.size() < 1) {
 				feature_ptr->in_slide_windows_flag = false;
 				feature_ptr->key_frame_id_set.clear();
 				sw_feature_id_set_.erase(feature_ptr->feature_id);
@@ -414,36 +406,36 @@ bool StereoFeatureManager::Optimization() {
 
 					auto left_itea = cur_frame.id_pt_map.find(cur_feature_id);
 					if (left_itea != cur_frame.id_pt_map.end()) {
-						problem.AddResidualBlock(
-								SimpleReprojectionError::Create(
-										fx, fy, cx, cy, 0.0,
-										double(left_itea->second.x),
-										double(left_itea->second.y)
-								),
-								NULL,
-//								feature_map_.find(cur_feature_id)->second.pt.data(),
-								pt_ptr_read,
-								qua_array + i * 4,
-								pos_array + i * 3
-						);
+//						problem.AddResidualBlock(
+//								SimpleReprojectionError::Create(
+//										fx, fy, cx, cy, 0.0,
+//										double(left_itea->second.x),
+//										double(left_itea->second.y)
+//								),
+//								NULL,
+////								feature_map_.find(cur_feature_id)->second.pt.data(),
+//								pt_ptr_read,
+//								qua_array + i * 4,
+//								pos_array + i * 3
+//						);
 
 
 					}
 					auto right_itea = cur_frame.id_r_pt_map.find(cur_feature_id);
 
 					if (right_itea != cur_frame.id_r_pt_map.end()) {
-						problem.AddResidualBlock(
-								SimpleReprojectionError::Create(
-										fx, fy, cx, cy, dx,
-										double(right_itea->second.x),
-										double(right_itea->second.y)
-								),
-								NULL,
-//								feature_map_.find(cur_feature_id)->second.pt.data(),
-								pt_ptr_read,
-								qua_array + i * 4,
-								pos_array + i * 3
-						);
+//						problem.AddResidualBlock(
+//								SimpleReprojectionError::Create(
+//										fx, fy, cx, cy, dx,
+//										double(right_itea->second.x),
+//										double(right_itea->second.y)
+//								),
+//								NULL,
+////								feature_map_.find(cur_feature_id)->second.pt.data(),
+//								pt_ptr_read,
+//								qua_array + i * 4,
+//								pos_array + i * 3
+//						);
 					}
 
 

@@ -16,8 +16,12 @@ struct SimpleReprojectionError {
 			double cy,
 			double dx,
 			double obx,
-			double oby) :
+			double oby,
+			double *q_bc,
+			double *t_bc) :
 			fx_(fx), dx_(dx), fy_(fy), cx_(cx), cy_(cy), obx_(obx), oby_(oby) {
+		q_bc_ = q_bc;
+		t_bc_ = t_bc;
 	}
 
 	template<typename T>
@@ -66,14 +70,18 @@ struct SimpleReprojectionError {
 			double cy,
 			double dx,
 			double obx,
-			double oby) {
+			double oby,
+			double *q_bc,
+			double *t_bc) {
 		return (new ceres::AutoDiffCostFunction<SimpleReprojectionError, 2, 3, 4, 3>(
-				new SimpleReprojectionError(fx, fy, cx, cy, dx, obx, oby)
+				new SimpleReprojectionError(fx, fy, cx, cy, dx, obx, oby, q_bc,q_bc)
 		));
 	}
 
 
 	double fx_, fy_, cx_, cy_, obx_, oby_, dx_;
+	double *q_bc_;
+	double *t_bc_;
 };
 
 

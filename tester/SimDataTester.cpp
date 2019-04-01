@@ -95,6 +95,8 @@ int main() {
 	config_ptr_->left_bodyTocam = left_b2c * 1.0;
 	config_ptr_->right_bodyTocam = right_b2c * 1.0;
 
+	config_ptr_->min_ob_distance = 20.0;
+
 
 	auto feature_manager_ptr_ = new StereoFeatureManager();
 

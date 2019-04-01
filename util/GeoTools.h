@@ -244,7 +244,7 @@ inline bool solvePosePnpCeres(
 	}
 
 	ceres::Solve(options, &problem, &summary);
-	std::cout << summary.FullReport() << std::endl;
+//	std::cout << summary.FullReport() << std::endl;
 
 	qua = Eigen::Quaterniond(qua_array[0], qua_array[1], qua_array[2], qua_array[3]).normalized();
 

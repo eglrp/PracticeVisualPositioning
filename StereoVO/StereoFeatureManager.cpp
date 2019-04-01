@@ -68,7 +68,7 @@ bool StereoFeatureManager::addNewFrame(int frame_id,
 
 bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
 //	if (cur_frame.frame_id < 1 ){//|| key_frame_id_vec_.size() < 2) {
-	if (key_frame_id_vec_.size() < 1) {
+	if (key_frame_id_vec_.size() < 2) {
 		return true;// add first two cur_frame. (Maybe just could be adopted in Stereo Visual Odometry)
 	}
 
@@ -107,6 +107,11 @@ bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
 
 bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	key_frame_id_vec_.push_back(frame_id);
+	std::cout << "key frame:";
+	for (auto &itea:key_frame_id_vec_) {
+		std::cout << itea << ",";
+	}
+	std::cout << std::endl;
 	FramePreId &cur_frame = frame_map_.find(frame_id)->second;
 
 	//region record all new feature id in sw_feature_id_set_
@@ -138,6 +143,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	if (key_frame_id_vec_.size() < 2) {
 		// initial
 		cur_frame.initialized_pose = true;
+		cur_frame.pos = Eigen::Vector3d(0,0,0);
+		cur_frame.qua = Eigen::Quaterniond(1.0,0.0,0.0,0.0);
 
 	} else {
 		// solve new pose by pnp
@@ -147,15 +154,16 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 			int cur_feature_id = cur_frame.feature_id_vec_[i];
 			auto itea = sw_feature_id_set_.find(cur_feature_id);
 			if (itea != sw_feature_id_set_.end()) {
-				auto itea = feature_map_.find(cur_feature_id);
-				if (config_ptr_->additional_check && itea == feature_map_.end()) {
+				auto feature_itea = feature_map_.find(cur_feature_id);
+				if (config_ptr_->additional_check && feature_itea == feature_map_.end()) {
 					printf("Some error in %s:%s : can not found feature in feature map\n",
 					       __FUNCTION__, __LINE__);
 
 				} else {
-					FeaturePreId *feature_ptr = &(itea->second);
+					FeaturePreId *feature_ptr = &(feature_itea->second);
 					if (feature_ptr->initialized) {
 						auto pt_eigen = feature_ptr->pt;
+						std::cout << "getted pt:" << pt_eigen.transpose() << std::endl;
 						pts3.push_back(cv::Point3f(pt_eigen[0], pt_eigen[1], pt_eigen[2]));
 						ob_pt.push_back(cur_frame.id_pt_map[i]);
 					}
@@ -200,8 +208,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	}
 
-// initial feature points by stereo observed.
-// TODO: Check the transfrom.
+	// initial feature points by stereo observed.
+	// TODO: Check the transfrom.
 	Eigen::Matrix3d left_R = config_ptr_->left_bodyTocam.block<3, 3>(0, 0) * cur_frame.qua.toRotationMatrix().inverse();
 
 	Eigen::Matrix3d right_R =
@@ -211,94 +219,55 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 	Eigen::Vector3d right_t = right_R * cur_frame.pos * -1.0 + config_ptr_->right_bodyTocam.block<3, 1>(0, 3);
 
-	for (int i = 0;
-	     i < cur_frame.feature_id_vec_.size();
-	     ++i) {
-// feature not been initialized. and could be observed in stereo
+	for (int i = 0; i < cur_frame.feature_id_vec_.size(); ++i) {
+		// feature not been initialized. and could be observed in stereo
 		int cur_feature_id = cur_frame.feature_id_vec_[i];
 		FeaturePreId *feature_ptr = &(feature_map_.find(cur_feature_id)->second);
 
-// in slide windows  && not initialized && observed by right camera
+		// in slide windows  && not initialized && observed by right camera
 		if (feature_ptr->in_slide_windows_flag &&
-		    !feature_ptr->
-				    initialized &&
-		    cur_frame
-				    .id_r_pt_map.
-				    find(cur_feature_id)
-		    != cur_frame.id_r_pt_map.
-
-				    end()
-
+		    !feature_ptr->initialized &&
+		    cur_frame.id_r_pt_map.find(cur_feature_id) != cur_frame.id_r_pt_map.end()
 				) {
 
 			Eigen::Vector2d left_ob(cur_frame.id_pt_map[cur_feature_id].x, cur_frame.id_pt_map[cur_feature_id].y);
 			Eigen::Vector2d right_ob(cur_frame.id_r_pt_map[cur_feature_id].x, cur_frame.id_r_pt_map[cur_feature_id].y);
 
-			if ((left_ob - right_ob).
-
-					norm()
-
-			    > config_ptr_->min_ob_distance) {
+			if ((left_ob - right_ob).norm() > config_ptr_->min_ob_distance) {
 				Eigen::Vector3d out_pt3(0, 0, 0);
-
-				if (
-						triangulatePointCeres(
-								Eigen::Quaterniond(left_R),
-								left_t,
-								Eigen::Quaterniond(right_R),
-								right_t,
-								config_ptr_
-										->left_cam_mat,
-								left_ob,
-								right_ob,
-								out_pt3
-						)) {
-					feature_ptr->
-							initialized = true;
-					feature_ptr->
-							pt = out_pt3 * 1.0;
+				if (triangulatePointCeres(
+						Eigen::Quaterniond(left_R),
+						left_t,
+						Eigen::Quaterniond(right_R),
+						right_t,
+						config_ptr_->left_cam_mat,
+						left_ob,
+						right_ob,
+						out_pt3
+				)) {
+					feature_ptr->initialized = true;
+					feature_ptr->pt = out_pt3 * 1.0;
 				}
 			}
 
 
 		}
 
-// initial feature points by two frame observed.
+		// initial feature points by two frame observed.
 		if (feature_ptr->in_slide_windows_flag &&
-		    !feature_ptr->
-				    initialized &&
-		    feature_ptr
-				    ->key_frame_id_set.
+		    !feature_ptr->initialized &&
+		    feature_ptr->key_frame_id_set.size() > 1) {
 
-				    size()
-
-		    > 1) {
-
-			for (
-				auto pre_key_id
-					:feature_ptr->key_frame_id_set) {
+			for (auto pre_key_id:feature_ptr->key_frame_id_set) {
 				FramePreId *pre_key_frame = &(frame_map_.find(pre_key_id)->second);
 				Eigen::Vector2d pre_ob(pre_key_frame->id_pt_map[cur_feature_id].x,
 				                       pre_key_frame->id_pt_map[cur_feature_id].y);
 				Eigen::Vector2d cur_ob(cur_frame.id_pt_map[cur_feature_id].x,
 				                       cur_frame.id_pt_map[cur_feature_id].y);
 
-				if ((pre_ob - cur_ob).
+				if ((pre_ob - cur_ob).norm() > config_ptr_->min_ob_distance &&
+				    (pre_key_frame->pos - cur_frame.pos).norm() > 0.5) {
 
-						norm()
-
-				    > config_ptr_->
-						min_ob_distance &&
-				    (pre_key_frame
-						     ->pos - cur_frame.pos).
-
-						    norm()
-
-				    > 0.5) {
-//					Eigen::Matrix3d pre_R =
-//							pre_key_frame->qua.toRotationMatrix() * config_ptr_->left_bodyTocam.block(0, 0, 3, 3);
-//					Eigen::Vector3d pre_t = config_ptr_->left_bodyTocam.block(0, 0, 3, 3) * pre_key_frame->pos +
-//					                        config_ptr_->left_bodyTocam.block(0, 3, 3, 1);
 					Eigen::Matrix3d pre_R =
 							config_ptr_->left_bodyTocam.block<3, 3>(0, 0) *
 							pre_key_frame->qua.inverse().toRotationMatrix();
@@ -307,23 +276,19 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
-					if (
-							triangulatePointCeres(
-									Eigen::Quaterniond(pre_R),
-									pre_t,
-									Eigen::Quaterniond(left_R),
-									left_t,
-									config_ptr_
-											->left_cam_mat,
-									pre_ob, cur_ob,
-									out_pt3
-							)) {
-						feature_ptr->
-								initialized = true;
-						feature_ptr->
-								pt = out_pt3 * 1.0;
-						break;
-					}
+//					if (triangulatePointCeres(
+//									Eigen::Quaterniond(pre_R),
+//									pre_t,
+//									Eigen::Quaterniond(left_R),
+//									left_t,
+//									config_ptr_
+//											->left_cam_mat,
+//									pre_ob, cur_ob,
+//									out_pt3
+//							)) {
+//						feature_ptr->initialized = true;
+//						feature_ptr->pt = out_pt3 * 1.0;
+//					}
 //
 				}
 
@@ -339,21 +304,17 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 // update visulization.
-	UpdateVisualization(cur_frame
-			                    .frame_id);
+	UpdateVisualization(cur_frame.frame_id);
 
 // delete oldest frame in key frame slide windows.
 
-	if (key_frame_id_vec_.
-
-			size()
-
+	if (key_frame_id_vec_.size()
 	    > config_ptr_->slide_windows_size) {
-/**
- * FRAME:
- * 1. set key frame flag = false
- * 2. deleted from (key_frame_id_vec)
- */
+		/**
+		 * FRAME:
+		 * 1. set key frame flag = false
+		 * 2. deleted from (key_frame_id_vec)
+		 */
 		FramePreId *oldest_frame_ptr = &(frame_map_.find(key_frame_id_vec_[0])->second);
 		key_frame_id_vec_.
 
@@ -364,22 +325,16 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 
-/**
- * FEATURE:
- * 1. delete related feature's key_frame_id_deque.
- * 2. if size of (key frame id deque) < 2:
- * 		clear key frame id deque,
- * 		set in slide windows flag = false;
- * 		deleted from sw feature id set
- */
+		/**
+		 * FEATURE:
+		 * 1. delete related feature's key_frame_id_deque.
+		 * 2. if size of (key frame id deque) < 2:
+		 * 		clear key frame id deque,
+		 * 		set in slide windows flag = false;
+		 * 		deleted from sw feature id set
+		 */
 
-		for (
-				int i = 0;
-				i < oldest_frame_ptr->feature_id_vec_.
-
-						size();
-
-				++i) {
+		for (int i = 0; i < oldest_frame_ptr->feature_id_vec_.size(); ++i) {
 			FeaturePreId *feature_ptr =
 					&(feature_map_.find(oldest_frame_ptr->feature_id_vec_[i])->second);
 
@@ -389,20 +344,10 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				                         return t_id == oldest_frame_ptr->frame_id;
 			                         });
 
-			if (feature_ptr->key_frame_id_set.
-
-					size()
-
-			    < 2) {
-				feature_ptr->
-						in_slide_windows_flag = false;
-				feature_ptr->key_frame_id_set.
-
-						clear();
-
-				sw_feature_id_set_.
-						erase(feature_ptr
-								      ->feature_id);
+			if (feature_ptr->key_frame_id_set.size() < 2) {
+				feature_ptr->in_slide_windows_flag = false;
+				feature_ptr->key_frame_id_set.clear();
+				sw_feature_id_set_.erase(feature_ptr->feature_id);
 			}
 		}
 
@@ -558,9 +503,9 @@ bool StereoFeatureManager::UpdateVisualization(int frame_id) {
 	std::cout << "cur frame id[key frame]:" << frame_ptr->frame_id
 	          << " is initialized:" << frame_ptr->initialized_pose << std::endl;
 
-	transform.block(0, 0, 3, 3) = frame_ptr->qua.toRotationMatrix() * 1.0;
-	transform.block(0, 3, 3, 1) = frame_ptr->pos * 1.0;
+	transform.block<3, 3>(0, 0) = frame_ptr->qua.toRotationMatrix() * 1.0;
+	transform.block<3, 1>(0, 3) = frame_ptr->pos * 1.0;
 
-	pose_deque.push_back(transform.inverse());
+	pose_deque.push_back(transform);
 
 }

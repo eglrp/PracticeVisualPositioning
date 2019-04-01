@@ -140,7 +140,7 @@ int main() {
 
 			cv::imshow("test", f_mat);
 
-			cv::waitKey(10);
+			cv::waitKey(10000);
 //		usleep(10000);
 		}
 

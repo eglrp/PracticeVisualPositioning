@@ -16,6 +16,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <StereoVO/StereoFeatureManager.h>
+#include <StereoVO/StereoConfigServer.h>
+
 
 #include <VOSimulator/CameraProject.h>
 
@@ -67,6 +70,35 @@ int main() {
 			left_bc, Eigen::Vector3d(0.5, 0.0, 0.0)
 	);
 
+	StereoConfigServer *config_ptr_ = StereoConfigServer::getInstance();
+	cv::Mat cam_mat(3,3,CV_32F,cv::Scalar(0.0));
+	cam_mat.at<float>(0,0) = left_cameraProject.fx_;
+	cam_mat.at<float>(1,1) = left_cameraProject.fy_;
+	cam_mat.at<float>(0,2) = left_cameraProject.cx_;
+	cam_mat.at<float>(1,2) = left_cameraProject.cy_;
+	cam_mat.at<float>(2,2) = 1.0;
+	cam_mat.copyTo(config_ptr_->left_cam_mat);
+	cam_mat.copyTo(config_ptr_->right_cam_mat);
+	cv::Mat dist_coeff(5,1,CV_32F,cv::Scalar(0.0));
+	dist_coeff.copyTo(config_ptr_->left_dist_coeff);
+	dist_coeff.copyTo(config_ptr_->right_dist_coeff);
+
+	Eigen::Matrix4d left_b2c= Eigen::Matrix4d::Identity();
+	Eigen::Matrix4d right_b2c = Eigen::Matrix4d::Identity();
+
+	left_b2c.block<3,3>(0,0) = left_cameraProject.qua_bc.toRotationMatrix() * 1.0;
+	left_b2c.block<3,1>(0,3) = left_cameraProject.t_bc * 1.0;
+
+	right_b2c.block<3,3>(0,0) = right_cameraProject.qua_bc.toRotationMatrix() * 1.0;
+	right_b2c.block<3,1>(0,3) = right_cameraProject.t_bc * 1.0;
+
+	config_ptr_->left_bodyTocam = left_b2c * 1.0;
+	config_ptr_->right_bodyTocam = right_b2c * 1.0;
+
+
+
+	auto feature_manager_ptr_ = new StereoFeatureManager();
+
 
 	for (int kk(0); kk < 100; ++kk)
 		for (int i = 0; i < sim_pos.rows(); ++i) {
@@ -109,6 +141,9 @@ int main() {
 			              cv::Scalar(0, 0, 0));
 			std::cout << "i:" << i <<
 			          "/" << sim_pos.rows() << std::endl;
+
+
+			// region Draw feature points in image.
 			for (int r = 0; r < pts_cam.rows(); ++r) {
 
 				if (pts_cam(r, 2) > 0.0) {
@@ -137,10 +172,39 @@ int main() {
 
 			}
 
-
 			cv::imshow("test", f_mat);
 
-			cv::waitKey(10000);
+			//endregion
+
+			std::vector<cv::Point2f> feature_pts;
+			std::vector<cv::Point2f> r_feature_pts;
+			std::vector<int> ids;
+			std::vector<int> r_ids;
+
+			for (int r(0); r < pts_cam.rows(); ++r) {
+				if (pts_cam(r, 2) > 0) {
+					ids.push_back(r);
+					feature_pts.push_back(cv::Point2f(pts_cam(r, 0), pts_cam(r, 1)));
+					if (r_pts_cam(r, 2) > 0) {
+						r_ids.push_back(r);
+						r_feature_pts.push_back(cv::Point2f(r_pts_cam(r, 0), r_pts_cam(r, 1)));
+					} else {
+						r_ids.push_back(-1);
+						r_feature_pts.push_back(cv::Point2f(-1.0, -1.0));
+					}
+				}
+			}
+
+			assert(feature_pts.size() == r_feature_pts.size());
+
+			feature_manager_ptr_->addNewFrame(i,
+			                                  ids, feature_pts, r_ids, r_feature_pts);
+
+
+			// tracking
+
+
+			cv::waitKey(10);
 //		usleep(10000);
 		}
 

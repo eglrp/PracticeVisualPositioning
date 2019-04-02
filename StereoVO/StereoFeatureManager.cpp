@@ -483,11 +483,10 @@ bool StereoFeatureManager::Optimization() {
 					}
 
 
-					if (i < 1) {
+					if (cur_frame.frame_id < 1) {
 						problem.SetParameterBlockConstant(qua_array + i * 4);
 						problem.SetParameterBlockConstant(pos_array + i * 3);
 					}
-
 
 				}
 
@@ -513,9 +512,77 @@ bool StereoFeatureManager::Optimization() {
 			                                   qua_array[i * 4 + 3]).inverse();
 		}
 
+
+		//calculate prior covariance of each key point based on observation of oldest frame.
+		if(key_frame_id_vec_.size()>config_ptr_->slide_windows_size-1){
+			FramePreId &oldest_frame = frame_map_.find(key_frame_id_vec_[0])->second;
+
+			std::vector<std::pair<const double *, const double *>> frame_feature_address_pair;
+			std::vector<int> calculated_feature_id_vec;
+			std::vector<Eigen::Vector3d> cal_feature_point3d_vec;
+			for(auto &f_id:oldest_frame.feature_id_vec_){
+				if(kp_map.find(f_id)!=kp_map.end()){
+					// feature observed by cur frame and in sw windows.
+					double *pt_ptr_read = kp_map.find(f_id)->second;
+					frame_feature_address_pair.push_back(std::make_pair(pos_array+0,pt_ptr_read));
+					calculated_feature_id_vec.push_back(f_id);
+					cal_feature_point3d_vec.push_back(Eigen::Vector3d(pt_ptr_read[0],pt_ptr_read[1],pt_ptr_read[2]));
+				}
+			}
+			frame_feature_address_pair.push_back(std::make_pair(pos_array+0, pos_array+0));
+
+			ceres::Covariance::Options cov_options;
+			ceres::Covariance covariance(cov_options);
+			covariance.Compute(frame_feature_address_pair,&problem);
+
+			Eigen::Matrix3d inv_cov_pose = Eigen::Matrix3d::Identity();
+			Eigen::Matrix3d cov_pose_pt = Eigen::Matrix3d::Identity();
+
+
+			double cov_TT_buf[3*3];
+			double cov_Tp_buf[3*3];
+
+			covariance.GetCovarianceBlock(pos_array+0,pos_array+0,cov_TT_buf);
+			inv_cov_pose(0,0) = 1.0 /cov_TT_buf[0*3+0];
+			inv_cov_pose(1,1) = 1.0 / cov_TT_buf[1*3+1];
+			inv_cov_pose(2,2) = 1.0 / cov_TT_buf[2*3+2];
+
+			std::cout << "cov inv pose:" << inv_cov_pose << std::endl;
+
+//			for(int i=0;i<frame_feature_address_pair.size()-1;++i){
+//
+//				try{
+//				covariance.GetCovarianceBlock(frame_feature_address_pair[i].first,frame_feature_address_pair[i].second,cov_pose_pt.data());
+//				std::cout << "cov pose pt data:" << cov_pose_pt << std::endl;
+//
+//				Eigen::Matrix3d prior_cov_pt = cov_pose_pt.transpose() * inv_cov_pose * cov_pose_pt;
+//
+//				FeaturePreId &feature = feature_map_.find(calculated_feature_id_vec[i])->second;
+//				feature.prior_info.push_back(std::make_pair(
+//						Eigen::Vector3d(cal_feature_point3d_vec[i]),
+//						prior_cov_pt
+//						));
+//				std::cout << "prior cov for pt:\n" << cov_pose_pt << std::endl;
+//
+//				}catch(std::exception &e){
+//
+//				}
+//
+//
+//
+//			}
+
+
+
+		}
+
+
+
+
 		for (auto &itea:kp_map) {
 
 			FeaturePreId &feature = feature_map_.find(itea.first)->second;
+
 			feature.pt = Eigen::Vector3d(
 					itea.second[0],
 					itea.second[1],
@@ -525,9 +592,9 @@ bool StereoFeatureManager::Optimization() {
 			if(feature.initialized==false){
 				feature.initialized=true;
 			}
-//			std::cout << "feature " << itea.first
-//			          << ":" << itea.second[0] << "," << itea.second[1] << "," << itea.second[2] << std::endl;
 			free(itea.second);
+
+
 		}
 
 	}

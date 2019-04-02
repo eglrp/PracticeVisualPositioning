@@ -33,17 +33,17 @@ int main() {
 	cv::Mat cam_mat(3, 3, CV_32F);
 	cv::Mat coeff_mat(5, 1, CV_32F);
 
-	cam_mat.at<float>(0, 0) = float(7.070912000000e+02);//fx
-	cam_mat.at<float>(1, 1) = float(7.070912000000e+02);//fy
-	cam_mat.at<float>(0, 2) = float(6.018873000000e+02);//cx
-	cam_mat.at<float>(1, 2) = float(1.831104000000e+02);//cy
+//	cam_mat.at<float>(0, 0) = float(7.070912000000e+02);//fx
+//	cam_mat.at<float>(1, 1) = float(7.070912000000e+02);//fy
+//	cam_mat.at<float>(0, 2) = float(6.018873000000e+02);//cx
+//	cam_mat.at<float>(1, 2) = float(1.831104000000e+02);//cy
 //	cam_mat.at<float>(2, 2) = float(1.0);
 
 	// KITTI 00-02 and 12-21
-//	cam_mat.at<float>(0, 0) = float(7.188560000000e+02);//fx
-//	cam_mat.at<float>(1, 1) = float(7.188560000000e+02);//fy
-//	cam_mat.at<float>(0, 2) = float(6.071928000000e+02);//cx
-//	cam_mat.at<float>(1, 2) = float(1.852157000000e+02);//cy
+	cam_mat.at<float>(0, 0) = float(7.188560000000e+02);//fx
+	cam_mat.at<float>(1, 1) = float(7.188560000000e+02);//fy
+	cam_mat.at<float>(0, 2) = float(6.071928000000e+02);//cx
+	cam_mat.at<float>(1, 2) = float(1.852157000000e+02);//cy
 	cam_mat.at<float>(2, 2) = float(1.0);
 
 	coeff_mat.at<float>(0, 0) = 0.0;

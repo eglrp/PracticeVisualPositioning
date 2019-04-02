@@ -41,6 +41,7 @@ public:
 	std::vector<int> feature_id_vec_;
 	std::map<int, cv::Point2f> id_pt_map;
 	std::map<int, cv::Point2f> id_r_pt_map;
+
 };
 
 class FeaturePreId {
@@ -65,6 +66,8 @@ public:
 
 	bool in_slide_windows_flag = false;
 	std::deque<int> key_frame_id_set;
+
+	std::vector<std::pair<Eigen::Vector3d,Eigen::Matrix3d>> prior_info;
 
 };
 
@@ -116,6 +119,8 @@ public:
 	std::set<int> sw_feature_id_set_; // feature id contained in slide windows
 
 	std::deque<Eigen::Matrix4d> pose_deque;
+
+
 
 };
 

@@ -163,7 +163,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 					FeaturePreId *feature_ptr = &(feature_itea->second);
 					if (feature_ptr->initialized) {
 						auto pt_eigen = feature_ptr->pt;
-						std::cout << "getted pt:" << pt_eigen.transpose() << std::endl;
+//						std::cout << "getted pt:" << pt_eigen.transpose() << std::endl;
 						pts3.push_back(cv::Point3f(pt_eigen[0], pt_eigen[1], pt_eigen[2]));
 						ob_pt.push_back(cv::Point2f(cur_frame.id_pt_map[feature_ptr->feature_id].x,
 						                            cur_frame.id_pt_map[feature_ptr->feature_id].y));
@@ -182,10 +182,10 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		Eigen::Quaterniond q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
 		Eigen::Vector3d t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
 
-		std::cout << "found 3d points number:" << pts3.size() << std::endl;
+//		std::cout << "found 3d points number:" << pts3.size() << std::endl;
 
-		std::cout << "result after initial:" << cur_frame.pos.transpose()
-		          << "\n cur quaternion:" << cur_frame.qua.toRotationMatrix() << std::endl;
+//		std::cout << "result after initial:" << cur_frame.pos.transpose()
+//		          << "\n cur quaternion:" << cur_frame.qua.toRotationMatrix() << std::endl;
 
 		if (solvePosePnpCeres(cur_frame.qua,
 		                      cur_frame.pos,
@@ -195,9 +195,9 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		                      pts3,
 		                      config_ptr_->left_cam_mat,
 		                      config_ptr_->left_dist_coeff)) {
-			std::cout << "solved pnp and get position:" << cur_frame.pos.transpose()
-			          << "\n quat:" << cur_frame.qua.matrix()
-			          << " \nused points:" << ob_pt.size() << std::endl;
+//			std::cout << "solved pnp and get position:" << cur_frame.pos.transpose()
+//			          << "\n quat:" << cur_frame.qua.matrix()
+//			          << " \nused points:" << ob_pt.size() << std::endl;
 			cur_frame.initialized_pose = true;
 
 		} else {
@@ -406,8 +406,6 @@ bool StereoFeatureManager::Optimization() {
 
 			Eigen::Quaterniond q_inv = cur_frame.qua.inverse();
 
-
-
 			qua_array[i * 4 + 0] = q_inv.w();
 			qua_array[i * 4 + 1] = q_inv.x();
 			qua_array[i * 4 + 2] = q_inv.y();
@@ -474,7 +472,7 @@ bool StereoFeatureManager::Optimization() {
 										right_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(5.0),
+								new ceres::CauchyLoss(2.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -494,8 +492,12 @@ bool StereoFeatureManager::Optimization() {
 		}
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-		options.trust_region_strategy_type = ceres::DOGLEG;
+//		options.trust_region_strategy_type = ceres::DOGLEG;
 //		options.check_gradients = true;
+		options.num_threads = 8;
+		options.num_linear_solver_threads=8;
+
+//		options.max_num_iterations = 200;
 
 
 		ceres::Solve(options, &problem, &summary);
@@ -509,13 +511,19 @@ bool StereoFeatureManager::Optimization() {
 		}
 
 		for (auto &itea:kp_map) {
-			feature_map_.find(itea.first)->second.pt = Eigen::Vector3d(
+
+			FeaturePreId &feature = feature_map_.find(itea.first)->second;
+			feature.pt = Eigen::Vector3d(
 					itea.second[0],
 					itea.second[1],
 					itea.second[2]
 			);
-			std::cout << "feature " << itea.first
-			          << ":" << itea.second[0] << "," << itea.second[1] << "," << itea.second[2] << std::endl;
+
+			if(feature.initialized==false){
+				feature.initialized=true;
+			}
+//			std::cout << "feature " << itea.first
+//			          << ":" << itea.second[0] << "," << itea.second[1] << "," << itea.second[2] << std::endl;
 			free(itea.second);
 		}
 

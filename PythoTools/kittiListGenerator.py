@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import os
 
 if __name__ == '__main__':
-	dir_name = '/home/steve/SourceData/Kittidataset/sequences/07/'
+	dir_name = '/home/steve/SourceData/Kittidataset/sequences/15/'
 
 	sub_dir_name = 'image_0'
 

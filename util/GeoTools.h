@@ -235,12 +235,17 @@ inline bool solvePosePnpCeres(
 						double(ob_pt[i].y),
 						ob3d_array + i * 3
 				),
-				new ceres::CauchyLoss(1.0),
+				new ceres::CauchyLoss(5.0),
 //				NULL,
 				qua_array,
 				t0.data()
 		);
 
+	}
+	options.linear_solver_type=ceres::DENSE_SCHUR;
+	if(ob_pt.size()>12){
+		options.num_linear_solver_threads=6;
+		options.num_threads  =6;
 	}
 
 	ceres::Solve(options, &problem, &summary);

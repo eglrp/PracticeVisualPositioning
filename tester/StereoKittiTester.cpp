@@ -71,7 +71,7 @@ int main() {
 	config_ptr->use_pyramid=true;
 
 
-	config_ptr->slide_windows_size = 20;
+	config_ptr->slide_windows_size = 30;
 
 	config_ptr->feature_quality = 0.01;
 

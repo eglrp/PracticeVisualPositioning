@@ -433,6 +433,9 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
+						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.5 * config_ptr_->slide_windows_size){
+							problem.SetParameterBlockConstant(pt_ptr);
+						}
 					}
 
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
@@ -452,7 +455,7 @@ bool StereoFeatureManager::Optimization() {
 										left_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(5.0),
+								new ceres::CauchyLoss(4.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -472,7 +475,7 @@ bool StereoFeatureManager::Optimization() {
 										right_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(2.0),
+								new ceres::CauchyLoss(4.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -480,7 +483,7 @@ bool StereoFeatureManager::Optimization() {
 					}
 
 
-					if (i < 2) {
+					if (i < 1) {
 						problem.SetParameterBlockConstant(qua_array + i * 4);
 						problem.SetParameterBlockConstant(pos_array + i * 3);
 					}

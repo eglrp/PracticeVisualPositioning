@@ -433,7 +433,7 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
-						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.5 * config_ptr_->slide_windows_size){
+						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.8 * config_ptr_->slide_windows_size){
 							problem.SetParameterBlockConstant(pt_ptr);
 						}
 					}

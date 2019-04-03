@@ -309,55 +309,6 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 // update visulization.
 	UpdateVisualization(cur_frame.frame_id);
 
-// delete oldest frame in key frame slide windows.
-
-	if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
-		/**
-		 * FRAME:
-		 * 1. set key frame flag = false
-		 * 2. deleted from (key_frame_id_vec)
-		 */
-		FramePreId &oldest_frame = (frame_map_.find(key_frame_id_vec_[0])->second);
-		key_frame_id_vec_.pop_front();
-		oldest_frame.key_frame_flag = false;
-
-		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
-			FeaturePreId &feature = feature_map_.find(oldest_frame.feature_id_vec_[i])->second;
-			feature.prior_info.push_back(
-					std::make_pair(Eigen::Vector3d(feature.pt),
-					               Eigen::Matrix3d::Identity() * 2.)
-			);
-		}
-
-
-
-		/**
-		 * FEATURE:
-		 * 1. delete related feature's key_frame_id_deque.
-		 * 2. if size of (key frame id deque) < 2:
-		 * 		clear key frame id deque,
-		 * 		set in slide windows flag = false;
-		 * 		deleted from sw feature id set
-		 */
-
-		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
-			FeaturePreId *feature_ptr =
-					&(feature_map_.find(oldest_frame.feature_id_vec_[i])->second);
-
-			auto itea = std::find_if(feature_ptr->key_frame_id_set.begin(),
-			                         feature_ptr->key_frame_id_set.end(),
-			                         [&](int t_id) {
-				                         return t_id == oldest_frame.frame_id;
-			                         });
-
-			if (feature_ptr->key_frame_id_set.size() < 1) {
-				feature_ptr->in_slide_windows_flag = false;
-				feature_ptr->key_frame_id_set.clear();
-				sw_feature_id_set_.erase(feature_ptr->feature_id);
-			}
-		}
-
-	}
 
 
 	return true;
@@ -409,6 +360,7 @@ bool StereoFeatureManager::Optimization() {
 
 		std::map<int, double *> kp_map;
 
+		// add constraint for each frame.
 		for (int i = 0; i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
@@ -426,6 +378,7 @@ bool StereoFeatureManager::Optimization() {
 			problem.AddParameterBlock(qua_array + i * 4, 4, new ceres::QuaternionParameterization);
 			problem.AddParameterBlock(pos_array + i * 3, 3);
 
+			// add constraint based on all observed feature in such frame.
 			for (int j = 0; j < cur_frame.feature_id_vec_.size(); ++j) {
 				int cur_feature_id = cur_frame.feature_id_vec_[j];
 
@@ -570,6 +523,100 @@ bool StereoFeatureManager::Optimization() {
 
 	}
 
+// delete oldest frame in key frame slide windows.
+	if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
+		/**
+		 * FRAME:
+		 * 1. set key frame flag = false
+		 * 2. deleted from (key_frame_id_vec)
+		 */
+		FramePreId &oldest_frame = (frame_map_.find(key_frame_id_vec_[0])->second);
+		key_frame_id_vec_.pop_front();
+		oldest_frame.key_frame_flag = false;
+
+		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
+			FeaturePreId &feature = feature_map_.find(oldest_frame.feature_id_vec_[i])->second;
+			feature.prior_info.push_back(
+					std::make_pair(Eigen::Vector3d(feature.pt),
+					               Eigen::Matrix3d::Identity() * 2.)
+			);
+		}
+
+
+
+		/**
+		 * FEATURE:
+		 * 1. delete related feature's key_frame_id_deque.
+		 * 2. if size of (key frame id deque) < 2:
+		 * 		clear key frame id deque,
+		 * 		set in slide windows flag = false;
+		 * 		deleted from sw feature id set
+		 */
+
+		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
+			FeaturePreId *feature_ptr =
+					&(feature_map_.find(oldest_frame.feature_id_vec_[i])->second);
+
+			auto itea = std::find_if(feature_ptr->key_frame_id_set.begin(),
+			                         feature_ptr->key_frame_id_set.end(),
+			                         [&](int t_id) {
+				                         return t_id == oldest_frame.frame_id;
+			                         });
+
+			if (feature_ptr->key_frame_id_set.size() < 1) {
+				feature_ptr->in_slide_windows_flag = false;
+				feature_ptr->key_frame_id_set.clear();
+				sw_feature_id_set_.erase(feature_ptr->feature_id);
+			}
+		}
+
+	}
+
+}
+
+
+bool StereoFeatureManager::OptimizationCoP(){
+	if(key_frame_id_vec_.size()>3){
+		ceres::Problem problem;
+		ceres::Solver::Options options;
+		ceres::Solver::Summary summary;
+
+		double qua_array[key_frame_id_vec_.size() * 4];
+		double pos_array[key_frame_id_vec_.size() * 4];
+
+		double fx(config_ptr_->left_cam_mat.at<float>(0, 0));
+		double fy(config_ptr_->left_cam_mat.at<float>(1, 1));
+		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
+		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
+
+		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
+		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3, 3>(0, 0));
+
+		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
+		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3, 1>(0, 3));
+
+		double left_q_bc_array[4];
+		double right_q_bc_array[4];
+		double left_t_bc_array[3];
+		double right_t_bc_array[3];
+
+		left_q_bc_array[0] = left_q_bc.w();
+		left_q_bc_array[1] = left_q_bc.x();
+		left_q_bc_array[2] = left_q_bc.y();
+		left_q_bc_array[3] = left_q_bc.z();
+		right_q_bc_array[0] = right_q_bc.w();
+		right_q_bc_array[1] = right_q_bc.x();
+		right_q_bc_array[2] = right_q_bc.y();
+		right_q_bc_array[3] = right_q_bc.z();
+
+		for (int i = 0; i < 3; ++i) {
+			left_t_bc_array[i] = left_t_bc(i);
+			right_t_bc_array[i] = right_t_bc(i);
+		}
+
+
+
+	}
 
 }
 

@@ -60,8 +60,8 @@ public:
 	Eigen::Vector3d pt = Eigen::Vector3d(1000.0,1000.0,1000.0);
 
 	// may not be using.
-	double inv_depth;
-	int depth_frame_id;
+	double inv_depth=-10.0;
+	int depth_frame_id=-1;
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;

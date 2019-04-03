@@ -376,6 +376,7 @@ bool StereoFeatureManager::Optimization() {
 			pos_array[i * 3 + 2] = cur_frame.pos.z();
 
 			problem.AddParameterBlock(qua_array + i * 4, 4, new ceres::QuaternionParameterization);
+//			problem.AddParameterBlock(q_inv.coeffs().data(),new ceres::EigenQuaternionParameterization)
 			problem.AddParameterBlock(pos_array + i * 3, 3);
 
 			// add constraint based on all observed feature in such frame.

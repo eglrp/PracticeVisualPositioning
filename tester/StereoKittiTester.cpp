@@ -20,7 +20,7 @@
 
 int main() {
 
-	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/00/";
+	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/15/";
 	std::string left_sub_dir_name = "image_0";
 	std::string right_sub_dir_name = "image_1";
 
@@ -63,20 +63,20 @@ int main() {
 	config_ptr->right_bodyTocam = Eigen::Matrix4d::Identity();
 	config_ptr->right_bodyTocam(0, 3) = -0.53715065326792;//*100.0;
 
-	config_ptr->min_ob_distance = 10.0;
+	config_ptr->min_ob_distance = 5.0;
 
-	config_ptr->max_features = 300;
+	config_ptr->max_features = 500;
 	config_ptr->min_feature_dis  = 20;
 
 	config_ptr->use_pyramid=true;
 
 
-	config_ptr->slide_windows_size = 20;
+	config_ptr->slide_windows_size = 15;
 
 	config_ptr->feature_quality = 0.01;
 
 	config_ptr->min_covisible_feature = 150;
-	config_ptr->min_parallex = 30.0;
+	config_ptr->min_parallex = 15.0;
 
 
 

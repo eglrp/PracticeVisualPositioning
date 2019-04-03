@@ -68,7 +68,7 @@ bool StereoFeatureManager::addNewFrame(int frame_id,
 
 bool StereoFeatureManager::CheckKeyFrameCondition(FramePreId &cur_frame) {
 //	if (cur_frame.frame_id < 1 ){//|| key_frame_id_vec_.size() < 2) {
-	if (key_frame_id_vec_.size() < 2) {
+	if (key_frame_id_vec_.size() < 1) {
 		return true;// add first two cur_frame. (Maybe just could be adopted in Stereo Visual Odometry)
 	}
 
@@ -279,15 +279,15 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 					Eigen::Vector3d out_pt3(0, 0, 0);
 					if (triangulatePointCeres(
-									Eigen::Quaterniond(pre_R),
-									pre_t,
-									Eigen::Quaterniond(left_R),
-									left_t,
-									config_ptr_
-											->left_cam_mat,
-									pre_ob, cur_ob,
-									out_pt3
-							)) {
+							Eigen::Quaterniond(pre_R),
+							pre_t,
+							Eigen::Quaterniond(left_R),
+							left_t,
+							config_ptr_
+									->left_cam_mat,
+							pre_ob, cur_ob,
+							out_pt3
+					)) {
 						feature_ptr->initialized = true;
 						feature_ptr->pt = out_pt3 * 1.0;
 						continue;
@@ -320,6 +320,14 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		FramePreId &oldest_frame = (frame_map_.find(key_frame_id_vec_[0])->second);
 		key_frame_id_vec_.pop_front();
 		oldest_frame.key_frame_flag = false;
+
+		for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
+			FeaturePreId &feature = feature_map_.find(oldest_frame.feature_id_vec_[i])->second;
+			feature.prior_info.push_back(
+					std::make_pair(Eigen::Vector3d(feature.pt),
+					               Eigen::Matrix3d::Identity() * 2.)
+			);
+		}
 
 
 
@@ -370,11 +378,11 @@ bool StereoFeatureManager::Optimization() {
 		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
 		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
 
-		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3,3>(0,0));
-		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3,3>(0,0));
+		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
+		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3, 3>(0, 0));
 
-		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3,1>(0,3));
-		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3,1>(0,3));
+		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
+		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3, 1>(0, 3));
 
 		double left_q_bc_array[4];
 		double right_q_bc_array[4];
@@ -391,12 +399,12 @@ bool StereoFeatureManager::Optimization() {
 		right_q_bc_array[3] = right_q_bc.z();
 
 
-		for(int i=0;i<3;++i){
+		for (int i = 0; i < 3; ++i) {
 			left_t_bc_array[i] = left_t_bc(i);
 			right_t_bc_array[i] = right_t_bc(i);
 		}
 
-
+		std::cout << "left cam t:" << left_t_bc.transpose() << " right cam t:" << right_t_bc.transpose() << std::endl;
 
 
 		std::map<int, double *> kp_map;
@@ -433,12 +441,34 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
-						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.9 * config_ptr_->slide_windows_size){
-							problem.SetParameterBlockConstant(pt_ptr);
-						}
+//						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.7 * config_ptr_->slide_windows_size){
+//							problem.SetParameterBlockConstant(pt_ptr);
+//						}
 					}
 
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
+
+					// add prior constraint by simplified marginalization.
+					for (auto &itea:feature_map_.find(cur_feature_id)->second.prior_info) {
+						if(itea.second(0,0)>0.0 && itea.second(1,1) > 0.0 && itea.second(2,2) > 0.0){
+							problem.AddResidualBlock(
+								SimpleKPPriorError::Create(
+										itea.first[0],
+										itea.first[1],
+										itea.first[2],
+										itea.second(0, 0),
+										itea.second(1, 1),
+										itea.second(2, 2)
+								),
+//								NULL,
+								new ceres::CauchyLoss(1.0),
+								pt_ptr_read
+						);
+						}
+
+					}
+
+
 
 //					std::cout << "feature point" << cur_feature_id << " 3d:" << pt_ptr_read[0] << ","
 //					          << pt_ptr_read[1] << ","
@@ -455,7 +485,7 @@ bool StereoFeatureManager::Optimization() {
 										left_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(4.0),
+								new ceres::CauchyLoss(2.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -475,7 +505,7 @@ bool StereoFeatureManager::Optimization() {
 										right_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(4.0),
+								new ceres::CauchyLoss(2.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -495,15 +525,17 @@ bool StereoFeatureManager::Optimization() {
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
 //		options.trust_region_strategy_type = ceres::DOGLEG;
+//		options.dogleg_type = ceres::SUBSPACE_DOGLEG;
 //		options.check_gradients = true;
+
 		options.num_threads = 8;
-		options.num_linear_solver_threads=8;
+		options.num_linear_solver_threads = 8;
 
 		options.max_num_iterations = 200;
 
 
 		ceres::Solve(options, &problem, &summary);
-		std::cout << summary.FullReport() << std::endl;
+//		std::cout << summary.FullReport() << std::endl;
 
 		for (int i = 0; i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
@@ -513,68 +545,7 @@ bool StereoFeatureManager::Optimization() {
 		}
 
 
-		//calculate prior covariance of each key point based on observation of oldest frame.
-		if(key_frame_id_vec_.size()>config_ptr_->slide_windows_size-1){
-			FramePreId &oldest_frame = frame_map_.find(key_frame_id_vec_[0])->second;
-
-			std::vector<std::pair<const double *, const double *>> frame_feature_address_pair;
-			std::vector<int> calculated_feature_id_vec;
-			std::vector<Eigen::Vector3d> cal_feature_point3d_vec;
-			for(auto &f_id:oldest_frame.feature_id_vec_){
-				if(kp_map.find(f_id)!=kp_map.end()){
-					// feature observed by cur frame and in sw windows.
-					double *pt_ptr_read = kp_map.find(f_id)->second;
-					frame_feature_address_pair.push_back(std::make_pair(pos_array+0,pt_ptr_read));
-					calculated_feature_id_vec.push_back(f_id);
-					cal_feature_point3d_vec.push_back(Eigen::Vector3d(pt_ptr_read[0],pt_ptr_read[1],pt_ptr_read[2]));
-				}
-			}
-			frame_feature_address_pair.push_back(std::make_pair(pos_array+0, pos_array+0));
-
-			ceres::Covariance::Options cov_options;
-			ceres::Covariance covariance(cov_options);
-			covariance.Compute(frame_feature_address_pair,&problem);
-
-			Eigen::Matrix3d inv_cov_pose = Eigen::Matrix3d::Identity();
-			Eigen::Matrix3d cov_pose_pt = Eigen::Matrix3d::Identity();
-
-
-			double cov_TT_buf[3*3];
-			double cov_Tp_buf[3*3];
-
-			covariance.GetCovarianceBlock(pos_array+0,pos_array+0,cov_TT_buf);
-			inv_cov_pose(0,0) = 1.0 /cov_TT_buf[0*3+0];
-			inv_cov_pose(1,1) = 1.0 / cov_TT_buf[1*3+1];
-			inv_cov_pose(2,2) = 1.0 / cov_TT_buf[2*3+2];
-
-			std::cout << "cov inv pose:" << inv_cov_pose << std::endl;
-
-//			for(int i=0;i<frame_feature_address_pair.size()-1;++i){
-//
-//				try{
-//				covariance.GetCovarianceBlock(frame_feature_address_pair[i].first,frame_feature_address_pair[i].second,cov_pose_pt.data());
-//				std::cout << "cov pose pt data:" << cov_pose_pt << std::endl;
-//
-//				Eigen::Matrix3d prior_cov_pt = cov_pose_pt.transpose() * inv_cov_pose * cov_pose_pt;
-//
-//				FeaturePreId &feature = feature_map_.find(calculated_feature_id_vec[i])->second;
-//				feature.prior_info.push_back(std::make_pair(
-//						Eigen::Vector3d(cal_feature_point3d_vec[i]),
-//						prior_cov_pt
-//						));
-//				std::cout << "prior cov for pt:\n" << cov_pose_pt << std::endl;
-//
-//				}catch(std::exception &e){
-//
-//				}
-//
-//
-//
-//			}
-
-
-
-		}
+		//calculate prior covariance of each key point based on observation of oldest frame.// commited ....
 
 
 
@@ -589,8 +560,8 @@ bool StereoFeatureManager::Optimization() {
 					itea.second[2]
 			);
 
-			if(feature.initialized==false){
-				feature.initialized=true;
+			if (feature.initialized == false) {
+				feature.initialized = true;
 			}
 			free(itea.second);
 

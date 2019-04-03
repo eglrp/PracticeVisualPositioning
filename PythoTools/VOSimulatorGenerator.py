@@ -204,7 +204,7 @@ if __name__ == '__main__':
 	                            np.max(pos_array[:, 1]) + 50.0,
 	                            np.min(pos_array[:, 2]) - 50.0,
 	                            np.max(pos_array[:, 2]) + 50.0,
-	                            10.0, 10.0, 10.0)
+	                            30.0, 30.0, 30.0)
 
 	plt.plot(kp_array[:, 0], kp_array[:, 1], kp_array[:, 2], '+y')
 

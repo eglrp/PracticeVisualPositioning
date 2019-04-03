@@ -21,6 +21,8 @@
 #include <ceres/rotation.h>
 
 #include <CeresSolverTools/SimpleReprojectionError.h>
+#include <CeresSolverTools/SimpleKPPriorError.h>
+
 
 #include <StereoVO/StereoConfigServer.h>
 
@@ -103,6 +105,12 @@ public:
 	bool AddNewKeyFrame(int frame_id);
 
 	bool Optimization();
+
+	/**
+	 * @brief projection error use inverse depth and projection between two frame.
+	 * @return
+	 */
+	bool OptimizationCoP();
 
 	bool UpdateVisualization(int frame_id);
 

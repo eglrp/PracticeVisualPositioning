@@ -310,7 +310,6 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	UpdateVisualization(cur_frame.frame_id);
 
 
-
 	return true;
 }
 
@@ -404,20 +403,20 @@ bool StereoFeatureManager::Optimization() {
 
 					// add prior constraint by simplified marginalization.
 					for (auto &itea:feature_map_.find(cur_feature_id)->second.prior_info) {
-						if(itea.second(0,0)>0.0 && itea.second(1,1) > 0.0 && itea.second(2,2) > 0.0){
+						if (itea.second(0, 0) > 0.0 && itea.second(1, 1) > 0.0 && itea.second(2, 2) > 0.0) {
 							problem.AddResidualBlock(
-								SimpleKPPriorError::Create(
-										itea.first[0],
-										itea.first[1],
-										itea.first[2],
-										itea.second(0, 0),
-										itea.second(1, 1),
-										itea.second(2, 2)
-								),
+									SimpleKPPriorError::Create(
+											itea.first[0],
+											itea.first[1],
+											itea.first[2],
+											itea.second(0, 0),
+											itea.second(1, 1),
+											itea.second(2, 2)
+									),
 //								NULL,
-								new ceres::CauchyLoss(1.0),
-								pt_ptr_read
-						);
+									new ceres::CauchyLoss(1.0),
+									pt_ptr_read
+							);
 						}
 
 					}
@@ -576,8 +575,8 @@ bool StereoFeatureManager::Optimization() {
 }
 
 
-bool StereoFeatureManager::OptimizationCoP(){
-	if(key_frame_id_vec_.size()>3){
+bool StereoFeatureManager::OptimizationCoP() {
+	if (key_frame_id_vec_.size() > 3) {
 		ceres::Problem problem;
 		ceres::Solver::Options options;
 		ceres::Solver::Summary summary;
@@ -614,7 +613,6 @@ bool StereoFeatureManager::OptimizationCoP(){
 			left_t_bc_array[i] = left_t_bc(i);
 			right_t_bc_array[i] = right_t_bc(i);
 		}
-
 
 
 	}

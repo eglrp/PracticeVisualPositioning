@@ -66,9 +66,9 @@ int main() {
 	config_ptr->min_ob_distance = 5.0;
 
 	config_ptr->max_features = 500;
-	config_ptr->min_feature_dis  = 20;
+	config_ptr->min_feature_dis = 20;
 
-	config_ptr->use_pyramid=true;
+	config_ptr->use_pyramid = true;
 
 
 	config_ptr->slide_windows_size = 15;
@@ -77,7 +77,6 @@ int main() {
 
 	config_ptr->min_covisible_feature = 150;
 	config_ptr->min_parallex = 15.0;
-
 
 
 	StereoOdometryServer odometry;

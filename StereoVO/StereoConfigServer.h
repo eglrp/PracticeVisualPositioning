@@ -65,8 +65,6 @@ public:
 	bool use_lk_reverse = true;
 	float reverse_dis_threshold = 0.5;
 
-
-
 	bool steres_use_lk_reverse = true;
 	float stereo_reverse_dis_threshold = 0.5;
 

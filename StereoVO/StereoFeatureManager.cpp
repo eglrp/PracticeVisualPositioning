@@ -581,37 +581,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 		ceres::Solver::Options options;
 		ceres::Solver::Summary summary;
 
-		double qua_array[key_frame_id_vec_.size() * 4];
-		double pos_array[key_frame_id_vec_.size() * 4];
-
 		double fx(config_ptr_->left_cam_mat.at<float>(0, 0));
 		double fy(config_ptr_->left_cam_mat.at<float>(1, 1));
 		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
 		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
 
-		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
-		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3, 3>(0, 0));
+		std::map<int, double *> kp_map;
 
-		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
-		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3, 1>(0, 3));
+		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
+			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
-		double left_q_bc_array[4];
-		double right_q_bc_array[4];
-		double left_t_bc_array[3];
-		double right_t_bc_array[3];
+			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
+			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-		left_q_bc_array[0] = left_q_bc.w();
-		left_q_bc_array[1] = left_q_bc.x();
-		left_q_bc_array[2] = left_q_bc.y();
-		left_q_bc_array[3] = left_q_bc.z();
-		right_q_bc_array[0] = right_q_bc.w();
-		right_q_bc_array[1] = right_q_bc.x();
-		right_q_bc_array[2] = right_q_bc.y();
-		right_q_bc_array[3] = right_q_bc.z();
 
-		for (int i = 0; i < 3; ++i) {
-			left_t_bc_array[i] = left_t_bc(i);
-			right_t_bc_array[i] = right_t_bc(i);
+
 		}
 
 

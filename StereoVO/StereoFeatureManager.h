@@ -44,6 +44,9 @@ public:
 	std::map<int, cv::Point2f> id_pt_map;
 	std::map<int, cv::Point2f> id_r_pt_map;
 
+	// frame constraint dataset.
+	double *jac_
+
 };
 
 class FeaturePreId {

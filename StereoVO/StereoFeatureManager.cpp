@@ -594,6 +594,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
+			// add
+			for(int j=0;j<cur_frame.feature_id_vec_.size();++j){
+
+
+
+
+			}
+
 
 
 		}

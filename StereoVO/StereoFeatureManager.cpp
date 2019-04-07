@@ -597,6 +597,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 			// add
 			for (int j = 0; j < cur_frame.feature_id_vec_.size(); ++j) {
 
+				// find out the frist observed  frame and using inverse depth to constraint the data.
+
 
 			}
 

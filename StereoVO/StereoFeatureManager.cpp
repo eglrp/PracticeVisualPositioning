@@ -393,9 +393,9 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
-						if(feature_map_.find(cur_feature_id)->second.key_frame_id_deque.size()>0.7 * config_ptr_->slide_windows_size){
-							problem.SetParameterBlockConstant(pt_ptr);
-						}
+//						if(feature_map_.find(cur_feature_id)->second.key_frame_id_deque.size()>0.7 * config_ptr_->slide_windows_size){
+//							problem.SetParameterBlockConstant(pt_ptr);
+//						}
 					}
 
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
@@ -456,8 +456,8 @@ bool StereoFeatureManager::Optimization() {
 										right_q_bc_array,
 										right_t_bc_array
 								),
-//								NULL,
-								new ceres::CauchyLoss(2.0),
+								NULL,
+//								new ceres::CauchyLoss(2.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -562,10 +562,13 @@ bool StereoFeatureManager::Optimization() {
 				                         return t_id == oldest_frame.frame_id;
 			                         });
 
+			feature_ptr->key_frame_id_deque.erase(itea);
+
 			if (feature_ptr->key_frame_id_deque.size() < 1) {
 				feature_ptr->in_slide_windows_flag = false;
 				feature_ptr->key_frame_id_deque.clear();
 				sw_feature_id_set_.erase(feature_ptr->feature_id);
+				std::cout << "erased feature:" << std::endl;
 			}
 		}
 
@@ -608,7 +611,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		}
 
 		// search each feature in sw feature id set.
-		for (auto it=sw_feature_id_set_.begin();it!=sw_feature_id_set_.end();++it) {
+		for (auto it = sw_feature_id_set_.begin(); it != sw_feature_id_set_.end(); ++it) {
 			FeaturePreId &cur_feature = feature_map_.find(*it)->second;
 			if (cur_feature.key_frame_id_deque.size() > 2) {
 				problem.AddParameterBlock(&(cur_feature.inv_depth), 1);

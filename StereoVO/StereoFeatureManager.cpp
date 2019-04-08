@@ -634,7 +634,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 				cv::Point2f &first_left_ob = first_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
-				// add stereo frame
+				// add stereo observation of current frame.
 				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 					problem.AddResidualBlock(
@@ -656,12 +656,105 @@ bool StereoFeatureManager::OptimizationCoP() {
 				// add frame to frame constraint. based on
 				for (int j = 1; j < cur_feature.key_frame_id_deque.size(); ++j) {
 					FramePreId &second_frame = frame_map_.find(cur_feature.key_frame_id_deque[j])->second;
+					if (second_frame.id_pt_map.find(cur_feature.feature_id) != second_frame.id_pt_map.end()) {
+						// add left observation for different frame.
+						cv::Point2f &second_left_ob = second_frame.id_pt_map.find(cur_feature.feature_id)->second;
+						problem.AddResidualBlock(
+								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
+								                                        double(first_left_ob.x),
+								                                        double(first_left_ob.y),
+								                                        double(second_left_ob.x),
+								                                        double(second_left_ob.y),
+								                                        left_q_bc.coeffs().data(), left_t_bc.data(),
+								                                        left_q_bc.coeffs().data(), left_t_bc.data()),
+								new ceres::CauchyLoss(1.0),
+								first_frame.qua.coeffs().data(), first_frame.pos.data(),
+								second_frame.qua.coeffs().data(), second_frame.pos.data(),
+								&(cur_feature.inv_depth)
+						);
+					}
+
+					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()) {
+						// add right observation for different frame.
+						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+						problem.AddResidualBlock(
+								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
+								                                        double(first_left_ob.x),
+								                                        double(first_left_ob.y),
+								                                        double(second_right_ob.x),
+								                                        double(second_right_ob.y),
+								                                        left_q_bc.coeffs().data(), left_t_bc.data(),
+								                                        right_q_bc.coeffs().data(), right_t_bc.data()),
+								new ceres::CauchyLoss(1.0),
+								first_frame.qua.coeffs().data(), first_frame.pos.data(),
+								second_frame.qua.coeffs().data(), second_frame.pos.data(),
+								&(cur_feature.inv_depth)
+						);
+					}
 
 
 				}
 
 
 			}
+
+		}
+
+		//optimization
+
+		options.linear_solver_type = ceres::DENSE_SCHUR;
+
+		options.num_threads = 8;
+		options.num_linear_solver_threads = 8;
+
+		options.max_num_iterations = 200;
+
+		ceres::Solve(options, &problem, &summary);
+
+		// delete oldest frame.
+		if (sw_feature_id_set_.size() > config_ptr_->slide_windows_size) {
+			/**
+			 * FRAME:
+			 * 1. set key frame flag = false
+			 * 2. deleted from (key_frame_id_vec)
+			 */
+			FramePreId &oldest_frame = (frame_map_.find(key_frame_id_vec_[0])->second);
+			key_frame_id_vec_.pop_front();
+			oldest_frame.key_frame_flag = false;
+
+			for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
+				FeaturePreId &feature = feature_map_.find(oldest_frame.feature_id_vec_[i])->second;
+				feature.prior_info.push_back(
+						std::make_pair(Eigen::Vector3d(feature.pt),
+						               Eigen::Matrix3d::Identity() * 2.)
+				);
+			}
+
+			/**
+			 * FEATURE:
+			 * 1. delete related feature's key_frame_id_deque.
+			 * 2. if size of (key frame id deque) < 2:
+			 * 		clear key frame id deque,
+			 * 		set in slide windows flag = false;
+			 * 		deleted from sw feature id set
+			 */
+			for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
+				FeaturePreId *feature_ptr =
+						&(feature_map_.find(oldest_frame.feature_id_vec_[i])->second);
+
+				auto itea = std::find_if(feature_ptr->key_frame_id_deque.begin(),
+				                         feature_ptr->key_frame_id_deque.end(),
+				                         [&](int t_id) {
+					                         return t_id == oldest_frame.frame_id;
+				                         });
+
+				if (feature_ptr->key_frame_id_deque.size() < 1) {
+					feature_ptr->in_slide_windows_flag = false;
+					feature_ptr->key_frame_id_deque.clear();
+					sw_feature_id_set_.erase(feature_ptr->feature_id);
+				}
+			}
+
 
 		}
 

@@ -393,9 +393,9 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
-//						if(feature_map_.find(cur_feature_id)->second.key_frame_id_deque.size()>0.7 * config_ptr_->slide_windows_size){
-//							problem.SetParameterBlockConstant(pt_ptr);
-//						}
+						if(feature_map_.find(cur_feature_id)->second.key_frame_id_deque.size()>0.7 * config_ptr_->slide_windows_size){
+							problem.SetParameterBlockConstant(pt_ptr);
+						}
 					}
 
 					double *pt_ptr_read = kp_map.find(cur_feature_id)->second;
@@ -608,8 +608,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 		}
 
 		// search each feature in sw feature id set.
-		for (int i = 0; i < sw_feature_id_set_.size(); ++i) {
-			FeaturePreId &cur_feature = feature_map_.find(sw_feature_id_set_[i])->second;
+		for (auto it=sw_feature_id_set_.begin();it!=sw_feature_id_set_.end();++it) {
+			FeaturePreId &cur_feature = feature_map_.find(*it)->second;
 			if (cur_feature.key_frame_id_deque.size() > 2) {
 				problem.AddParameterBlock(&(cur_feature.inv_depth), 1);
 

@@ -41,9 +41,9 @@ public:
 	Eigen::Vector3d pos = Eigen::Vector3d::Zero();
 	Eigen::Quaterniond qua = Eigen::Quaterniond::Identity();
 
-	std::vector<int> feature_id_vec_;
-	std::map<int, cv::Point2f> id_pt_map;
-	std::map<int, cv::Point2f> id_r_pt_map;
+	std::vector<int> feature_id_vec_; // id of contained features
+	std::map<int, cv::Point2f> id_pt_map; // id -> pt(observed by left camera)
+	std::map<int, cv::Point2f> id_r_pt_map; // id->pt(observed by right camera)
 
 	// frame constraint dataset.
 //	double *jac_
@@ -58,22 +58,22 @@ public:
 	}
 
 	int feature_id;
-	int tracked_counter;
+	int tracked_counter; //
 
 	bool initialized = false;
-	Eigen::Vector3d pt = Eigen::Vector3d(1000.0,1000.0,1000.0);
+	Eigen::Vector3d pt = Eigen::Vector3d(1000.0, 1000.0, 1000.0); // position of feature point in world frame.
 
 	// may not be using.
-	double inv_depth=-10.0;
-	int depth_frame_id=-1;
+	double inv_depth = -10.0;// inverse depth of current feature in the frame which id is depth_frame_id
+	int depth_frame_id = -1; //
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;
 
 	bool in_slide_windows_flag = false;
-	std::deque<int> key_frame_id_deque;
+	std::deque<int> key_frame_id_deque; // the frame id which are constained current feature.
 
-	std::vector<std::pair<Eigen::Vector3d,Eigen::Matrix3d>> prior_info;
+	std::vector<std::pair<Eigen::Vector3d, Eigen::Matrix3d>> prior_info; //
 
 };
 
@@ -131,7 +131,6 @@ public:
 	std::set<int> sw_feature_id_set_; // feature id contained in slide windows
 
 	std::deque<Eigen::Matrix4d> pose_deque;
-
 
 
 };

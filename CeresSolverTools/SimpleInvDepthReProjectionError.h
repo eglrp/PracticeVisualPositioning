@@ -52,7 +52,7 @@ struct SimpleInvDepthReProjectionError {
 			const T *const tj,//3
 			const T *const inv_d_ptr,//1
 			T *residuals// 2
-	) {
+	) const {
 
 
 		Eigen::Matrix<T, 3, 1> pt_ci_unit, pt_cj_unit;
@@ -64,26 +64,21 @@ struct SimpleInvDepthReProjectionError {
 		Eigen::Matrix<T,3,1> t_bc_i(T(t_bc_i_(0)),T(t_bc_i_(1)),T(t_bc_i_(2)));
 		Eigen::Matrix<T,3,1> t_bc_j(T(t_bc_j_(0)),T(t_bc_j_(1)),T(t_bc_j_(2)));
 
-//		Eigen::Quaternion<T> q_bw_i = Eigen::Map<const Eigen::Quaternion<T>>(qi);
-//		Eigen::Quaternion<T> q_bw_j = Eigen::Map<const Eigen::Quaternion<T>>(qj);
-//		Eigen::Matrix<T,3,1> t_bw_i = Eigen::Map<const Eigen::Matrix<T,3,1>>(ti);
-//		Eigen::Matrix<T,3,1> t_bw_j = Eigen::Map<const Eigen::Matrix<T,3,1>>(tj);
-		Eigen::Map<Eigen::Quaternion<T>> q_bw_i(qi);
-		Eigen::Map<Eigen::Quaternion<T>> q_bw_j(qj);
-		Eigen::Map<Eigen::Matrix<T,3,1>> t_bw_i(ti);
-		Eigen::Map<Eigen::Matrix<T,3,1>> t_bw_j(tj);
+		Eigen::Map<const Eigen::Quaternion<T>> q_bw_i(qi);
+		Eigen::Map<const Eigen::Quaternion<T>> q_bw_j(qj);
+		Eigen::Map<const Eigen::Matrix<T,3,1>> t_bw_i(ti);
+		Eigen::Map<const Eigen::Matrix<T,3,1>> t_bw_j(tj);
 
 
 		Eigen::Matrix<T,3,1> pt_w = q_bw_i *(q_bc_i.inverse() *(pt_ci_unit/inv_d_ptr[0]-t_bc_i))+t_bw_i; // pt_ci ==> pt_body_i == > pt_w
 		Eigen::Matrix<T,3,1> pt_cj = q_bc_j * ( q_bw_j.inverse() * (pt_w-t_bw_j)) + t_bc_j;//
-		Eigen::Matrix<T,2,1> pre_pt_cj_unit = pt_cj.head<2>(0) / pt_cj(2);
+		Eigen::Matrix<T,2,1> pre_pt_cj_unit = pt_cj.block(0,0,2,1)/ pt_cj(2);
 
-//		Eigen::Matrix<T,2,1> residual_vector = Eigen::Map<Eigen::Matrix<T,2,1>>(residuals);
 		Eigen::Map<Eigen::Matrix<T,2,1>> residual_vector(residuals);
 		Eigen::Matrix<T,2,2> sqrt_info_mat;
 		sqrt_info_mat << T(sqrt_info(0)) , T(sqrt_info(1)) , T(sqrt_info(2)) , T(sqrt_info(3));
 
-		residual_vector = sqrt_info_mat * (pre_pt_cj_unit-pt_cj_unit.head<2>(0));
+		residual_vector = sqrt_info_mat * (pre_pt_cj_unit-pt_cj_unit.block(0,0,2,1));
 		return true;
 	}
 
@@ -117,10 +112,10 @@ struct SimpleInvDepthReProjectionError {
 	Eigen::Vector3d t_bc_j_;
 
 
-	static Eigen::Matrix2d sqrt_info; // infomation matrix of observation.
+	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 5.0; // infomation matrix of observation.
 
 };
 
-Eigen::Matrix2d SimpleInvDepthReProjectionError::sqrt_info = Eigen::Matrix2d::Identity();
+//Eigen::Matrix2d SimpleInvDepthReProjectionError::sqrt_info = Eigen::Matrix2d::Identity();
 
 #endif //PRACTICEVISUALPOSITIONING_SIMPLEINVDEPTHREPROJECTIONERROR_H

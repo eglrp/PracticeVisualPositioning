@@ -585,10 +585,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
 		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
 
-		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3,3>(0,0));
-		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3,1>(0,3));
-		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3,3>(0,0));
-		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3,1>(0,3));
+		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3, 3>(0, 0));
+		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
+		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3, 3>(0, 0));
+		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3, 1>(0, 3));
 
 		std::map<int, double *> kp_map;
 
@@ -602,25 +602,27 @@ bool StereoFeatureManager::OptimizationCoP() {
 		}
 
 		// search each feature in sw feature id set.
-		for(int i=0;i<sw_feature_id_set_.size();++i){
+		for (int i = 0; i < sw_feature_id_set_.size(); ++i) {
 			FeaturePreId &cur_feature = feature_map_.find(sw_feature_id_set_[i])->second;
-			if(cur_feature.key_frame_id_deque.size()>2){
-				problem.AddParameterBlock(&(cur_feature.inv_depth),1);
+			if (cur_feature.key_frame_id_deque.size() > 2) {
+				problem.AddParameterBlock(&(cur_feature.inv_depth), 1);
 
 				FramePreId &first_frame = frame_map_.find(cur_feature.key_frame_id_deque[0])->second;
-				if(cur_feature.depth_frame_id<0){
+				if (cur_feature.depth_frame_id < 0) {
 					// try to calculate an initial value for inverse depth.
-					if(cur_feature.initialized){
+					if (cur_feature.initialized && first_frame.initialized_pose) {
+						cur_feature.depth_frame_id = first_frame.frame_id;
 
-					}else{
+						Eigen::Vector3d pt_cam = left_q_bc * (first_frame.qua.inverse() *
+						                                      (cur_feature.pt - first_frame.pos)) + left_t_bc;
+						cur_feature.inv_depth = 1.0 / pt_cam(2);
+
+
+					} else {
 						// default value for depth.
 						cur_feature.depth_frame_id = first_frame.frame_id;
 						cur_feature.inv_depth = 1.0 / 50.0;
 					}
-
-
-
-
 
 
 				}

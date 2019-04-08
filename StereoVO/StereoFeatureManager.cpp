@@ -599,6 +599,12 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
+			if(cur_frame.frame_id < 1){
+				// set zero to current frame.
+				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
+				problem.SetParameterBlockConstant(cur_frame.pos.data());
+			}
+
 		}
 
 		// search each feature in sw feature id set.
@@ -616,7 +622,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 						Eigen::Vector3d pt_cam = left_q_bc * (first_frame.qua.inverse() *
 						                                      (cur_feature.pt - first_frame.pos)) + left_t_bc;
 						cur_feature.inv_depth = 1.0 / pt_cam(2);
-
 
 					} else {
 						// default value for depth.

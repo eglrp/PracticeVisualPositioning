@@ -456,8 +456,8 @@ bool StereoFeatureManager::Optimization() {
 										right_q_bc_array,
 										right_t_bc_array
 								),
-								NULL,
-//								new ceres::CauchyLoss(2.0),
+//								NULL,
+								new ceres::CauchyLoss(6.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3

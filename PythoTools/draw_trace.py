@@ -23,7 +23,7 @@ if __name__ == '__main__':
 	plt.figure()
 	plt.title('2d trace')
 
-	plt.plot(pose[:,0],pose[:,1],'+')
+	plt.plot(pose[:,0],pose[:,2],'+')
 	plt.grid()
 
 	print(pose.shape)

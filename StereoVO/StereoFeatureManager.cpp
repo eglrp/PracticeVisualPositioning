@@ -134,7 +134,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				}
 			}
 		}
-		feature_ptr->key_frame_id_set.push_back(cur_frame.frame_id);
+		feature_ptr->key_frame_id_deque.push_back(cur_frame.frame_id);
 	}
 	//endregion
 
@@ -258,9 +258,9 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 		// initial feature points by two frame observed.
 		if (feature_ptr->in_slide_windows_flag &&
 		    !feature_ptr->initialized &&
-		    feature_ptr->key_frame_id_set.size() > 1) {
+		    feature_ptr->key_frame_id_deque.size() > 1) {
 
-			for (auto pre_key_id:feature_ptr->key_frame_id_set) {
+			for (auto pre_key_id:feature_ptr->key_frame_id_deque) {
 				FramePreId *pre_key_frame = &(frame_map_.find(pre_key_id)->second);
 				Eigen::Vector2d pre_ob(pre_key_frame->id_pt_map[cur_feature_id].x,
 				                       pre_key_frame->id_pt_map[cur_feature_id].y);
@@ -393,7 +393,7 @@ bool StereoFeatureManager::Optimization() {
 						       feature_map_.find(cur_feature_id)->second.pt.data(),
 						       3 * sizeof(double));
 						problem.AddParameterBlock(pt_ptr, 3);
-//						if(feature_map_.find(cur_feature_id)->second.key_frame_id_set.size()>0.7 * config_ptr_->slide_windows_size){
+//						if(feature_map_.find(cur_feature_id)->second.key_frame_id_deque.size()>0.7 * config_ptr_->slide_windows_size){
 //							problem.SetParameterBlockConstant(pt_ptr);
 //						}
 					}
@@ -556,15 +556,15 @@ bool StereoFeatureManager::Optimization() {
 			FeaturePreId *feature_ptr =
 					&(feature_map_.find(oldest_frame.feature_id_vec_[i])->second);
 
-			auto itea = std::find_if(feature_ptr->key_frame_id_set.begin(),
-			                         feature_ptr->key_frame_id_set.end(),
+			auto itea = std::find_if(feature_ptr->key_frame_id_deque.begin(),
+			                         feature_ptr->key_frame_id_deque.end(),
 			                         [&](int t_id) {
 				                         return t_id == oldest_frame.frame_id;
 			                         });
 
-			if (feature_ptr->key_frame_id_set.size() < 1) {
+			if (feature_ptr->key_frame_id_deque.size() < 1) {
 				feature_ptr->in_slide_windows_flag = false;
-				feature_ptr->key_frame_id_set.clear();
+				feature_ptr->key_frame_id_deque.clear();
 				sw_feature_id_set_.erase(feature_ptr->feature_id);
 			}
 		}
@@ -585,6 +585,11 @@ bool StereoFeatureManager::OptimizationCoP() {
 		double cx(config_ptr_->left_cam_mat.at<float>(0, 2));
 		double cy(config_ptr_->left_cam_mat.at<float>(1, 2));
 
+		Eigen::Quaterniond left_q_bc(config_ptr_->left_bodyTocam.block<3,3>(0,0));
+		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3,1>(0,3));
+		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3,3>(0,0));
+		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3,1>(0,3));
+
 		std::map<int, double *> kp_map;
 
 		// add frame parametere block
@@ -596,12 +601,32 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 		}
 
+		// search each feature in sw feature id set.
 		for(int i=0;i<sw_feature_id_set_.size();++i){
 			FeaturePreId &cur_feature = feature_map_.find(sw_feature_id_set_[i])->second;
-			if(cur_feature.key_frame_id_set.size()>2){
-				problem.AddParameterBlock(cur_feature.inv_depth)
+			if(cur_feature.key_frame_id_deque.size()>2){
+				problem.AddParameterBlock(&(cur_feature.inv_depth),1);
+
+				FramePreId &first_frame = frame_map_.find(cur_feature.key_frame_id_deque[0])->second;
+				if(cur_feature.depth_frame_id<0){
+					// try to calculate an initial value for inverse depth.
+					if(cur_feature.initialized){
+
+					}else{
+						// default value for depth.
+						cur_feature.depth_frame_id = first_frame.frame_id;
+						cur_feature.inv_depth = 1.0 / 50.0;
+					}
+
+
+
+
+
+
+				}
 
 			}
+			// add frame to frame constraint. based on
 		}
 
 

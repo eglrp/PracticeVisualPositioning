@@ -46,7 +46,7 @@ public:
 	std::map<int, cv::Point2f> id_r_pt_map;
 
 	// frame constraint dataset.
-	double *jac_
+//	double *jac_
 
 };
 
@@ -71,7 +71,7 @@ public:
 	std::vector<int> frame_id_vec;
 
 	bool in_slide_windows_flag = false;
-	std::deque<int> key_frame_id_set;
+	std::deque<int> key_frame_id_deque;
 
 	std::vector<std::pair<Eigen::Vector3d,Eigen::Matrix3d>> prior_info;
 

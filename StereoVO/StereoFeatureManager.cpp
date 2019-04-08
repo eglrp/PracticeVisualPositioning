@@ -305,7 +305,6 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 	Optimization();
 
 
-
 // update visulization.
 	UpdateVisualization(cur_frame.frame_id);
 
@@ -588,21 +587,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 		std::map<int, double *> kp_map;
 
+		// add frame parametere block
 		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			// add
-			for (int j = 0; j < cur_frame.feature_id_vec_.size(); ++j) {
+		}
 
-				// find out the frist observed  frame and using inverse depth to constraint the data.
-
+		for(int i=0;i<sw_feature_id_set_.size();++i){
+			FeaturePreId &cur_feature = feature_map_.find(sw_feature_id_set_[i])->second;
+			if(cur_feature.key_frame_id_set.size()>2){
+				problem.AddParameterBlock(cur_feature.inv_depth)
 
 			}
-
-
 		}
 
 

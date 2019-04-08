@@ -23,6 +23,7 @@
 #include <CeresSolverTools/SimpleReprojectionError.h>
 #include <CeresSolverTools/SimpleKPPriorError.h>
 
+#include <CeresSolverTools/SimpleInvDepthReProjectionError.h>
 
 #include <StereoVO/StereoConfigServer.h>
 

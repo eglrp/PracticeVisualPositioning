@@ -639,7 +639,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			if (cur_frame.frame_id < 1|| i < 2) {
+			if (cur_frame.frame_id < 1 || i < 2) {
 				// set zero to current frame.
 				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
@@ -677,15 +677,19 @@ bool StereoFeatureManager::OptimizationCoP() {
 				cv::Point2f &first_left_ob = first_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
 				// add stereo observation of current frame.
-				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end() && first_frame.frame_id<10) {
+				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()
+//				&& first_frame.frame_id<10
+						) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
-					printf("feature id :%d and frame id :%d\n",cur_feature.feature_id,first_frame.frame_id);
+					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
 					problem.AddResidualBlock(
 							SimpleStereoInvDepthReprojectionErro::Create(fx, fy, cx, cy,
-							                                        double(first_left_ob.x), double(first_left_ob.y),
-							                                        double(first_right_ob.x), double(first_right_ob.y),
-							                                        left_q_bc_array, left_t_bc_array,
-							                                        right_q_bc_array, right_t_bc_array
+							                                             double(first_left_ob.x),
+							                                             double(first_left_ob.y),
+							                                             double(first_right_ob.x),
+							                                             double(first_right_ob.y),
+							                                             left_q_bc_array, left_t_bc_array,
+							                                             right_q_bc_array, right_t_bc_array
 							),
 							new ceres::CauchyLoss(1.0),
 							first_frame.qua.coeffs().data(),
@@ -717,7 +721,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 						);
 					}
 
-					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end() && second_frame.frame_id<10) {
+					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()
+//					    && second_frame.frame_id < 10
+					    ) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 						problem.AddResidualBlock(
@@ -790,11 +796,11 @@ bool StereoFeatureManager::OptimizationCoP() {
 				                         [&](int t_id) {
 					                         return t_id == oldest_frame.frame_id;
 				                         });
-				if(feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size()>2){
+				if (feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size() > 2) {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
-					int next_frame_id=-1;
-					for()
+					int next_frame_id = -1;
+//					for()
 
 					//recover points in world
 

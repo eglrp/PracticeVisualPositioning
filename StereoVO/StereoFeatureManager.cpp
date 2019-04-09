@@ -683,7 +683,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
 					problem.AddResidualBlock(
-							SimpleStereoInvDepthReprojectionErro::Create(fx, fy, cx, cy,
+							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
 							                                             double(first_left_ob.x),
 							                                             double(first_left_ob.y),
 							                                             double(first_right_ob.x),
@@ -800,7 +800,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
 					int next_frame_id = -1;
-//					for()
+					
 
 					//recover points in world
 

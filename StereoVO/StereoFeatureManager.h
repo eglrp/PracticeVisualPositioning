@@ -24,7 +24,7 @@
 #include <CeresSolverTools/SimpleKPPriorError.h>
 
 #include <CeresSolverTools/SimpleInvDepthReProjectionError.h>
-#include <CeresSolverTools/SimpleStereoInvDepthReprojectionErro.h>
+#include <CeresSolverTools/SimpleStereoInvDepthReprojectionError.h>
 
 #include <StereoVO/StereoConfigServer.h>
 

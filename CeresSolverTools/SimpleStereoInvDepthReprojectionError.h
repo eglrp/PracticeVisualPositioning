@@ -11,8 +11,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-struct SimpleStereoInvDepthReprojectionErro {
-	SimpleStereoInvDepthReprojectionErro(
+struct SimpleStereoInvDepthReprojectionError {
+	SimpleStereoInvDepthReprojectionError(
 			double fx,
 			double fy,
 			double cx,
@@ -91,8 +91,8 @@ struct SimpleStereoInvDepthReprojectionErro {
 			double *q_bc_j,
 			double *t_bc_j
 	) {
-		return (new ceres::AutoDiffCostFunction<SimpleStereoInvDepthReprojectionErro, 2, 4, 3, 1>(
-				new SimpleStereoInvDepthReprojectionErro(fx, fy, cx, cy, u_i, v_i, u_j, v_j, q_bc_i, t_bc_i, q_bc_j,
+		return (new ceres::AutoDiffCostFunction<SimpleStereoInvDepthReprojectionError, 2, 4, 3, 1>(
+				new SimpleStereoInvDepthReprojectionError(fx, fy, cx, cy, u_i, v_i, u_j, v_j, q_bc_i, t_bc_i, q_bc_j,
 				                                         t_bc_j)
 		));
 	}

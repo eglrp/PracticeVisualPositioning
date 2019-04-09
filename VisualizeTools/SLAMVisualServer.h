@@ -100,6 +100,9 @@ namespace BaseSLAM {
 				windows_.spinOnce();
 			}
 
+			windows_.showWidget("grid_map",
+			                    cv::viz::WGrid());
+
 
 			return true;
 

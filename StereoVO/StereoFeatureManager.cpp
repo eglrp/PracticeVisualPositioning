@@ -752,6 +752,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
+		options.trust_region_strategy_type=ceres::DOGLEG;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
@@ -799,10 +800,16 @@ bool StereoFeatureManager::OptimizationCoP() {
 				if (feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size() > 2) {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
-					int next_frame_id = -1;
-					
+					// next frame id (select latest frame that observed such feature)
+					int n_frame_id = feature_ptr->key_frame_id_deque[feature_ptr->key_frame_id_deque.size()-1];
+					FramePreId &next_frame = frame_map_.find(n_frame_id)->second;
 
 					//recover points in world
+					cv::Point2f &pt_ci_image = cur_frame.id_pt_map[feature_ptr->feature_id];
+					Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x)-cx)/fx,
+					                           (double(pt_ci_image.y)-cy)/fy,
+					                           1.0);
+
 
 
 

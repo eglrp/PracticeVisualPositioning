@@ -70,10 +70,8 @@ public:
 
 	bool show_mask = true;
 
-
 	double ransac_confidence = 0.99;
 	double ransac_error = 1.0;
-
 
 	/**
 	 * Parameters For Feature Manager
@@ -85,12 +83,9 @@ public:
 
 	float min_ob_distance = 10.0;//
 
-
 	/**
 	 * Parameter For Optimizer
 	 */
-
-
 	int robust_kernel_type = 1;// 0:HuberLoss 1:CauchyLoss
 	double robust_ratio = 1.0;// parameter for robust loss function.
 
@@ -98,8 +93,6 @@ public:
 	std::string trust_region_strategy_type = "DOGLEG";
 	int max_num_itea = 10;
 	double max_solver_time_in_seconds = 1.0;
-
-
 
 
 

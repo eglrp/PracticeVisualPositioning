@@ -136,7 +136,6 @@ public:
 
 	std::deque<Eigen::Matrix4d> pose_deque;
 
-
 };
 
 

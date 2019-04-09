@@ -579,7 +579,7 @@ bool StereoFeatureManager::Optimization() {
 
 
 bool StereoFeatureManager::OptimizationCoP() {
-	if (key_frame_id_vec_.size() > 3) {
+	if (key_frame_id_vec_.size() > 5) {
 		ceres::Problem problem;
 		ceres::Solver::Options options;
 		ceres::Solver::Summary summary;

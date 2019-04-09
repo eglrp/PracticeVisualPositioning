@@ -98,9 +98,9 @@ public:
 
 	/**
 	 *  Function
+	 *  return a pointer to an instance.
 	 *
 	 */
-
 	static StereoConfigServer *getInstance() ;
 
 protected:

@@ -53,8 +53,7 @@ struct SimpleInvDepthReProjectionError {
 			const T *const inv_d_ptr,//1
 			T *residuals// 2
 	) const {
-
-
+		printf("into the residual problem\n");
 		Eigen::Matrix<T, 3, 1> pt_ci_unit, pt_cj_unit;
 		pt_ci_unit << T(ob_i_(0)), T(ob_i_(1)), T(ob_i_(2));
 		pt_cj_unit << T(ob_j_(0)),T(ob_j_(1)) , T(ob_j_(2));
@@ -79,6 +78,8 @@ struct SimpleInvDepthReProjectionError {
 		sqrt_info_mat << T(sqrt_info(0)) , T(sqrt_info(1)) , T(sqrt_info(2)) , T(sqrt_info(3));
 
 		residual_vector = sqrt_info_mat * (pre_pt_cj_unit-pt_cj_unit.block(0,0,2,1));
+
+		printf("into the residual problem end\n");
 		return true;
 	}
 
@@ -107,7 +108,6 @@ struct SimpleInvDepthReProjectionError {
 	Eigen::Quaterniond q_bc_j_;
 	Eigen::Vector3d t_bc_i_;
 	Eigen::Vector3d t_bc_j_;
-
 
 	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 5.0; // infomation matrix of observation.
 

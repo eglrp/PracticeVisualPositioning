@@ -615,18 +615,37 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 		std::map<int, double *> kp_map;
 
+
 		// add frame parametere block
 		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
+			cur_frame.qua_array[0] = cur_frame.qua.x();
+			cur_frame.qua_array[1] = cur_frame.qua.y();
+			cur_frame.qua_array[2] = cur_frame.qua.z();
+			cur_frame.qua_array[3] = cur_frame.qua.w();
 
-			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
-			problem.AddParameterBlock(cur_frame.pos.data(), 3);
+			cur_frame.pos_array[0] = cur_frame.pos(0);
+			cur_frame.pos_array[1] = cur_frame.pos(1);
+			cur_frame.pos_array[2] = cur_frame.pos(2);
+
+			problem.AddParameterBlock(
+					cur_frame.qua_array, 4, new ceres::EigenQuaternionParameterization
+			);
+			problem.AddParameterBlock(
+					cur_frame.pos_array, 3
+			);
+
+//			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
+//			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
 			if (cur_frame.frame_id < 1) {
 				// set zero to current frame.
-				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
-				problem.SetParameterBlockConstant(cur_frame.pos.data());
+//				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
+//				problem.SetParameterBlockConstant(cur_frame.pos.data());
+				problem.SetParameterBlockConstant(cur_frame.qua_array);
+				problem.SetParameterBlockConstant(cur_frame.pos_array);
+
 			}
 
 		}
@@ -645,14 +664,13 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 						Eigen::Vector3d pt_cam = left_q_bc * (first_frame.qua.inverse() *
 						                                      (cur_feature.pt - first_frame.pos)) + left_t_bc;
-						cur_feature.inv_depth = 1.0 / pt_cam(2);
+						cur_feature.inv_depth_array[0] = 1.0 / pt_cam(2);
 
 					} else {
 						// default value for depth.
 						cur_feature.depth_frame_id = first_frame.frame_id;
-						cur_feature.inv_depth = 1.0 / 50.0;
+						cur_feature.inv_depth_array[0] = 1.0 / 50.0;
 					}
-
 
 				}
 
@@ -666,15 +684,19 @@ bool StereoFeatureManager::OptimizationCoP() {
 							SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
 							                                        double(first_left_ob.x), double(first_left_ob.y),
 							                                        double(first_right_ob.x), double(first_right_ob.y),
-                                                                    left_q_bc_array, left_t_bc_array,
-                                                                    right_q_bc_array, right_t_bc_array
+							                                        left_q_bc_array, left_t_bc_array,
+							                                        right_q_bc_array, right_t_bc_array
 							),
 							new ceres::CauchyLoss(1.0),
 							first_frame.qua.coeffs().data(),
 							first_frame.pos.data(),
 							first_frame.qua.coeffs().data(),
 							first_frame.pos.data(),
-							&(cur_feature.inv_depth)
+//							first_frame.qua_array,
+//							first_frame.pos_array,
+//							first_frame.qua_array,
+//							first_frame.pos_array,
+							cur_feature.inv_depth_array
 					);
 				}
 
@@ -690,13 +712,15 @@ bool StereoFeatureManager::OptimizationCoP() {
 								                                        double(first_left_ob.y),
 								                                        double(second_left_ob.x),
 								                                        double(second_left_ob.y),
-                                                                        left_q_bc_array, left_t_bc_array,
-                                                                        right_q_bc_array, right_t_bc_array
+								                                        left_q_bc_array, left_t_bc_array,
+								                                        right_q_bc_array, right_t_bc_array
 								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
 								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-								&(cur_feature.inv_depth)
+//								first_frame.qua_array, first_frame.pos_array,
+//								second_frame.qua_array, second_frame.pos_array,
+								cur_feature.inv_depth_array
 						);
 					}
 
@@ -709,13 +733,15 @@ bool StereoFeatureManager::OptimizationCoP() {
 								                                        double(first_left_ob.y),
 								                                        double(second_right_ob.x),
 								                                        double(second_right_ob.y),
-                                                                        left_q_bc_array, left_t_bc_array,
-                                                                        right_q_bc_array, right_t_bc_array
+								                                        left_q_bc_array, left_t_bc_array,
+								                                        right_q_bc_array, right_t_bc_array
 								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
 								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-								&(cur_feature.inv_depth)
+//								first_frame.qua_array, first_frame.pos_array,
+//								second_frame.qua_array, second_frame.pos_array,
+								cur_feature.inv_depth_array
 						);
 					}
 

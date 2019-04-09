@@ -639,7 +639,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			if (cur_frame.frame_id < 1 || i < 2) {
+			if (cur_frame.frame_id < 1 || i < 4) {
 				// set zero to current frame.
 				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
@@ -681,15 +681,15 @@ bool StereoFeatureManager::OptimizationCoP() {
 //				&& first_frame.frame_id<10
 						) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
-					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
+//					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
 					problem.AddResidualBlock(
 							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
-							                                             double(first_left_ob.x),
-							                                             double(first_left_ob.y),
-							                                             double(first_right_ob.x),
-							                                             double(first_right_ob.y),
-							                                             left_q_bc_array, left_t_bc_array,
-							                                             right_q_bc_array, right_t_bc_array
+							                                              double(first_left_ob.x),
+							                                              double(first_left_ob.y),
+							                                              double(first_right_ob.x),
+							                                              double(first_right_ob.y),
+							                                              left_q_bc_array, left_t_bc_array,
+							                                              right_q_bc_array, right_t_bc_array
 							),
 							new ceres::CauchyLoss(1.0),
 							first_frame.qua.coeffs().data(),
@@ -723,7 +723,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()
 //					    && second_frame.frame_id < 10
-					    ) {
+							) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 						problem.AddResidualBlock(
@@ -752,7 +752,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-		options.trust_region_strategy_type=ceres::DOGLEG;
+//		options.trust_region_strategy_type=ceres::DOGLEG;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
@@ -801,21 +801,29 @@ bool StereoFeatureManager::OptimizationCoP() {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
 					// next frame id (select latest frame that observed such feature)
-					int n_frame_id = feature_ptr->key_frame_id_deque[feature_ptr->key_frame_id_deque.size()-1];
+					int n_frame_id = feature_ptr->key_frame_id_deque[feature_ptr->key_frame_id_deque.size() - 1];
 					FramePreId &next_frame = frame_map_.find(n_frame_id)->second;
 
 					//recover points in world
 					cv::Point2f &pt_ci_image = cur_frame.id_pt_map[feature_ptr->feature_id];
-					Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x)-cx)/fx,
-					                           (double(pt_ci_image.y)-cy)/fy,
+					Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x) - cx) / fx,
+					                           (double(pt_ci_image.y) - cy) / fy,
 					                           1.0);
 
-
-
+					Eigen::Vector3d pt_ci = pt_ci_unit / feature_ptr->inv_depth_array[0];
+					Eigen::Vector3d pt_w = cur_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + cur_frame.pos;
+					Eigen::Vector3d pt_cj =
+							left_q_bc * (next_frame.qua.inverse() * (pt_w - next_frame.pos)) + left_t_bc;
 
 					// calculate inverse depth in new frame
+					double depth = pt_ci(2);
 
 					// update data.
+					feature_ptr->depth_frame_id = next_frame.frame_id;
+					if (depth > 0.5) {
+
+						feature_ptr->inv_depth_array[0] = 1.0 / depth;
+					}
 
 				}
 

@@ -413,7 +413,7 @@ bool StereoFeatureManager::Optimization() {
 											itea.second(2, 2)
 									),
 //								NULL,
-									new ceres::CauchyLoss(1.0),
+									new ceres::CauchyLoss(0.4),
 									pt_ptr_read
 							);
 						}
@@ -436,8 +436,8 @@ bool StereoFeatureManager::Optimization() {
 										left_q_bc_array,
 										left_t_bc_array
 								),
-//								NULL,
-								new ceres::CauchyLoss(2.0),
+//								NULL,1
+								new ceres::CauchyLoss(4.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3
@@ -457,7 +457,7 @@ bool StereoFeatureManager::Optimization() {
 										right_t_bc_array
 								),
 //								NULL,
-								new ceres::CauchyLoss(6.0),
+								new ceres::CauchyLoss(4.0),
 								pt_ptr_read,
 								qua_array + i * 4,
 								pos_array + i * 3

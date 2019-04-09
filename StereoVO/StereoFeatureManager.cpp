@@ -641,6 +641,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 				// add stereo observation of current frame.
 				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+					double inv_depth[1] = {50.0};
 					problem.AddResidualBlock(
 							SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
 							                                        double(first_left_ob.x), double(first_left_ob.y),
@@ -653,7 +654,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 							first_frame.pos.data(),
 							first_frame.qua.coeffs().data(),
 							first_frame.pos.data(),
-							&(cur_feature.inv_depth)
+//							&(cur_feature.inv_depth)
+							inv_depth
 					);
 				}
 

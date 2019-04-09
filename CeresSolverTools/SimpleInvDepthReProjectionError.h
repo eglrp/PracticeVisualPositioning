@@ -101,9 +101,6 @@ struct SimpleInvDepthReProjectionError {
 				));
 	}
 
-
-
-
 	Eigen::Vector3d ob_i_, ob_j_;
 
 	Eigen::Quaterniond q_bc_i_; // i-th quaternion from body to camera.
@@ -116,6 +113,5 @@ struct SimpleInvDepthReProjectionError {
 
 };
 
-//Eigen::Matrix2d SimpleInvDepthReProjectionError::sqrt_info = Eigen::Matrix2d::Identity();
 
 #endif //PRACTICEVISUALPOSITIONING_SIMPLEINVDEPTHREPROJECTIONERROR_H

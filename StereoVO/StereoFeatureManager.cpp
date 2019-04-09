@@ -593,6 +593,25 @@ bool StereoFeatureManager::OptimizationCoP() {
 		Eigen::Vector3d left_t_bc(config_ptr_->left_bodyTocam.block<3, 1>(0, 3));
 		Eigen::Quaterniond right_q_bc(config_ptr_->right_bodyTocam.block<3, 3>(0, 0));
 		Eigen::Vector3d right_t_bc(config_ptr_->right_bodyTocam.block<3, 1>(0, 3));
+		double left_q_bc_array[4];
+		double right_q_bc_array[4];
+		double left_t_bc_array[3];
+		double right_t_bc_array[3];
+
+		left_q_bc_array[3] = left_q_bc.w();
+		left_q_bc_array[0] = left_q_bc.x();
+		left_q_bc_array[1] = left_q_bc.y();
+		left_q_bc_array[2] = left_q_bc.z();
+		right_q_bc_array[3] = right_q_bc.w();
+		right_q_bc_array[0] = right_q_bc.x();
+		right_q_bc_array[1] = right_q_bc.y();
+		right_q_bc_array[2] = right_q_bc.z();
+
+
+		for (int i = 0; i < 3; ++i) {
+			left_t_bc_array[i] = left_t_bc(i);
+			right_t_bc_array[i] = right_t_bc(i);
+		}
 
 		std::map<int, double *> kp_map;
 
@@ -646,16 +665,15 @@ bool StereoFeatureManager::OptimizationCoP() {
 							SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
 							                                        double(first_left_ob.x), double(first_left_ob.y),
 							                                        double(first_right_ob.x), double(first_right_ob.y),
-							                                        left_q_bc.coeffs().data(), left_t_bc.data(),
-							                                        right_q_bc.coeffs().data(), right_t_bc.data()
+                                                                    left_q_bc_array, left_t_bc_array,
+                                                                    right_q_bc_array, right_t_bc_array
 							),
 							new ceres::CauchyLoss(1.0),
 							first_frame.qua.coeffs().data(),
 							first_frame.pos.data(),
 							first_frame.qua.coeffs().data(),
 							first_frame.pos.data(),
-//							&(cur_feature.inv_depth)
-							inv_depth
+							&(cur_feature.inv_depth)
 					);
 				}
 
@@ -671,8 +689,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 								                                        double(first_left_ob.y),
 								                                        double(second_left_ob.x),
 								                                        double(second_left_ob.y),
-								                                        left_q_bc.coeffs().data(), left_t_bc.data(),
-								                                        left_q_bc.coeffs().data(), left_t_bc.data()),
+                                                                        left_q_bc_array, left_t_bc_array,
+                                                                        right_q_bc_array, right_t_bc_array
+								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
 								second_frame.qua.coeffs().data(), second_frame.pos.data(),
@@ -689,8 +708,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 								                                        double(first_left_ob.y),
 								                                        double(second_right_ob.x),
 								                                        double(second_right_ob.y),
-								                                        left_q_bc.coeffs().data(), left_t_bc.data(),
-								                                        right_q_bc.coeffs().data(), right_t_bc.data()),
+                                                                        left_q_bc_array, left_t_bc_array,
+                                                                        right_q_bc_array, right_t_bc_array
+								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
 								second_frame.qua.coeffs().data(), second_frame.pos.data(),

@@ -29,8 +29,8 @@
 
 #include <util/GeoTools.h>
 
-class FramePreId {
-public:
+struct FramePreId {
+//public:
 	FramePreId(int id) : frame_id(id) {
 	}
 
@@ -41,6 +41,9 @@ public:
 	Eigen::Vector3d pos = Eigen::Vector3d::Zero();
 	Eigen::Quaterniond qua = Eigen::Quaterniond::Identity();
 
+	double pos_array[4];
+	double qua_array[4];
+
 	std::vector<int> feature_id_vec_; // id of contained features
 	std::map<int, cv::Point2f> id_pt_map; // id -> pt(observed by left camera)
 	std::map<int, cv::Point2f> id_r_pt_map; // id->pt(observed by right camera)
@@ -50,8 +53,8 @@ public:
 
 };
 
-class FeaturePreId {
-public:
+struct FeaturePreId {
+//public:
 	FeaturePreId(int id, int cnt = 1) : feature_id(id),
 	                                    tracked_counter(cnt) {
 
@@ -66,6 +69,7 @@ public:
 	// may not be using.
 	double inv_depth = 1.0 / 50.0;// inverse depth of current feature in the frame which id is depth_frame_id
 	int depth_frame_id = -1; //
+	double *inv_depth_array = new double[1];
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;

@@ -269,8 +269,6 @@ inline bool solvePosePnpCeres(
 	}
 
 	return true;
-
-
 }
 
 /**

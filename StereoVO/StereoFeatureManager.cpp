@@ -619,6 +619,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
+
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 

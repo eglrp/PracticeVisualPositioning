@@ -102,19 +102,6 @@ public:
 	 */
 
 	static StereoConfigServer *getInstance() ;
-//	{
-//
-//		static std::once_flag oc;
-//
-//		if (instance_ == nullptr) {
-//			std::call_once(oc, [] {
-//				if (instance_ == nullptr) {
-//					instance_ = new StereoConfigServer();
-//				}
-//			});
-//		}
-//		return instance_;
-//	}
 
 protected:
 

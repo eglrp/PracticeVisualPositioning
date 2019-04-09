@@ -302,7 +302,8 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 
 
 // optimization
-	Optimization();
+//	Optimization();
+	OptimizationCoP();
 
 
 // update visulization.

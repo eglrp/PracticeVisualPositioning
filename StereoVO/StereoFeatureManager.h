@@ -64,7 +64,7 @@ public:
 	Eigen::Vector3d pt = Eigen::Vector3d(1000.0, 1000.0, 1000.0); // position of feature point in world frame.
 
 	// may not be using.
-	double inv_depth = -10.0;// inverse depth of current feature in the frame which id is depth_frame_id
+	double inv_depth = 1.0 / 50.0;// inverse depth of current feature in the frame which id is depth_frame_id
 	int depth_frame_id = -1; //
 
 //	std::map<int, cv::Point2f> frame_pt_map;

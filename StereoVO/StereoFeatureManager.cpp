@@ -677,7 +677,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 				cv::Point2f &first_left_ob = first_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
 				// add stereo observation of current frame.
-				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()) {
+				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end() && first_frame.frame_id<10) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 					printf("feature id :%d and frame id :%d\n",cur_feature.feature_id,first_frame.frame_id);
 					problem.AddResidualBlock(
@@ -717,7 +717,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 						);
 					}
 
-					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()) {
+					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end() && second_frame.frame_id<10) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 						problem.AddResidualBlock(
@@ -790,6 +790,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 				                         [&](int t_id) {
 					                         return t_id == oldest_frame.frame_id;
 				                         });
+				if(feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size()>2){
+					// try to delete the frame represented the pose of feature point by inverse depth.
+					FramePreId &cur_frame = frame_map_.find(*itea)->second;
+					int next_frame_id=-1;
+					for()
+
+					//recover points in world
+
+
+
+					// calculate inverse depth in new frame
+
+					// update data.
+
+				}
 
 				feature_ptr->key_frame_id_deque.erase(itea);// key frame deque.
 

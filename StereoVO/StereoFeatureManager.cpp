@@ -751,6 +751,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 					                         return t_id == oldest_frame.frame_id;
 				                         });
 
+				feature_ptr->key_frame_id_deque.erase(itea);// key frame deque.
+
 				if (feature_ptr->key_frame_id_deque.size() < 1) {
 					feature_ptr->in_slide_windows_flag = false;
 					feature_ptr->key_frame_id_deque.clear();

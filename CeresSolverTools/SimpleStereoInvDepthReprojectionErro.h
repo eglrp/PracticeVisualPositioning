@@ -1,19 +1,18 @@
 //
-// Created by steve on 4/3/19.
+// Created by steve on 4/9/19.
 //
 
-#ifndef PRACTICEVISUALPOSITIONING_SIMPLEINVDEPTHREPROJECTIONERROR_H
-#define PRACTICEVISUALPOSITIONING_SIMPLEINVDEPTHREPROJECTIONERROR_H
+#ifndef PRACTICEVISUALPOSITIONING_SIMPLESTEREOINVDEPTHREPROJECTIONERRO_H
+#define PRACTICEVISUALPOSITIONING_SIMPLESTEREOINVDEPTHREPROJECTIONERRO_H
 
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
 
-#include <Eigen/Geometry>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
-struct SimpleInvDepthReProjectionError {
-
-	SimpleInvDepthReProjectionError(
+struct SimpleStereoInvDepthReprojectionErro {
+	SimpleStereoInvDepthReprojectionErro(
 			double fx,
 			double fy,
 			double cx,
@@ -27,7 +26,6 @@ struct SimpleInvDepthReProjectionError {
 			double *q_bc_j,
 			double *t_bc_j
 	) {
-
 		q_bc_i_ = Eigen::Map<const Eigen::Quaterniond>(q_bc_i);
 		q_bc_j_ = Eigen::Map<const Eigen::Quaterniond>(q_bc_j);
 		t_bc_i_ = Eigen::Map<const Eigen::Vector3d>(t_bc_i);
@@ -44,12 +42,11 @@ struct SimpleInvDepthReProjectionError {
 
 	}
 
+
 	template<typename T>
 	bool operator()(
 			const T *const qi,//4
 			const T *const ti,//3
-			const T *const qj,//4
-			const T *const tj,//3
 			const T *const inv_d_ptr,//1
 			T *residuals// 2
 	) const {
@@ -63,14 +60,12 @@ struct SimpleInvDepthReProjectionError {
 		Eigen::Matrix<T, 3, 1> t_bc_j(T(t_bc_j_(0)), T(t_bc_j_(1)), T(t_bc_j_(2)));
 
 		Eigen::Map<const Eigen::Quaternion<T>> q_bw_i(qi);
-		Eigen::Map<const Eigen::Quaternion<T>> q_bw_j(qj);
 		Eigen::Map<const Eigen::Matrix<T, 3, 1>> t_bw_i(ti);
-		Eigen::Map<const Eigen::Matrix<T, 3, 1>> t_bw_j(tj);
 
 
 		Eigen::Matrix<T, 3, 1> pt_w = q_bw_i * (q_bc_i.inverse() * (pt_ci_unit / inv_d_ptr[0] - t_bc_i)) +
 		                              t_bw_i; // pt_ci ==> pt_body_i == > pt_w
-		Eigen::Matrix<T, 3, 1> pt_cj = q_bc_j * (q_bw_j.inverse() * (pt_w - t_bw_j)) + t_bc_j;//
+		Eigen::Matrix<T, 3, 1> pt_cj = q_bc_j * (q_bw_i.inverse() * (pt_w - t_bw_i)) + t_bc_j;//
 		Eigen::Matrix<T, 2, 1> pre_pt_cj_unit = pt_cj.block(0, 0, 2, 1) / pt_cj(2);
 
 		Eigen::Map<Eigen::Matrix<T, 2, 1>> residual_vector(residuals);
@@ -96,10 +91,12 @@ struct SimpleInvDepthReProjectionError {
 			double *q_bc_j,
 			double *t_bc_j
 	) {
-		return (new ceres::AutoDiffCostFunction<SimpleInvDepthReProjectionError, 2, 4, 3, 4, 3, 1>(
-				new SimpleInvDepthReProjectionError(fx, fy, cx, cy, u_i, v_i, u_j, v_j, q_bc_i, t_bc_i, q_bc_j, t_bc_j)
+		return (new ceres::AutoDiffCostFunction<SimpleStereoInvDepthReprojectionErro, 2, 4, 3, 1>(
+				new SimpleStereoInvDepthReprojectionErro(fx, fy, cx, cy, u_i, v_i, u_j, v_j, q_bc_i, t_bc_i, q_bc_j,
+				                                         t_bc_j)
 		));
 	}
+
 
 	Eigen::Vector3d ob_i_, ob_j_;
 
@@ -109,8 +106,7 @@ struct SimpleInvDepthReProjectionError {
 	Eigen::Vector3d t_bc_j_;
 
 	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 5.0; // infomation matrix of observation.
-
 };
 
 
-#endif //PRACTICEVISUALPOSITIONING_SIMPLEINVDEPTHREPROJECTIONERROR_H
+#endif //PRACTICEVISUALPOSITIONING_SIMPLESTEREOINVDEPTHREPROJECTIONERRO_H

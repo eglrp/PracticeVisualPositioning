@@ -24,6 +24,7 @@
 #include <CeresSolverTools/SimpleKPPriorError.h>
 
 #include <CeresSolverTools/SimpleInvDepthReProjectionError.h>
+#include <CeresSolverTools/SimpleStereoInvDepthReprojectionErro.h>
 
 #include <StereoVO/StereoConfigServer.h>
 
@@ -41,8 +42,8 @@ struct FramePreId {
 	Eigen::Vector3d pos = Eigen::Vector3d::Zero();
 	Eigen::Quaterniond qua = Eigen::Quaterniond::Identity();
 
-	double pos_array[4];
-	double qua_array[4];
+	double *pos_array = new double[3];
+	double *qua_array = new double[4];
 
 	std::vector<int> feature_id_vec_; // id of contained features
 	std::map<int, cv::Point2f> id_pt_map; // id -> pt(observed by left camera)

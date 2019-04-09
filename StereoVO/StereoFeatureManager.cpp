@@ -629,22 +629,22 @@ bool StereoFeatureManager::OptimizationCoP() {
 			cur_frame.pos_array[1] = cur_frame.pos(1);
 			cur_frame.pos_array[2] = cur_frame.pos(2);
 
-			problem.AddParameterBlock(
-					cur_frame.qua_array, 4, new ceres::EigenQuaternionParameterization
-			);
-			problem.AddParameterBlock(
-					cur_frame.pos_array, 3
-			);
+//			problem.AddParameterBlock(
+//					cur_frame.qua_array, 4, new ceres::EigenQuaternionParameterization
+//			);
+//			problem.AddParameterBlock(
+//					cur_frame.pos_array, 3
+//			);
 
-//			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
-//			problem.AddParameterBlock(cur_frame.pos.data(), 3);
+			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
+			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
 			if (cur_frame.frame_id < 1) {
 				// set zero to current frame.
-//				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
-//				problem.SetParameterBlockConstant(cur_frame.pos.data());
-				problem.SetParameterBlockConstant(cur_frame.qua_array);
-				problem.SetParameterBlockConstant(cur_frame.pos_array);
+				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
+				problem.SetParameterBlockConstant(cur_frame.pos.data());
+//				problem.SetParameterBlockConstant(cur_frame.qua_array);
+//				problem.SetParameterBlockConstant(cur_frame.pos_array);
 
 			}
 
@@ -677,28 +677,29 @@ bool StereoFeatureManager::OptimizationCoP() {
 				cv::Point2f &first_left_ob = first_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
 				// add stereo observation of current frame.
-				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()) {
-					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
-					double inv_depth[1] = {50.0};
-					problem.AddResidualBlock(
-							SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
-							                                        double(first_left_ob.x), double(first_left_ob.y),
-							                                        double(first_right_ob.x), double(first_right_ob.y),
-							                                        left_q_bc_array, left_t_bc_array,
-							                                        right_q_bc_array, right_t_bc_array
-							),
-							new ceres::CauchyLoss(1.0),
-							first_frame.qua.coeffs().data(),
-							first_frame.pos.data(),
-							first_frame.qua.coeffs().data(),
-							first_frame.pos.data(),
-//							first_frame.qua_array,
-//							first_frame.pos_array,
-//							first_frame.qua_array,
-//							first_frame.pos_array,
-							cur_feature.inv_depth_array
-					);
-				}
+//				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()) {
+//					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+//					printf("feature id :%d and frame id :%d\n",cur_feature.feature_id,first_frame.frame_id);
+//					problem.AddResidualBlock(
+//							SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
+//							                                        double(first_left_ob.x), double(first_left_ob.y),
+//							                                        double(first_right_ob.x), double(first_right_ob.y),
+//							                                        left_q_bc_array, left_t_bc_array,
+//							                                        right_q_bc_array, right_t_bc_array
+//							),
+//							new ceres::CauchyLoss(1.0),
+//							first_frame.qua.coeffs().data(),
+//							first_frame.pos.data(),
+//							first_frame.qua.coeffs().data(),
+//							first_frame.pos.data(),
+////							first_frame.qua_array+0,
+////							first_frame.pos_array+0,
+////							first_frame.qua_array+0,
+////							first_frame.pos_array+0,
+////							cur_feature.inv_depth_array+0
+//
+//					);
+//				}
 
 				// add frame to frame constraint. based on
 				for (int j = 1; j < cur_feature.key_frame_id_deque.size(); ++j) {
@@ -744,7 +745,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 								cur_feature.inv_depth_array
 						);
 					}
-
 
 				}
 

@@ -620,31 +620,13 @@ bool StereoFeatureManager::OptimizationCoP() {
 		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
-			cur_frame.qua_array[0] = cur_frame.qua.x();
-			cur_frame.qua_array[1] = cur_frame.qua.y();
-			cur_frame.qua_array[2] = cur_frame.qua.z();
-			cur_frame.qua_array[3] = cur_frame.qua.w();
-
-			cur_frame.pos_array[0] = cur_frame.pos(0);
-			cur_frame.pos_array[1] = cur_frame.pos(1);
-			cur_frame.pos_array[2] = cur_frame.pos(2);
-
-//			problem.AddParameterBlock(
-//					cur_frame.qua_array, 4, new ceres::EigenQuaternionParameterization
-//			);
-//			problem.AddParameterBlock(
-//					cur_frame.pos_array, 3
-//			);
-
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			if (cur_frame.frame_id < 1 || i < 4) {
+			if (cur_frame.frame_id < 1) {//} || i < 4) {
 				// set zero to current frame.
 				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
-//				problem.SetParameterBlockConstant(cur_frame.qua_array);
-//				problem.SetParameterBlockConstant(cur_frame.pos_array);
 
 			}
 

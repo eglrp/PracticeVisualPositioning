@@ -42,8 +42,8 @@ struct FramePreId {
 	Eigen::Vector3d pos = Eigen::Vector3d::Zero();
 	Eigen::Quaterniond qua = Eigen::Quaterniond::Identity();
 
-	double *pos_array = new double[3];
-	double *qua_array = new double[4];
+//	double *pos_array = new double[3];
+//	double *qua_array = new double[4];
 
 	std::vector<int> feature_id_vec_; // id of contained features
 	std::map<int, cv::Point2f> id_pt_map; // id -> pt(observed by left camera)
@@ -68,9 +68,9 @@ struct FeaturePreId {
 	Eigen::Vector3d pt = Eigen::Vector3d(1000.0, 1000.0, 1000.0); // position of feature point in world frame.
 
 	// may not be using.
-	double inv_depth = 1.0 / 50.0;// inverse depth of current feature in the frame which id is depth_frame_id
+//	double inv_depth = 1.0 / 50.0;// inverse depth of current feature in the frame which id is depth_frame_id
 	int depth_frame_id = -1; //
-	double *inv_depth_array = new double[1];
+	double *inv_depth_array = new double[1]{1.0/50.0};
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;

@@ -70,7 +70,7 @@ struct FeaturePreId {
 	// may not be using.
 //	double inv_depth = 1.0 / 50.0;// inverse depth of current feature in the frame which id is depth_frame_id
 	int depth_frame_id = -1; //
-	double *inv_depth_array = new double[1]{1.0/50.0};
+	double *inv_depth_array = new double[1]{1.0 / 50.0};
 
 //	std::map<int, cv::Point2f> frame_pt_map;
 	std::vector<int> frame_id_vec;

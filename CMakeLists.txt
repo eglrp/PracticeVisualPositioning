@@ -30,7 +30,6 @@ find_package(LAPACK)
 #BOOST
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
-
 find_package(OpenCV REQUIRED)
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
@@ -78,11 +77,6 @@ aux_source_directory(
 
 
 aux_source_directory(./StereoVO StereoVO_FILES)
-
-#aux_source_directory(
-#		./CeresSolverTools
-#		CERESTOOL
-#)
 
 
 add_executable(feature_track_server_test tester/feature_tracker_server_tester.cpp)

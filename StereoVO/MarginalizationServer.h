@@ -52,10 +52,12 @@ protected:
 	bool with_marginalization_info_flag_ = false;
 
 
+	// save marginalization preprocessed data.
 	std::map<double *, BlockInfo> address_block_info_map_; // recored relate information here.
+
+
+	// Save information temp.
 	std::set<double *> removed_block_set_;
-
-
 	std::vector<ceres::CostFunction *> cost_func_vec;
 
 

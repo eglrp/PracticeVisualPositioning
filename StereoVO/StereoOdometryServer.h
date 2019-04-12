@@ -31,8 +31,6 @@ public:
 	}
 
 
-
-
 	StereoFeatureTracker * tracker_ptr_ = new StereoFeatureTracker();
 	StereoFeatureManager * feature_manager_ptr_ = new StereoFeatureManager();
 	Optimizer * optimizer_ptr_ = new Optimizer();

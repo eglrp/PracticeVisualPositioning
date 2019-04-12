@@ -11,9 +11,13 @@
 #include <Eigen/Geometry>
 
 struct BlockInfo{
+	const double * block_para_address = nullptr;
 	int block_size= -1;
 
-	// save the fi
+
+	std::vector<ceres::CostFunction *> relate_cost_func_vec;
+
+	// save the information adopted in marginalization constraint
 	Eigen::MatrixXd block_linearized_jac;
 	Eigen::MatrixXd block_linear_residual;
 	Eigen::MatrixXd keeped_block_value;
@@ -26,8 +30,9 @@ public:
 	}
 
 
+
 protected:
-	std::map<double *,BlockInfo> address_block_info_map_;
+	std::map<double *,BlockInfo> address_block_info_map_; // recored relate information here.
 
 
 

@@ -111,8 +111,18 @@ public:
 	bool CheckKeyFrameCondition(FramePreId &cur_frame);
 
 
+	/**
+	 * @brief Add a new key frame and calculate it's pose.
+	 * @param frame_id
+	 * @return
+	 */
 	bool AddNewKeyFrame(int frame_id);
 
+	/**
+	 * @brief Sliding windows filter based optimization for feautres and key-frames.
+	 * using reprojection error that position of feature points represented by position in world frame.
+	 * @return
+	 */
 	bool Optimization();
 
 	/**
@@ -121,12 +131,18 @@ public:
 	 */
 	bool OptimizationCoP();
 
+	/**
+	 * @brief add latest key frame's pose to a deque.
+	 * @param frame_id
+	 * @return
+	 */
 	bool UpdateVisualization(int frame_id);
 
 	StereoConfigServer *config_ptr_;
 
 	int cur_feature_id = -1;
 	int cur_frame_id = -1;
+
 
 	std::map<int, FeaturePreId> feature_map_;// save all features observed in the whole process
 	std::map<int, FramePreId> frame_map_;// save all frame and its observed feature's id in the whole process.

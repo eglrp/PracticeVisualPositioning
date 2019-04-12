@@ -660,7 +660,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 				// add stereo observation of current frame.
 				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()
-//				&& first_frame.frame_id<10
 						) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 //					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);

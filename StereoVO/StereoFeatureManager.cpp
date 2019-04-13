@@ -157,7 +157,7 @@ bool StereoFeatureManager::AddNewKeyFrame(int frame_id) {
 				auto feature_itea = feature_map_.find(cur_feature_id);
 				if (config_ptr_->additional_check && feature_itea == feature_map_.end()) {
 					printf("Some error in %s:%s : can not found feature in feature map\n",
-					       __FUNCTION__, __LINE__);
+					       __FUNCTION__, std::to_string(__LINE__).c_str());
 
 				} else {
 					FeaturePreId *feature_ptr = &(feature_itea->second);
@@ -620,6 +620,12 @@ bool StereoFeatureManager::OptimizationCoP() {
 		for (int i(0); i < key_frame_id_vec_.size(); ++i) {
 			FramePreId &cur_frame = frame_map_.find(key_frame_id_vec_[i])->second;
 
+			if (std::isnan(cur_frame.qua.coeffs().sum()) || std::isnan(cur_frame.pos.sum())) {
+				std::cout << " at " << cur_frame.frame_id << "-th frame" <<
+				          "quaternion is :" << cur_frame.qua.coeffs().transpose() << " pos is:" << cur_frame.pos << std::endl;
+				std::cout << __FILE__ << ":  with some problem" << std::endl;
+			}
+
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
@@ -660,7 +666,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 				// add stereo observation of current frame.
 				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()
-				&& first_frame.frame_id<5
+				    && first_frame.frame_id < 5
 						) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 //					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);

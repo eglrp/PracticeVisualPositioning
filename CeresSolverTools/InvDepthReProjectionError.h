@@ -54,6 +54,28 @@ public:
 		const double inv_depth = parameters[4][0]; // inverse depth.
 
 
+		Eigen::Vector3d pt_w = q_bw_i * (q_bc_i_.inverse() * (ob_i_/inv_depth-t_bc_i_)) + t_bw_i;
+		Eigen::Vector3d pt_cj = q_bc_j_ * (q_bw_j.inverse() * (pt_w - t_bw_j)) + t_bc_j_;
+		Eigen::Vector2d pre_pt_cj_unit = pt_cj.block(0,0,2,1) / pt_cj(2);
+
+		if(pt_cj(2) < 0.1){
+			std::cout << "ERROR pt_cj(2) < 0.1" << std::endl;
+			return false;
+		}
+
+		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
+		residual_vec = sqrt_info * (pre_pt_cj_unit-ob_j_.block(0,0,2,1));
+
+		if(jacobians){
+			// calculate jacobian matrix.
+
+
+		}
+
+
+
+
+		return true;
 
 	}
 

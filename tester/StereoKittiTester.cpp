@@ -20,7 +20,7 @@
 
 int main() {
 
-	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/00/";
+	std::string dir_name = "/home/steve/SourceData/Kittidataset/sequences/13/";
 	std::string left_sub_dir_name = "image_0";
 	std::string right_sub_dir_name = "image_1";
 

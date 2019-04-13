@@ -16,10 +16,7 @@ struct BlockInfo {
 	int block_idx = -1;
 	bool removed_flag = false;
 
-	// save the information adopted in marginalization constraint
-	Eigen::MatrixXd block_linearized_jac;
-	Eigen::MatrixXd block_linear_residual;
-	Eigen::MatrixXd keeped_block_value;
+	Eigen::VectorXd keeped_block_value;
 };
 
 class MarginalizationServer {
@@ -44,6 +41,8 @@ public:
 
 	bool InsertMarignalizationFactor(ceres::Problem &problem);
 
+
+
 	// return state of marginalizationg
 	bool withMarginalizationInfo() const;
 
@@ -54,6 +53,9 @@ protected:
 
 	// save marginalization preprocessed data.
 	std::map<double *, BlockInfo> address_block_info_map_; // recored relate information here.
+	// save the information adopted in marginalization constraint
+	Eigen::MatrixXd block_linearized_jac;
+	Eigen::MatrixXd block_linear_residual;
 
 
 	// Save information temp.

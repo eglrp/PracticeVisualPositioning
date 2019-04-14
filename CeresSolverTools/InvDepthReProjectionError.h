@@ -10,7 +10,7 @@
 #include <Eigen/Geometry>
 
 //// useful function
-Eigen::Matrix3d hat(Eigen::Vector3d a) {
+inline Eigen::Matrix3d hat(Eigen::Vector3d a) {
 	Eigen::Matrix3d hat_a;
 	hat_a << 0.0, -a.z(), a.y(),
 			a.z(), 0.0, -a.x(),
@@ -25,7 +25,7 @@ Eigen::Matrix3d hat(Eigen::Vector3d a) {
  * @param a
  * @return
  */
-Eigen::Matrix<double, 3, 4> quternion_derivative(Eigen::Quaterniond qua, Eigen::Vector3d a) {
+inline Eigen::Matrix<double, 3, 4> quternion_derivative(Eigen::Quaterniond qua, Eigen::Vector3d a) {
 	double w = qua.w();
 	Eigen::Vector3d v(qua.x(), qua.y(), qua.z());
 
@@ -146,7 +146,7 @@ public:
 
 			// t_bw_j
 			if (jacobians[3]) {
-				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
+				Eigen::Map<Eigen::Matrix<double, 2, 3, Eigen::RowMajor>>
 						jacobian_tbw_j(jacobians[3]);
 				jacobian_tbw_j = reduce_mat * R_bc_j * R_bw_j.transpose() * -1.0;
 
@@ -154,8 +154,8 @@ public:
 
 			// inverse_depth_i
 			if (jacobians[4]) {
-				Eigen::Map<Eigen::Matrix<double, 2, 1, Eigen::RowMajor>>
-						jacobian_inv_depth(jacobians[4]);
+//				Eigen::Map<Eigen::Matrix<double, 2, 1, Eigen::RowMajor>>
+				Eigen::Map<Eigen::Vector2d> jacobian_inv_depth(jacobians[4]);
 				jacobian_inv_depth = (reduce_mat * R_bc_j * R_bw_j.transpose() * R_bw_i * R_bc_i.transpose()
 				                      * ob_i_ * -1.0 / (inv_depth * inv_depth));
 

@@ -731,14 +731,30 @@ bool StereoFeatureManager::OptimizationCoP() {
 							) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+//						problem.AddResidualBlock(
+//								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
+//								                                        double(first_left_ob.x),
+//								                                        double(first_left_ob.y),
+//								                                        double(second_right_ob.x),
+//								                                        double(second_right_ob.y),
+//								                                        left_q_bc_array, left_t_bc_array,
+//								                                        right_q_bc_array, right_t_bc_array
+//								),
+//								new ceres::CauchyLoss(1.0),
+//								first_frame.qua.coeffs().data(), first_frame.pos.data(),
+//								second_frame.qua.coeffs().data(), second_frame.pos.data(),
+//								cur_feature.inv_depth_array
+//						);
+
+
 						problem.AddResidualBlock(
-								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
-								                                        double(first_left_ob.x),
-								                                        double(first_left_ob.y),
-								                                        double(second_right_ob.x),
-								                                        double(second_right_ob.y),
-								                                        left_q_bc_array, left_t_bc_array,
-								                                        right_q_bc_array, right_t_bc_array
+								new InvDepthReProjectionError::Create(fx, fy, cx, cy,
+								                                      double(first_left_ob.x),
+								                                      double(first_left_ob.y),
+								                                      double(second_right_ob.x),
+								                                      double(second_right_ob.y),
+								                                      left_q_bc_array, left_t_bc_array,
+								                                      right_q_bc_array, right_t_bc_array
 								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),

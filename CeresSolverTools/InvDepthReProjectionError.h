@@ -133,7 +133,7 @@ public:
 
 			reduce_mat = sqrt_info * reduce_mat;
 
-			if(residual_vec.norm()<0.1){
+			if(residual_vec.norm()<0.4){
 				reduce_mat  *=0.0;
 			}
 

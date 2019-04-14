@@ -110,7 +110,10 @@ public:
 			          << "\nq_bw_j:" << q_bw_j.coeffs()
 			          << "\nt_bw_j:" << t_bw_j
 			          << "\n inv depth i:" << inv_depth << std::endl;
-			return true;
+					  double tmp_array[2];
+					  tmp_array[0] = residuals[0];
+					  tmp_array[1] = residuals[1];
+			return false;
 		}
 
 		if (jacobians) {

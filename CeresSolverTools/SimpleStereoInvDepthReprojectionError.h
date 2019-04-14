@@ -7,6 +7,7 @@
 
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
+#include <ceres/jet.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -73,6 +74,12 @@ struct SimpleStereoInvDepthReprojectionError {
 		sqrt_info_mat << T(sqrt_info(0, 0)), T(sqrt_info(0, 1)), T(sqrt_info(1, 0)), T(sqrt_info(1, 1));
 
 		residual_vector = sqrt_info_mat * (pre_pt_cj_unit - pt_cj_unit.block(0, 0, 2, 1));
+
+		if(ceres::IsNormal(residual_vector(0)) && ceres::IsNormal(residual_vector(1))){
+			return true;
+		}else{
+			return false;
+		}
 
 		return true;
 	}

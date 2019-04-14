@@ -26,6 +26,8 @@
 #include <CeresSolverTools/SimpleInvDepthReProjectionError.h>
 #include <CeresSolverTools/SimpleStereoInvDepthReprojectionError.h>
 
+#include <CeresSolverTools/InvDepthReProjectionError.h>
+
 #include <StereoVO/StereoConfigServer.h>
 
 #include <util/GeoTools.h>

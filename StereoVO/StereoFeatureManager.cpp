@@ -622,10 +622,12 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 			if (std::isnan(cur_frame.qua.coeffs().sum()) || std::isnan(cur_frame.pos.sum())) {
 				std::cout << " at " << cur_frame.frame_id << "-th frame" <<
-				          "quaternion is :" << cur_frame.qua.coeffs().transpose() << " pos is:" << cur_frame.pos << std::endl;
+				          "quaternion is :" << cur_frame.qua.coeffs().transpose() << " pos is:" << cur_frame.pos
+				          << std::endl;
 				std::cout << __FILE__ << ":  with some problem" << std::endl;
 			}
 
+			cur_frame.qua.normalize();
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
@@ -693,14 +695,29 @@ bool StereoFeatureManager::OptimizationCoP() {
 					if (second_frame.id_pt_map.find(cur_feature.feature_id) != second_frame.id_pt_map.end()) {
 						// add left observation for different frame.
 						cv::Point2f &second_left_ob = second_frame.id_pt_map.find(cur_feature.feature_id)->second;
+//						problem.AddResidualBlock(
+//								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
+//								                                        double(first_left_ob.x),
+//								                                        double(first_left_ob.y),
+//								                                        double(second_left_ob.x),
+//								                                        double(second_left_ob.y),
+//								                                        left_q_bc_array, left_t_bc_array,
+//								                                        right_q_bc_array, right_t_bc_array
+//								),
+//								new ceres::CauchyLoss(1.0),
+//								first_frame.qua.coeffs().data(), first_frame.pos.data(),
+//								second_frame.qua.coeffs().data(), second_frame.pos.data(),
+//								cur_feature.inv_depth_array
+//						);
+
 						problem.AddResidualBlock(
-								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
-								                                        double(first_left_ob.x),
-								                                        double(first_left_ob.y),
-								                                        double(second_left_ob.x),
-								                                        double(second_left_ob.y),
-								                                        left_q_bc_array, left_t_bc_array,
-								                                        right_q_bc_array, right_t_bc_array
+								new InvDepthReProjectionError(fx, fy, cx, cy,
+								                              double(first_left_ob.x),
+								                              double(first_left_ob.y),
+								                              double(second_left_ob.x),
+								                              double(second_left_ob.y),
+								                              left_q_bc_array, left_t_bc_array,
+								                              right_q_bc_array, right_t_bc_array
 								),
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
@@ -740,7 +757,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-		options.trust_region_strategy_type=ceres::DOGLEG;
+		options.trust_region_strategy_type = ceres::DOGLEG;
 
 		options.check_gradients = true;
 

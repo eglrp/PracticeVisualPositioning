@@ -114,33 +114,50 @@ public:
 
 			//q_bw_i
 			if (jacobians[0]) {
-				Eigen::Map<Eigen::Matrix<double, 3, 4, Eigen::RowMajor>>
+				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
 						jacobian_qbw_i(jacobians[0]);
-				jacobian_qbw_i = R_bc_j * R_bw_j.transpose() *
-				                 quternion_derivative(q_bw_i, pt_bi);
-				jacobian_qbw_i = reduce_mat * jacobian_qbw_i;
+				Eigen::Matrix<double, 3, 4> jacobian_pt_cj_qbw_i = R_bc_j * R_bw_j.transpose() *
+				                                                   quternion_derivative(q_bw_i, pt_bi);
+				jacobian_qbw_i = reduce_mat * jacobian_pt_cj_qbw_i;
 			}
 
 
 			// t_bw_i
 			if (jacobians[1]) {
-				Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>>
+				Eigen::Map<Eigen::Matrix<double, 2, 3, Eigen::RowMajor>>
 						jacobian_tbw_i(jacobians[1]);
+
 				jacobian_tbw_i = reduce_mat * R_bc_j * R_bw_j.transpose();
 			}
 
 			// q_bw_j
 			if (jacobians[2]) {
+				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
+						jacobian_qbw_j(jacobians[2]);
+				Eigen::Matrix4d dqinv_dq = Eigen::Matrix4d::Identity();
+				dqinv_dq.block(0, 0, 3, 3) *= -1.0;
+				Eigen::Matrix<double, 3, 4> jacobian_pt_cj_qbw_j = R_bc_j *
+				                                                   quternion_derivative(q_bw_j.inverse(),
+				                                                                        pt_w - t_bw_j) *
+				                                                   dqinv_dq;
+				jacobian_qbw_j = reduce_mat * jacobian_pt_cj_qbw_j;
 
 			}
 
 			// t_bw_j
 			if (jacobians[3]) {
+				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
+						jacobian_tbw_j(jacobians[3]);
+				jacobian_tbw_j = reduce_mat * R_bc_j * R_bw_j.transpose() * -1.0;
 
 			}
 
 			// inverse_depth_i
 			if (jacobians[4]) {
+				Eigen::Map<Eigen::Matrix<double, 2, 1, Eigen::RowMajor>>
+						jacobian_inv_depth(jacobians[4]);
+				jacobian_inv_depth = (reduce_mat * R_bc_j * R_bw_j.transpose() * R_bw_i * R_bc_i.transpose()
+				                      * ob_i_ * -1.0 / (inv_depth * inv_depth));
 
 			}
 

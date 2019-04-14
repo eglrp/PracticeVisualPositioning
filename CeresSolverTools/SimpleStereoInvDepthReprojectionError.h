@@ -78,6 +78,7 @@ struct SimpleStereoInvDepthReprojectionError {
 		if(ceres::IsNormal(residual_vector(0)) && ceres::IsNormal(residual_vector(1))){
 			return true;
 		}else{
+			std::cout << residual_vector << std::endl;
 			return false;
 		}
 

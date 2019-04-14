@@ -672,21 +672,22 @@ bool StereoFeatureManager::OptimizationCoP() {
 						) {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 //					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
-					problem.AddResidualBlock(
-							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
-							                                              double(first_left_ob.x),
-							                                              double(first_left_ob.y),
-							                                              double(first_right_ob.x),
-							                                              double(first_right_ob.y),
-							                                              left_q_bc_array, left_t_bc_array,
-							                                              right_q_bc_array, right_t_bc_array
-							),
-							new ceres::CauchyLoss(1.0),
-							first_frame.qua.coeffs().data(),
-							first_frame.pos.data(),
-							cur_feature.inv_depth_array
+					if (cv::norm(first_left_ob - first_right_ob) > 5.0)
+						problem.AddResidualBlock(
+								SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
+								                                              double(first_left_ob.x),
+								                                              double(first_left_ob.y),
+								                                              double(first_right_ob.x),
+								                                              double(first_right_ob.y),
+								                                              left_q_bc_array, left_t_bc_array,
+								                                              right_q_bc_array, right_t_bc_array
+								),
+								new ceres::CauchyLoss(1.0),
+								first_frame.qua.coeffs().data(),
+								first_frame.pos.data(),
+								cur_feature.inv_depth_array
 
-					);
+						);
 				}
 
 				// add frame to frame constraint. based on
@@ -710,20 +711,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 //								cur_feature.inv_depth_array
 //						);
 
-						problem.AddResidualBlock(
-								new InvDepthReProjectionError(fx, fy, cx, cy,
-								                              double(first_left_ob.x),
-								                              double(first_left_ob.y),
-								                              double(second_left_ob.x),
-								                              double(second_left_ob.y),
-								                              left_q_bc_array, left_t_bc_array,
-								                              right_q_bc_array, right_t_bc_array
-								),
-								new ceres::CauchyLoss(1.0),
-								first_frame.qua.coeffs().data(), first_frame.pos.data(),
-								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-								cur_feature.inv_depth_array
-						);
+						if (cv::norm(first_left_ob - second_left_ob) > 5.0)
+							problem.AddResidualBlock(
+									new InvDepthReProjectionError(fx, fy, cx, cy,
+									                              double(first_left_ob.x),
+									                              double(first_left_ob.y),
+									                              double(second_left_ob.x),
+									                              double(second_left_ob.y),
+									                              left_q_bc_array, left_t_bc_array,
+									                              right_q_bc_array, right_t_bc_array
+									),
+									new ceres::CauchyLoss(1.0),
+									first_frame.qua.coeffs().data(), first_frame.pos.data(),
+									second_frame.qua.coeffs().data(), second_frame.pos.data(),
+									cur_feature.inv_depth_array
+							);
 					}
 
 					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()
@@ -747,20 +749,20 @@ bool StereoFeatureManager::OptimizationCoP() {
 //						);
 
 
-						problem.AddResidualBlock(
-								new InvDepthReProjectionError(fx, fy, cx, cy,
-								                                      double(first_left_ob.x),
-								                                      double(first_left_ob.y),
-								                                      double(second_right_ob.x),
-								                                      double(second_right_ob.y),
-								                                      left_q_bc_array, left_t_bc_array,
-								                                      right_q_bc_array, right_t_bc_array
-								),
-								new ceres::CauchyLoss(1.0),
-								first_frame.qua.coeffs().data(), first_frame.pos.data(),
-								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-								cur_feature.inv_depth_array
-						);
+//						problem.AddResidualBlock(
+//								new InvDepthReProjectionError(fx, fy, cx, cy,
+//								                                      double(first_left_ob.x),
+//								                                      double(first_left_ob.y),
+//								                                      double(second_right_ob.x),
+//								                                      double(second_right_ob.y),
+//								                                      left_q_bc_array, left_t_bc_array,
+//								                                      right_q_bc_array, right_t_bc_array
+//								),
+//								new ceres::CauchyLoss(1.0),
+//								first_frame.qua.coeffs().data(), first_frame.pos.data(),
+//								second_frame.qua.coeffs().data(), second_frame.pos.data(),
+//								cur_feature.inv_depth_array
+//						);
 					}
 
 				}

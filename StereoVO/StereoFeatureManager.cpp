@@ -740,7 +740,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-//		options.trust_region_strategy_type=ceres::DOGLEG;
+		options.trust_region_strategy_type=ceres::DOGLEG;
+
+		options.check_gradients = true;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;

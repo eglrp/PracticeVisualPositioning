@@ -75,6 +75,7 @@ struct SimpleStereoInvDepthReprojectionError {
 
 		residual_vector = sqrt_info_mat * (pre_pt_cj_unit - pt_cj_unit.block(0, 0, 2, 1));
 
+		std::cout << "simple stereo inv depth:" << residual_vector.transpose()<<std::endl;
 		if(ceres::IsNormal(residual_vector(0)) && ceres::IsNormal(residual_vector(1))){
 			return true;
 		}else{

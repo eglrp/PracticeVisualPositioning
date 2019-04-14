@@ -780,14 +780,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.check_gradients = true;
 //		options.gradient_check_relative_precision =1e-06;
 
-		options.num_threads = 8;
+		options.num_threads = 1;
 		options.num_linear_solver_threads = 8;
 
 		options.max_num_iterations = 300;
 
 		ceres::Solve(options, &problem, &summary);
-//		std::cout << summary.FullReport() << std::endl;
-		std::cout << summary.BriefReport() << std::endl;
+		std::cout << summary.FullReport() << std::endl;
+//		std::cout << summary.BriefReport() << std::endl;
 
 		// delete oldest frame.
 		if (sw_feature_id_set_.size() > config_ptr_->slide_windows_size) {

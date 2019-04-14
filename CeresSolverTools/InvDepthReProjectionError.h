@@ -102,6 +102,8 @@ public:
 
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));
+
+		std::cout << "residual vec:" << residual_vec.transpose() << std::endl;
 		if (std::isnan(residual_vec(0)) || std::isnan(residual_vec(1))) {
 			std::cout << "residual vec:" << residual_vec.transpose() << std::endl;
 			std::cout << "q_bw_i" << q_bw_i.coeffs()
@@ -235,7 +237,7 @@ public:
 	Eigen::Vector3d t_bc_i_;
 	Eigen::Vector3d t_bc_j_;
 
-	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 5.0; // infomation matrix of observation.
+	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 1.0; // infomation matrix of observation.
 };
 
 

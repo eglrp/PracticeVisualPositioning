@@ -81,7 +81,7 @@ public:
 	int min_covisible_feature = 100;// lower bound of tracked feature number.
 	float min_parallex = 30.0; // average moving distance of all features.
 
-	float min_ob_distance = 5.0;//
+	float min_ob_distance = 2.0;//
 
 	/**
 	 * Parameter For Optimizer

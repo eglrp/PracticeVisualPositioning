@@ -105,7 +105,6 @@ public:
 		if (std::isnan(residual_vec(0)) || std::isnan(residual_vec(1))) {
 			std::cout << "residual vec:" << residual_vec.transpose() << std::endl;
 			std::cout << "q_bw_i" << q_bw_i.coeffs()
-
 			          << "\nt_bw_i:" << t_bw_i
 			          << "\nq_bw_j:" << q_bw_j.coeffs()
 			          << "\nt_bw_j:" << t_bw_j

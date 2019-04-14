@@ -50,11 +50,11 @@ public:
 	 * @brief Parameters for Feature tracking.
 	 */
 
-	bool use_pyramid = true;
+	bool use_pyramid = false;
 	int pyr_patch_size = 21;
 	int pyr_levels = 3;
 
-	int max_features = 300;
+	int max_features = 200;
 	int min_feature_dis = 20;
 	double feature_quality = 0.05;
 
@@ -79,7 +79,7 @@ public:
 	int slide_windows_size = 15; //
 
 	int min_covisible_feature = 100;// lower bound of tracked feature number.
-	float min_parallex = 20.0; // average moving distance of all features.
+	float min_parallex = 30.0; // average moving distance of all features.
 
 	float min_ob_distance = 5.0;//
 

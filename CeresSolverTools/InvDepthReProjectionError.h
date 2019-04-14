@@ -102,13 +102,15 @@ public:
 
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));
-		if (!std::isfinite(residual_vec.sum())) {
+		if (std::isnan(residual_vec(0)) || std::isnan(residual_vec(1))) {
+			std::cout << "residual vec:" << residual_vec.transpose() << std::endl;
 			std::cout << "q_bw_i" << q_bw_i.coeffs()
+
 			          << "\nt_bw_i:" << t_bw_i
 			          << "\nq_bw_j:" << q_bw_j.coeffs()
 			          << "\nt_bw_j:" << t_bw_j
 			          << "\n inv depth i:" << inv_depth << std::endl;
-			return false;
+			return true;
 		}
 
 		if (jacobians) {

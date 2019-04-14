@@ -667,27 +667,27 @@ bool StereoFeatureManager::OptimizationCoP() {
 				cv::Point2f &first_left_ob = first_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
 				// add stereo observation of current frame.
-				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()
-				    && first_frame.frame_id < 5
-						) {
-					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
-//					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
-					problem.AddResidualBlock(
-							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
-							                                              double(first_left_ob.x),
-							                                              double(first_left_ob.y),
-							                                              double(first_right_ob.x),
-							                                              double(first_right_ob.y),
-							                                              left_q_bc_array, left_t_bc_array,
-							                                              right_q_bc_array, right_t_bc_array
-							),
-							new ceres::CauchyLoss(1.0),
-							first_frame.qua.coeffs().data(),
-							first_frame.pos.data(),
-							cur_feature.inv_depth_array
-
-					);
-				}
+//				if (first_frame.id_r_pt_map.find(cur_feature.feature_id) != first_frame.id_r_pt_map.end()
+//				    && first_frame.frame_id < 5
+//						) {
+//					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+////					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
+//					problem.AddResidualBlock(
+//							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
+//							                                              double(first_left_ob.x),
+//							                                              double(first_left_ob.y),
+//							                                              double(first_right_ob.x),
+//							                                              double(first_right_ob.y),
+//							                                              left_q_bc_array, left_t_bc_array,
+//							                                              right_q_bc_array, right_t_bc_array
+//							),
+//							new ceres::CauchyLoss(1.0),
+//							first_frame.qua.coeffs().data(),
+//							first_frame.pos.data(),
+//							cur_feature.inv_depth_array
+//
+//					);
+//				}
 
 				// add frame to frame constraint. based on
 				for (int j = 1; j < cur_feature.key_frame_id_deque.size(); ++j) {
@@ -775,16 +775,17 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.linear_solver_type = ceres::DENSE_SCHUR;
 //		options.trust_region_strategy_type = ceres::DOGLEG;
 
-		options.check_gradients = true;
-		options.gradient_check_relative_precision =1e-06;
+//		options.check_gradients = true;
+//		options.gradient_check_relative_precision =1e-06;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
 
-		options.max_num_iterations = 100;
+		options.max_num_iterations = 300;
 
 		ceres::Solve(options, &problem, &summary);
 //		std::cout << summary.FullReport() << std::endl;
+		std::cout << summary.BriefReport() << std::endl;
 
 		// delete oldest frame.
 		if (sw_feature_id_set_.size() > config_ptr_->slide_windows_size) {

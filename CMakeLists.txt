@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(PracticeVisualPositioning)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TOOL Release)
+set(CMAKE_BUILD_TOOL Debuge)
 
 #set(MKLROOT "/opt/intel/mkl/")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fopenacc -lpthread -fopenmp -mavx -mfma ")

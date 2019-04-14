@@ -63,20 +63,20 @@ public:
 	float lk_eps = 0.01;
 
 	bool use_lk_reverse = true;
-	float reverse_dis_threshold = 0.5;
+	float reverse_dis_threshold = 0.1;
 
 	bool steres_use_lk_reverse = true;
-	float stereo_reverse_dis_threshold = 0.5;
+	float stereo_reverse_dis_threshold = 0.1;
 
-	bool show_mask = true;
+	bool show_mask = false;
 
-	double ransac_confidence = 0.99;
+	double ransac_confidence = 0.999;
 	double ransac_error = 1.0;
 
 	/**
 	 * Parameters For Feature Manager
 	 */
-	int slide_windows_size = 15; //
+	int slide_windows_size = 20; //
 
 	int min_covisible_feature = 100;// lower bound of tracked feature number.
 	float min_parallex = 30.0; // average moving distance of all features.

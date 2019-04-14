@@ -90,16 +90,7 @@ public:
 		Eigen::Vector2d pre_pt_cj_unit = pt_cj.block(0, 0, 2, 1) / pt_cj(2);
 		double depth_j = pt_cj(2);
 
-//		std::cout << "q_bw_i" << q_bw_i.coeffs()
-//		          << "\nt_bw_i:" << t_bw_i
-//		          << "\nq_bw_j:" << q_bw_j.coeffs()
-//		          << "\nt_bw_j:" << t_bw_j
-//		          << "\n inv depth i:" << inv_depth << std::endl;
 
-//		if (pt_cj(2) < 0.2) {
-//			std::cout << "ERROR pt_cj(2) < 0.1" << std::endl;
-//			return false;
-//		}
 
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));

@@ -631,7 +631,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			if (cur_frame.frame_id < 1) {//} || i < 4) {
+			if (cur_frame.frame_id < 1 || i < 4) {
 				// set zero to current frame.
 				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
@@ -727,7 +727,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 					}
 
 					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()
-					    && second_frame.frame_id < 5
+//					    && second_frame.frame_id < 5
 							) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
@@ -748,7 +748,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 
 						problem.AddResidualBlock(
-								new InvDepthReProjectionError::Create(fx, fy, cx, cy,
+								new InvDepthReProjectionError(fx, fy, cx, cy,
 								                                      double(first_left_ob.x),
 								                                      double(first_left_ob.y),
 								                                      double(second_right_ob.x),
@@ -773,16 +773,18 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-		options.trust_region_strategy_type = ceres::DOGLEG;
+//		options.trust_region_strategy_type = ceres::DOGLEG;
 
 		options.check_gradients = true;
+		options.gradient_check_relative_precision =1e-06;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
 
-		options.max_num_iterations = 200;
+		options.max_num_iterations = 100;
 
 		ceres::Solve(options, &problem, &summary);
+//		std::cout << summary.FullReport() << std::endl;
 
 		// delete oldest frame.
 		if (sw_feature_id_set_.size() > config_ptr_->slide_windows_size) {

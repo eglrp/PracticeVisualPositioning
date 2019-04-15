@@ -55,8 +55,8 @@ public:
 	int pyr_levels = 3;
 
 	int max_features = 300;
-	int min_feature_dis = 20;
-	double feature_quality = 0.05;
+	int min_feature_dis = 15;
+	double feature_quality = 0.03;
 
 	int lk_patch_size = 21;
 	int lk_itea_count = 30;

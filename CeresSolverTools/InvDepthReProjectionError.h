@@ -76,14 +76,22 @@ public:
 #ifdef UNIT_SPHERE_ERROR
 		Eigen::Vector3d b1, b2;
 		Eigen::Vector3d a = ob_j_.normalized();
-		Eigen::Vector3d tmp(0,0,1);
-		if(a==tmp){
-			tmp << 1,0,0;
+		Eigen::Vector3d tmp(0, 0, 1);
+		if (a == tmp) {
+			tmp << 1, 0, 0;
 		}
-		b1 = (tmp- a * (a.transpose() * tmp)).normalized();
+		b1 = (tmp - a * (a.transpose() * tmp)).normalized();
 		b2 = a.cross(b1);
-		tangent_base.block<1,3>(0,0) = b1.transpose();
-		tangent_base.block<1,3>(1,0) = b2.transpose();
+		tangent_base.block<1, 3>(0, 0) = b1.transpose();
+		tangent_base.block<1, 3>(1, 0) = b2.transpose();
+#else
+		ob_i_(0) = (u_i - cx) / fx;
+		ob_i_(1) = (v_i - cy) / fy;
+		ob_i_(2) = 1.0;
+
+		ob_j_(0) = (u_j - cx) / fx;
+		ob_j_(1) = (v_j - cy) / fy;
+		ob_j_(2) = 1.0;
 
 #endif
 
@@ -105,17 +113,18 @@ public:
 		Eigen::Vector3d pt_w = q_bw_i * (pt_bi) + t_bw_i;
 		Eigen::Vector3d pt_bj = (q_bw_j.inverse() * (pt_w - t_bw_j));
 		Eigen::Vector3d pt_cj = q_bc_j_ * pt_bj + t_bc_j_;
-		Eigen::Vector2d pre_pt_cj_unit = pt_cj.block(0, 0, 2, 1) / pt_cj(2);
-		double depth_j = pt_cj(2);
 
 
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
+//		std::cout << "residual_vec:" << residual_vec.transpose() << std::endl;
 
 
 #ifdef UNIT_SPHERE_ERROR
 		residual_vec = sqrt_info * tangent_base * (pt_cj.normalized() - ob_j_.normalized());
-
 #else
+		Eigen::Vector2d pre_pt_cj_unit = pt_cj.block(0, 0, 2, 1) / pt_cj(2);
+		double depth_j = pt_cj(2);
+
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));
 #endif
 
@@ -145,17 +154,20 @@ public:
 #ifdef UNIT_SPHERE_ERROR
 			double norm = pt_cj.norm();
 			Eigen::Matrix3d norm_jaco;
-			double x1,x2,x3;
+			double x1, x2, x3;
 			x1 = pt_cj(0);
 			x2 = pt_cj(1);
 			x3 = pt_cj(2);
-			norm_jaco << 1.0 / norm - x1 * x1 / pow(norm, 3), - x1 * x2 / pow(norm, 3),            - x1 * x3 / pow(norm, 3),
-					- x1 * x2 / pow(norm, 3),            1.0 / norm - x2 * x2 / pow(norm, 3), - x2 * x3 / pow(norm, 3),
-					- x1 * x3 / pow(norm, 3),            - x2 * x3 / pow(norm, 3),            1.0 / norm - x3 * x3 / pow(norm, 3);
-			reduce_mat = tangent_base * norm_jaco;
+			norm_jaco << 1.0 / norm - x1 * x1 / pow(norm, 3), -x1 * x2 / pow(norm, 3), -x1 * x3 / pow(norm, 3),
+					-x1 * x2 / pow(norm, 3), 1.0 / norm - x2 * x2 / pow(norm, 3), -x2 * x3 / pow(norm, 3),
+					-x1 * x3 / pow(norm, 3), -x2 * x3 / pow(norm, 3), 1.0 / norm - x3 * x3 / pow(norm, 3);
+			reduce_mat = sqrt_info * tangent_base * norm_jaco;
+			if (residual_vec.norm() < 0.3) {
+				reduce_mat *= 0.0;
+			}
 #else
 			reduce_mat <<
-			           1.0 / depth_j, 0, -pt_cj(0) / depth_j / depth_j,
+					   1.0 / depth_j, 0, -pt_cj(0) / depth_j / depth_j,
 					0.0, 1.0 / depth_j, -pt_cj(1) / depth_j / depth_j;
 
 			reduce_mat = sqrt_info * reduce_mat;
@@ -274,7 +286,7 @@ public:
 	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity();// (5.0/250.0); // infomation matrix of observation.
 
 #ifdef UNIT_SPHERE_ERROR
-	Eigen::Matrix<double,2,3> tangent_base;
+	Eigen::Matrix<double, 2, 3> tangent_base;
 #endif
 
 };

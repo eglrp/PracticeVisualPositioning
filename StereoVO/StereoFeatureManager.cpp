@@ -770,14 +770,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 //		options.check_gradients = true;
 //		options.gradient_check_relative_precision = 1e-04;
 
-		options.update_state_every_iteration = true;
+//		options.update_state_every_iteration = true;
 //		options.num_threads = 1;
 //		options.num_linear_solver_threads = 1;
 
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
 
-		options.max_num_iterations = 10;
+		options.max_num_iterations = 30;
 		options.linear_solver_ordering.reset(ordering);
 
 		ceres::Solve(options, &problem, &summary);

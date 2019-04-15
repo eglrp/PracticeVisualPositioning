@@ -9,6 +9,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#define UNIT_SPHERE_ERROR
+
 //// useful function
 inline Eigen::Matrix3d hat(Eigen::Vector3d a) {
 	Eigen::Matrix3d hat_a;
@@ -69,6 +71,22 @@ public:
 		ob_j_(0) = (u_j - cx) / fx;
 		ob_j_(1) = (v_j - cy) / fy;
 		ob_j_(2) = 1.0;
+
+
+#ifdef UNIT_SPHERE_ERROR
+		Eigen::Vector3d b1, b2;
+		Eigen::Vector3d a = ob_j_.normalized();
+		Eigen::Vector3d tmp(0,0,1);
+		if(a==tmp){
+			tmp << 1,0,0;
+		}
+		b1 = (tmp- a * (a.transpose() * tmp)).normalized();
+		b2 = a.cross(b1);
+		tangent_base.block<1,3>(0,0) = b1.transpose();
+		tangent_base.block<1,3>(1,0) = b2.transpose();
+
+#endif
+
 	}
 
 
@@ -92,7 +110,14 @@ public:
 
 
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
+
+
+#ifdef UNIT_SPHERE_ERROR
+		residual_vec = sqrt_info * tangent_base * (pt_cj.normalized() - ob_j_.normalized());
+
+#else
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));
+#endif
 
 //		std::cout << "residual vec:" << residual_vec.transpose() << std::endl;
 		if (std::isnan(residual_vec(0)) || std::isnan(residual_vec(1))) {
@@ -116,7 +141,19 @@ public:
 			Eigen::Matrix3d R_bc_j = q_bc_j_.toRotationMatrix();
 
 			Eigen::Matrix<double, 2, 3> reduce_mat(Eigen::Matrix<double, 2, 3>::Identity());
-			//
+
+#ifdef UNIT_SPHERE_ERROR
+			double norm = pt_cj.norm();
+			Eigen::Matrix3d norm_jaco;
+			double x1,x2,x3;
+			x1 = pt_cj(0);
+			x2 = pt_cj(1);
+			x3 = pt_cj(2);
+			norm_jaco << 1.0 / norm - x1 * x1 / pow(norm, 3), - x1 * x2 / pow(norm, 3),            - x1 * x3 / pow(norm, 3),
+					- x1 * x2 / pow(norm, 3),            1.0 / norm - x2 * x2 / pow(norm, 3), - x2 * x3 / pow(norm, 3),
+					- x1 * x3 / pow(norm, 3),            - x2 * x3 / pow(norm, 3),            1.0 / norm - x3 * x3 / pow(norm, 3);
+			reduce_mat = tangent_base * norm_jaco;
+#else
 			reduce_mat <<
 			           1.0 / depth_j, 0, -pt_cj(0) / depth_j / depth_j,
 					0.0, 1.0 / depth_j, -pt_cj(1) / depth_j / depth_j;
@@ -127,6 +164,7 @@ public:
 				reduce_mat *= 0.0;
 			}
 
+#endif
 			//q_bw_i
 			if (jacobians[0]) {
 				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
@@ -234,6 +272,11 @@ public:
 	Eigen::Vector3d t_bc_j_;
 
 	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity();// (5.0/250.0); // infomation matrix of observation.
+
+#ifdef UNIT_SPHERE_ERROR
+	Eigen::Matrix<double,2,3> tangent_base;
+#endif
+
 };
 
 

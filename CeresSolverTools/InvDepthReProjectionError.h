@@ -27,8 +27,8 @@ inline Eigen::Matrix3d hat(Eigen::Vector3d a) {
  */
 inline Eigen::Matrix<double, 3, 4> quternion_derivative(Eigen::Quaterniond qua, Eigen::Vector3d a) {
 	double norm_factor = qua.norm();
-	double w = qua.w()/norm_factor;
-	Eigen::Vector3d v(qua.x()/norm_factor, qua.y()/norm_factor, qua.z()/norm_factor);
+	double w = qua.w() / norm_factor;
+	Eigen::Vector3d v(qua.x() / norm_factor, qua.y() / norm_factor, qua.z() / norm_factor);
 
 	Eigen::Matrix<double, 3, 4> derivative;
 	derivative.block(0, 3, 3, 1) = w * a + v.cross(a);
@@ -91,7 +91,6 @@ public:
 		double depth_j = pt_cj(2);
 
 
-
 		Eigen::Map<Eigen::Vector2d> residual_vec(residuals);
 		residual_vec = sqrt_info * ((pt_cj.head<2>() / pt_cj.z()) - ob_j_.block(0, 0, 2, 1));
 
@@ -103,9 +102,9 @@ public:
 			          << "\nq_bw_j:" << q_bw_j.coeffs()
 			          << "\nt_bw_j:" << t_bw_j
 			          << "\n inv depth i:" << inv_depth << std::endl;
-					  double tmp_array[2];
-					  tmp_array[0] = residuals[0];
-					  tmp_array[1] = residuals[1];
+			double tmp_array[2];
+			tmp_array[0] = residuals[0];
+			tmp_array[1] = residuals[1];
 			return false;
 		}
 
@@ -124,8 +123,8 @@ public:
 
 			reduce_mat = sqrt_info * reduce_mat;
 
-			if(residual_vec.norm()<0.4){
-				reduce_mat  *=0.0;
+			if (residual_vec.norm() < 0.4) {
+				reduce_mat *= 0.0;
 			}
 
 			//q_bw_i
@@ -152,7 +151,7 @@ public:
 						jacobian_tbw_i(jacobians[1]);
 
 				jacobian_tbw_i = reduce_mat * R_bc_j * R_bw_j.transpose();
-				if (!std::isfinite(jacobian_tbw_i.sum())||jacobian_tbw_i.norm()>1e10) {
+				if (!std::isfinite(jacobian_tbw_i.sum()) || jacobian_tbw_i.norm() > 1e10) {
 					std::cout << "q_bw_i" << q_bw_i.coeffs()
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
@@ -174,7 +173,7 @@ public:
 				                                                                        pt_w - t_bw_j) *
 				                                                   dqinv_dq;
 				jacobian_qbw_j = reduce_mat * jacobian_pt_cj_qbw_j;
-				if (!std::isfinite(jacobian_qbw_j.norm())||jacobian_qbw_j.norm()>1e10) {
+				if (!std::isfinite(jacobian_qbw_j.norm()) || jacobian_qbw_j.norm() > 1e10) {
 					std::cout << "q_bw_i" << q_bw_i.coeffs()
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
@@ -190,7 +189,7 @@ public:
 				Eigen::Map<Eigen::Matrix<double, 2, 3, Eigen::RowMajor>>
 						jacobian_tbw_j(jacobians[3]);
 				jacobian_tbw_j = reduce_mat * R_bc_j * R_bw_j.transpose() * -1.0;
-				if (!std::isfinite(jacobian_tbw_j.sum())||jacobian_tbw_j.norm()>1e10) {
+				if (!std::isfinite(jacobian_tbw_j.sum()) || jacobian_tbw_j.norm() > 1e10) {
 					std::cout << "q_bw_i" << q_bw_i.coeffs()
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
@@ -207,7 +206,7 @@ public:
 				Eigen::Map<Eigen::Vector2d> jacobian_inv_depth(jacobians[4]);
 				jacobian_inv_depth = (reduce_mat * R_bc_j * R_bw_j.transpose() * R_bw_i * R_bc_i.transpose()
 				                      * ob_i_ * -1.0 / (inv_depth * inv_depth));
-				if (!std::isfinite(jacobian_inv_depth.sum())||jacobian_inv_depth.norm()>1e10) {
+				if (!std::isfinite(jacobian_inv_depth.sum()) || jacobian_inv_depth.norm() > 1e10) {
 					std::cout << "q_bw_i" << q_bw_i.coeffs()
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
@@ -234,7 +233,7 @@ public:
 	Eigen::Vector3d t_bc_i_;
 	Eigen::Vector3d t_bc_j_;
 
-	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() / 1.0; // infomation matrix of observation.
+	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity();// (5.0/250.0); // infomation matrix of observation.
 };
 
 

@@ -791,26 +791,45 @@ bool StereoFeatureManager::OptimizationCoP() {
 		}
 
 //		// update pose of feature in sliding window.
-//		for (auto the_feature_id:sw_feature_id_set_) {
-//			FeaturePreId &cur_feature = feature_map_.find(the_feature_id)->second;
-//
-//			FramePreId &inv_depth_frame = frame_map_.find(cur_feature.depth_frame_id)->second;
-//			cv::Point2f &pt_ci_image = inv_depth_frame.id_pt_map[cur_feature.feature_id];
-//			Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x) - cx) / fx,
-//			                           (double(pt_ci_image.y) - cy) / fy,
-//			                           1.0);
-//
-//			Eigen::Vector3d pt_ci = pt_ci_unit / cur_feature.inv_depth_array[0];
-//			cur_feature.pt = inv_depth_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + inv_depth_frame.pos;
-//			if (cur_feature.initialized == false) {
-//				cur_feature.initialized = true;
-//			}
-//
-//
-//		}
+
 
 		// delete oldest frame.
 		if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
+
+			for (auto fid_itea = sw_feature_id_set_.begin();
+			     fid_itea != sw_feature_id_set_.end(); ++fid_itea) {
+				int the_feature_id = *fid_itea;
+				std::cout << "the feature id:" << the_feature_id << std::endl;
+				auto feature_itea = feature_map_.find(the_feature_id);
+				if (feature_itea != feature_map_.end() && feature_itea->second.initialized == true) {
+					FeaturePreId &cur_feature = feature_map_.find(the_feature_id)->second;
+
+					FramePreId &inv_depth_frame = frame_map_.find(cur_feature.depth_frame_id)->second;
+					if (inv_depth_frame.id_pt_map.find(cur_feature.feature_id) != inv_depth_frame.id_pt_map.end()) {
+						cv::Point2f &pt_ci_image = inv_depth_frame.id_pt_map[cur_feature.feature_id];
+						Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x) - cx) / fx,
+						                           (double(pt_ci_image.y) - cy) / fy,
+						                           1.0);
+
+						Eigen::Vector3d pt_ci = pt_ci_unit / cur_feature.inv_depth_array[0];
+						Eigen::Vector3d pt_w =
+								inv_depth_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + inv_depth_frame.pos;
+
+					}
+
+
+//				if (cur_feature.initialized == false) {
+//					cur_feature.initialized = true;
+//				}
+
+				}
+
+			}
+
+
+
+
+
 			/**
 			 * FRAME:
 			 * 1. set key frame flag = false

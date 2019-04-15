@@ -28,7 +28,7 @@ inline Eigen::Matrix3d hat(const Eigen::Vector3d a) {
  * @return
  */
 inline Eigen::Matrix<double, 3, 4> quternion_derivative(const Eigen::Quaterniond qua,
-		const Eigen::Vector3d a) {
+                                                        const Eigen::Vector3d a) {
 	double norm_factor = 1.0;//qua.norm();
 	double w = qua.w() / norm_factor;
 	Eigen::Vector3d v(qua.x() / norm_factor, qua.y() / norm_factor, qua.z() / norm_factor);
@@ -182,14 +182,7 @@ public:
 				Eigen::Matrix<double, 3, 4> jacobian_pt_cj_qbw_i = R_bc_j * R_bw_j.transpose() *
 				                                                   quternion_derivative(q_bw_i, pt_bi);
 				jacobian_qbw_i = reduce_mat * jacobian_pt_cj_qbw_i;
-				if (!std::isfinite(jacobian_qbw_i.norm())) {
-					std::cout << "q_bw_i" << q_bw_i.coeffs()
-					          << "\nt_bw_i:" << t_bw_i
-					          << "\nq_bw_j:" << q_bw_j.coeffs()
-					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth_i << std::endl;
-					return false;
-				}
+
 			}
 
 
@@ -199,15 +192,7 @@ public:
 						jacobian_tbw_i(jacobians[1]);
 
 				jacobian_tbw_i = reduce_mat * R_bc_j * R_bw_j.transpose();
-				if (!std::isfinite(jacobian_tbw_i.sum()) || jacobian_tbw_i.norm() > 1e10) {
-					std::cout << "q_bw_i" << q_bw_i.coeffs()
-					          << "\nt_bw_i:" << t_bw_i
-					          << "\nq_bw_j:" << q_bw_j.coeffs()
-					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth_i << std::endl;
-//					jacobian_tbw_i.setZero();
-					return false;
-				}
+
 			}
 
 			// q_bw_j
@@ -215,20 +200,17 @@ public:
 				Eigen::Map<Eigen::Matrix<double, 2, 4, Eigen::RowMajor>>
 						jacobian_qbw_j(jacobians[2]);
 				Eigen::Matrix4d dqinv_dq = Eigen::Matrix4d::Identity();
+				// -1 0 0 0
+				// 0 -1 0 0
+				// 0 0 -1 0
+				// 0 0 0  1
 				dqinv_dq.block(0, 0, 3, 3) *= -1.0;
 				Eigen::Matrix<double, 3, 4> jacobian_pt_cj_qbw_j = R_bc_j *
-				                                                   quternion_derivative(q_bw_j.conjugate(),
+				                                                   quternion_derivative(q_bw_j.inverse(),
 				                                                                        pt_w - t_bw_j) *
 				                                                   dqinv_dq;
 				jacobian_qbw_j = reduce_mat * jacobian_pt_cj_qbw_j;
-				if (!std::isfinite(jacobian_qbw_j.norm()) || jacobian_qbw_j.norm() > 1e10) {
-					std::cout << "q_bw_i" << q_bw_i.coeffs()
-					          << "\nt_bw_i:" << t_bw_i
-					          << "\nq_bw_j:" << q_bw_j.coeffs()
-					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth_i << std::endl;
-					return false;
-				}
+
 
 			}
 
@@ -237,14 +219,6 @@ public:
 				Eigen::Map<Eigen::Matrix<double, 2, 3, Eigen::RowMajor>>
 						jacobian_tbw_j(jacobians[3]);
 				jacobian_tbw_j = reduce_mat * R_bc_j * R_bw_j.transpose() * -1.0;
-				if (!std::isfinite(jacobian_tbw_j.sum()) || jacobian_tbw_j.norm() > 1e10) {
-					std::cout << "q_bw_i" << q_bw_i.coeffs()
-					          << "\nt_bw_i:" << t_bw_i
-					          << "\nq_bw_j:" << q_bw_j.coeffs()
-					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth_i << std::endl;
-					return false;
-				}
 
 			}
 
@@ -256,14 +230,6 @@ public:
 				jacobian_inv_depth = (reduce_mat * R_bc_j * R_bw_j.transpose() * R_bw_i * R_bc_i.transpose()
 				                      * ob_i_ * -1.0 / (inv_depth_i * inv_depth_i));
 
-				if (!std::isfinite(jacobian_inv_depth.sum()) || jacobian_inv_depth.norm() > 1e10) {
-					std::cout << "q_bw_i" << q_bw_i.coeffs()
-					          << "\nt_bw_i:" << t_bw_i
-					          << "\nq_bw_j:" << q_bw_j.coeffs()
-					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth_i << std::endl;
-					return false;
-				}
 
 			}
 
@@ -283,7 +249,7 @@ public:
 	Eigen::Vector3d t_bc_i_;
 	Eigen::Vector3d t_bc_j_;
 
-	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity()* 100.0;// (5.0/250.0); // infomation matrix of observation.
+	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity() * 100.0;// (5.0/250.0); // infomation matrix of observation.
 
 #ifdef UNIT_SPHERE_ERROR
 	Eigen::Matrix<double, 2, 3> tangent_base;

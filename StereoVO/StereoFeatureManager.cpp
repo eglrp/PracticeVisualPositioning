@@ -673,21 +673,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 //					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
 //					if (cv::norm(first_left_ob - first_right_ob) > 5.0)
-//					problem.AddResidualBlock(
-//							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
-//							                                              double(first_left_ob.x),
-//							                                              double(first_left_ob.y),
-//							                                              double(first_right_ob.x),
-//							                                              double(first_right_ob.y),
-//							                                              left_q_bc_array, left_t_bc_array,
-//							                                              right_q_bc_array, right_t_bc_array
-//							),
-//							new ceres::CauchyLoss(1.0),
-//							first_frame.qua.coeffs().data(),
-//							first_frame.pos.data(),
-//							cur_feature.inv_depth_array
-//
-//					);
+					problem.AddResidualBlock(
+							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
+							                                              double(first_left_ob.x),
+							                                              double(first_left_ob.y),
+							                                              double(first_right_ob.x),
+							                                              double(first_right_ob.y),
+							                                              left_q_bc_array, left_t_bc_array,
+							                                              right_q_bc_array, right_t_bc_array
+							),
+							new ceres::CauchyLoss(1.0),
+							first_frame.qua.coeffs().data(),
+							first_frame.pos.data(),
+							cur_feature.inv_depth_array
+
+					);
 				}
 
 				// add frame to frame constraint. based on
@@ -696,20 +696,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 					if (second_frame.id_pt_map.find(cur_feature.feature_id) != second_frame.id_pt_map.end()) {
 						// add left observation for different frame.
 						cv::Point2f &second_left_ob = second_frame.id_pt_map.find(cur_feature.feature_id)->second;
-//						problem.AddResidualBlock(
-//								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
-//								                                        double(first_left_ob.x),
-//								                                        double(first_left_ob.y),
-//								                                        double(second_left_ob.x),
-//								                                        double(second_left_ob.y),
-//								                                        left_q_bc_array, left_t_bc_array,
-//								                                        right_q_bc_array, right_t_bc_array
-//								),
-//								new ceres::CauchyLoss(1.0),
-//								first_frame.qua.coeffs().data(), first_frame.pos.data(),
-//								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-//								cur_feature.inv_depth_array
-//						);
 
 						problem.AddResidualBlock(
 								new InvDepthReProjectionError(fx, fy, cx, cy,
@@ -733,20 +719,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 							) {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
-//						problem.AddResidualBlock(
-//								SimpleInvDepthReProjectionError::Create(fx, fy, cx, cy,
-//								                                        double(first_left_ob.x),
-//								                                        double(first_left_ob.y),
-//								                                        double(second_right_ob.x),
-//								                                        double(second_right_ob.y),
-//								                                        left_q_bc_array, left_t_bc_array,
-//								                                        right_q_bc_array, right_t_bc_array
-//								),
-//								new ceres::CauchyLoss(1.0),
-//								first_frame.qua.coeffs().data(), first_frame.pos.data(),
-//								second_frame.qua.coeffs().data(), second_frame.pos.data(),
-//								cur_feature.inv_depth_array
-//						);
 
 
 						problem.AddResidualBlock(
@@ -777,7 +749,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.linear_solver_type = ceres::DENSE_SCHUR;
 		options.trust_region_strategy_type = ceres::DOGLEG;
 
-//		options.check_gradients = true;
+		options.check_gradients = true;
 //		options.gradient_check_relative_precision =1e-04;
 
 //		options.num_threads = 1;
@@ -791,6 +763,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 		ceres::Solve(options, &problem, &summary);
 //		std::cout << summary.FullReport() << std::endl;
 		std::cout << summary.BriefReport() << std::endl;
+		if(summary.termination_type == ceres::TerminationType::FAILURE){
+			std::cout << summary.FullReport() << std::endl;
+
+			int a = 100;
+			a = a + cur_frame_id;
+			std::cout << " frame id:" << a - 100 ;
+			std::cout << "some error happend" << std::endl;
+		}
 
 		// delete oldest frame.
 		if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {

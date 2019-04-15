@@ -12,7 +12,7 @@
 #define UNIT_SPHERE_ERROR
 
 //// useful function
-inline Eigen::Matrix3d hat(Eigen::Vector3d a) {
+inline Eigen::Matrix3d hat(const Eigen::Vector3d a) {
 	Eigen::Matrix3d hat_a;
 	hat_a << 0.0, -a.z(), a.y(),
 			a.z(), 0.0, -a.x(),
@@ -22,13 +22,14 @@ inline Eigen::Matrix3d hat(Eigen::Vector3d a) {
 
 
 /**
- * @brief \partical(R{q} a)\partial{q}
+ * @brief \partical(R{q} a)/\partial{q}
  * @param qua
  * @param a
  * @return
  */
-inline Eigen::Matrix<double, 3, 4> quternion_derivative(Eigen::Quaterniond qua, Eigen::Vector3d a) {
-	double norm_factor = qua.norm();
+inline Eigen::Matrix<double, 3, 4> quternion_derivative(const Eigen::Quaterniond qua,
+		const Eigen::Vector3d a) {
+	double norm_factor = 1.0;//qua.norm();
 	double w = qua.w() / norm_factor;
 	Eigen::Vector3d v(qua.x() / norm_factor, qua.y() / norm_factor, qua.z() / norm_factor);
 
@@ -149,7 +150,7 @@ public:
 			Eigen::Matrix3d R_bc_i = q_bc_i_.toRotationMatrix();
 			Eigen::Matrix3d R_bc_j = q_bc_j_.toRotationMatrix();
 
-			Eigen::Matrix<double, 2, 3> reduce_mat(Eigen::Matrix<double, 2, 3>::Identity());
+			Eigen::Matrix<double, 2, 3> reduce_mat(Eigen::Matrix<double, 2, 3>::Zero());
 
 #ifdef UNIT_SPHERE_ERROR
 			double norm = pt_cj.norm();
@@ -162,9 +163,6 @@ public:
 					-x1 * x2 / pow(norm, 3), 1.0 / norm - x2 * x2 / pow(norm, 3), -x2 * x3 / pow(norm, 3),
 					-x1 * x3 / pow(norm, 3), -x2 * x3 / pow(norm, 3), 1.0 / norm - x3 * x3 / pow(norm, 3);
 			reduce_mat = sqrt_info * tangent_base * norm_jaco;
-			if (residual_vec.norm() < 0.3) {
-				reduce_mat *= 0.0;
-			}
 #else
 			reduce_mat <<
 					   1.0 / depth_j, 0, -pt_cj(0) / depth_j / depth_j,
@@ -283,7 +281,7 @@ public:
 	Eigen::Vector3d t_bc_i_;
 	Eigen::Vector3d t_bc_j_;
 
-	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity();// (5.0/250.0); // infomation matrix of observation.
+	Eigen::Matrix2d sqrt_info = Eigen::Matrix2d::Identity()* 100.0;// (5.0/250.0); // infomation matrix of observation.
 
 #ifdef UNIT_SPHERE_ERROR
 	Eigen::Matrix<double, 2, 3> tangent_base;

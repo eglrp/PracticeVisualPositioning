@@ -648,8 +648,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 				}
 
 
-
-
 			} else {
 				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 2);
 				ordering->AddElementToGroup(cur_frame.pos.data(), 2);
@@ -791,6 +789,25 @@ bool StereoFeatureManager::OptimizationCoP() {
 			std::cout << " frame id:" << a - 100;
 			std::cout << "some error happend" << std::endl;
 		}
+
+//		// update pose of feature in sliding window.
+//		for (auto the_feature_id:sw_feature_id_set_) {
+//			FeaturePreId &cur_feature = feature_map_.find(the_feature_id)->second;
+//
+//			FramePreId &inv_depth_frame = frame_map_.find(cur_feature.depth_frame_id)->second;
+//			cv::Point2f &pt_ci_image = inv_depth_frame.id_pt_map[cur_feature.feature_id];
+//			Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x) - cx) / fx,
+//			                           (double(pt_ci_image.y) - cy) / fy,
+//			                           1.0);
+//
+//			Eigen::Vector3d pt_ci = pt_ci_unit / cur_feature.inv_depth_array[0];
+//			cur_feature.pt = inv_depth_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + inv_depth_frame.pos;
+//			if (cur_feature.initialized == false) {
+//				cur_feature.initialized = true;
+//			}
+//
+//
+//		}
 
 		// delete oldest frame.
 		if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {

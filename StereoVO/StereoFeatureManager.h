@@ -19,6 +19,7 @@
 
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
+#include <ceres/ordered_groups.h>
 
 #include <CeresSolverTools/SimpleReprojectionError.h>
 #include <CeresSolverTools/SimpleKPPriorError.h>

@@ -583,6 +583,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		ceres::Problem problem;
 		ceres::Solver::Options options;
 		ceres::Solver::Summary summary;
+		ceres::ParameterBlockOrdering *ordering = new ceres::ParameterBlockOrdering();
 
 		double fx(config_ptr_->left_cam_mat.at<float>(0, 0));
 		double fy(config_ptr_->left_cam_mat.at<float>(1, 1));
@@ -631,11 +632,27 @@ bool StereoFeatureManager::OptimizationCoP() {
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
-			if (cur_frame.frame_id < 1 || i < 4) {
+			if (cur_frame.frame_id < 1) {
 				// set zero to current frame.
 				problem.SetParameterBlockConstant(cur_frame.qua.coeffs().data());
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
+			}
 
+			if (i < int(config_ptr_->slide_windows_size / 3)) {
+				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 1);
+				ordering->AddElementToGroup(cur_frame.pos.data(), 1);
+
+				for (int pi(0); pi < 3; ++pi) {
+					problem.SetParameterLowerBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) - 1.0);
+					problem.SetParameterUpperBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) + 1.0);
+				}
+
+
+
+
+			} else {
+				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 2);
+				ordering->AddElementToGroup(cur_frame.pos.data(), 2);
 			}
 
 		}
@@ -645,6 +662,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 			FeaturePreId &cur_feature = feature_map_.find(*it)->second;
 			if (cur_feature.key_frame_id_deque.size() > 2) {
 				problem.AddParameterBlock(cur_feature.inv_depth_array, 1);
+				ordering->AddElementToGroup(cur_feature.inv_depth_array, 0);
 
 				FramePreId &first_frame = frame_map_.find(cur_feature.key_frame_id_deque[0])->second;
 				if (cur_feature.depth_frame_id < 0) {
@@ -749,9 +767,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.linear_solver_type = ceres::DENSE_SCHUR;
 		options.trust_region_strategy_type = ceres::DOGLEG;
 
-		options.check_gradients = true;
-//		options.gradient_check_relative_precision =1e-04;
+//		options.check_gradients = true;
+//		options.gradient_check_relative_precision = 1e-04;
 
+		options.update_state_every_iteration = true;
 //		options.num_threads = 1;
 //		options.num_linear_solver_threads = 1;
 
@@ -759,16 +778,17 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.num_linear_solver_threads = 8;
 
 		options.max_num_iterations = 10;
+		options.linear_solver_ordering.reset(ordering);
 
 		ceres::Solve(options, &problem, &summary);
 //		std::cout << summary.FullReport() << std::endl;
 		std::cout << summary.BriefReport() << std::endl;
-		if(summary.termination_type == ceres::TerminationType::FAILURE){
+		if (summary.termination_type == ceres::TerminationType::FAILURE) {
 			std::cout << summary.FullReport() << std::endl;
 
 			int a = 100;
 			a = a + cur_frame_id;
-			std::cout << " frame id:" << a - 100 ;
+			std::cout << " frame id:" << a - 100;
 			std::cout << "some error happend" << std::endl;
 		}
 

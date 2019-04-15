@@ -107,10 +107,10 @@ public:
 		Eigen::Map<const Eigen::Vector3d> t_bw_i(parameters[1]);
 		Eigen::Map<const Eigen::Quaterniond> q_bw_j(parameters[2]);
 		Eigen::Map<const Eigen::Vector3d> t_bw_j(parameters[3]);
-		const double inv_depth = parameters[4][0]; // inverse depth.
+		const double inv_depth_i = parameters[4][0]; // inverse depth.
 
 
-		Eigen::Vector3d pt_bi = q_bc_i_.inverse() * (ob_i_ / inv_depth - t_bc_i_);
+		Eigen::Vector3d pt_bi = q_bc_i_.inverse() * (ob_i_ / inv_depth_i - t_bc_i_);
 		Eigen::Vector3d pt_w = q_bw_i * (pt_bi) + t_bw_i;
 		Eigen::Vector3d pt_bj = (q_bw_j.inverse() * (pt_w - t_bw_j));
 		Eigen::Vector3d pt_cj = q_bc_j_ * pt_bj + t_bc_j_;
@@ -136,7 +136,7 @@ public:
 			          << "\nt_bw_i:" << t_bw_i
 			          << "\nq_bw_j:" << q_bw_j.coeffs()
 			          << "\nt_bw_j:" << t_bw_j
-			          << "\n inv depth i:" << inv_depth << std::endl;
+			          << "\n inv depth i:" << inv_depth_i << std::endl;
 			double tmp_array[2];
 			tmp_array[0] = residuals[0];
 			tmp_array[1] = residuals[1];
@@ -187,7 +187,7 @@ public:
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
 					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth << std::endl;
+					          << "\n inv depth i:" << inv_depth_i << std::endl;
 					return false;
 				}
 			}
@@ -204,7 +204,7 @@ public:
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
 					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth << std::endl;
+					          << "\n inv depth i:" << inv_depth_i << std::endl;
 //					jacobian_tbw_i.setZero();
 					return false;
 				}
@@ -226,7 +226,7 @@ public:
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
 					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth << std::endl;
+					          << "\n inv depth i:" << inv_depth_i << std::endl;
 					return false;
 				}
 
@@ -242,7 +242,7 @@ public:
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
 					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth << std::endl;
+					          << "\n inv depth i:" << inv_depth_i << std::endl;
 					return false;
 				}
 
@@ -252,14 +252,16 @@ public:
 			if (jacobians[4]) {
 //				Eigen::Map<Eigen::Matrix<double, 2, 1, Eigen::RowMajor>>
 				Eigen::Map<Eigen::Vector2d> jacobian_inv_depth(jacobians[4]);
+
 				jacobian_inv_depth = (reduce_mat * R_bc_j * R_bw_j.transpose() * R_bw_i * R_bc_i.transpose()
-				                      * ob_i_ * -1.0 / (inv_depth * inv_depth));
+				                      * ob_i_ * -1.0 / (inv_depth_i * inv_depth_i));
+
 				if (!std::isfinite(jacobian_inv_depth.sum()) || jacobian_inv_depth.norm() > 1e10) {
 					std::cout << "q_bw_i" << q_bw_i.coeffs()
 					          << "\nt_bw_i:" << t_bw_i
 					          << "\nq_bw_j:" << q_bw_j.coeffs()
 					          << "\nt_bw_j:" << t_bw_j
-					          << "\n inv depth i:" << inv_depth << std::endl;
+					          << "\n inv depth i:" << inv_depth_i << std::endl;
 					return false;
 				}
 

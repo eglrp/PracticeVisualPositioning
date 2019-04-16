@@ -10,13 +10,17 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-struct BlockInfo {
+struct ParameterBlockInfo {
 	const double *block_para_address = nullptr;
 	int block_size = -1;
 	int block_idx = -1;
 	bool removed_flag = false;
 
 	double *keeped_block_value = nullptr;
+
+	~ParameterBlockInfo(){
+		delete [] keeped_block_value;
+	}
 };
 
 class MarginalizationServer {
@@ -49,7 +53,7 @@ protected:
 
 
 	// save marginalization preprocessed data.
-	std::map<double *, BlockInfo> address_block_info_map_; // recored relate information here.
+	std::map<double *, ParameterBlockInfo> address_block_info_map_; // recored relate information here.
 	// save the information adopted in marginalization constraint
 	Eigen::MatrixXd block_linearized_jac;
 	Eigen::MatrixXd block_linear_residual;

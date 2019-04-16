@@ -15,7 +15,7 @@ class MarginalizationFactor : public ceres::CostFunction {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	MarginalizationFactor(std::vector<BlockInfo *> block_info_vec,
+	MarginalizationFactor(std::vector<ParameterBlockInfo *> block_info_vec,
 	                      Eigen::MatrixXd &block_linearized_jac,
 	                      Eigen::MatrixXd &block_linear_residual) :
 			block_linearized_jac_(block_linearized_jac),
@@ -39,7 +39,7 @@ public:
 
 	}
 
-	std::vector<BlockInfo *> block_info_vec_;
+	std::vector<ParameterBlockInfo *> block_info_vec_;
 
 	Eigen::MatrixXd block_linearized_jac_;
 	Eigen::MatrixXd block_linearized_residual_;

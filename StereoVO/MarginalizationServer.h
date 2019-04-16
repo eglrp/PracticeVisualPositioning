@@ -16,7 +16,7 @@ struct BlockInfo {
 	int block_idx = -1;
 	bool removed_flag = false;
 
-	Eigen::VectorXd keeped_block_value;
+	double *keeped_block_value = nullptr;
 };
 
 class MarginalizationServer {
@@ -24,8 +24,6 @@ public:
 	MarginalizationServer() {
 
 	}
-
-
 
 
 	bool AddCostFunction(ceres::CostFunction *func_ptr);
@@ -40,7 +38,6 @@ public:
 	bool MarignalizationProcess();
 
 	bool InsertMarignalizationFactor(ceres::Problem &problem);
-
 
 
 	// return state of marginalizationg

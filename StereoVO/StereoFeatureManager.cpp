@@ -638,8 +638,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 				problem.SetParameterBlockConstant(cur_frame.pos.data());
 			}
 
-			if (i < int(config_ptr_->slide_windows_size / 3)) {
-				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 1);
+			if (i < int(config_ptr_->slide_windows_size / 2)) {
+				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(),1);
 				ordering->AddElementToGroup(cur_frame.pos.data(), 1);
 
 				for (int pi(0); pi < 3; ++pi) {
@@ -736,16 +736,17 @@ bool StereoFeatureManager::OptimizationCoP() {
 						// add right observation for different frame.
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 
-
-						problem.AddResidualBlock(
-								new InvDepthReProjectionError(fx, fy, cx, cy,
+						ceres::CostFunction *inv_depth_error_r = new InvDepthReProjectionError(fx, fy, cx, cy,
 								                              double(first_left_ob.x),
 								                              double(first_left_ob.y),
 								                              double(second_right_ob.x),
 								                              double(second_right_ob.y),
 								                              left_q_bc_array, left_t_bc_array,
 								                              right_q_bc_array, right_t_bc_array
-								),
+								);
+
+						problem.AddResidualBlock(
+								inv_depth_error_r,
 								new ceres::CauchyLoss(1.0),
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
 								second_frame.qua.coeffs().data(), second_frame.pos.data(),
@@ -775,7 +776,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
 
-		options.max_num_iterations = 30;
+		options.max_num_iterations = 10;
+		options.max_solver_time_in_seconds = 0.05;
 		options.linear_solver_ordering.reset(ordering);
 
 		ceres::Solve(options, &problem, &summary);
@@ -790,43 +792,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 			std::cout << "some error happend" << std::endl;
 		}
 
-//		// update pose of feature in sliding window.
-
 
 		// delete oldest frame.
 		if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
-
-			for (auto fid_itea = sw_feature_id_set_.begin();
-			     fid_itea != sw_feature_id_set_.end(); ++fid_itea) {
-				int the_feature_id = *fid_itea;
-				std::cout << "the feature id:" << the_feature_id << std::endl;
-				auto feature_itea = feature_map_.find(the_feature_id);
-				if (feature_itea != feature_map_.end() && feature_itea->second.initialized == true) {
-					FeaturePreId &cur_feature = feature_map_.find(the_feature_id)->second;
-
-					FramePreId &inv_depth_frame = frame_map_.find(cur_feature.depth_frame_id)->second;
-					if (inv_depth_frame.id_pt_map.find(cur_feature.feature_id) != inv_depth_frame.id_pt_map.end()) {
-						cv::Point2f &pt_ci_image = inv_depth_frame.id_pt_map[cur_feature.feature_id];
-						Eigen::Vector3d pt_ci_unit((double(pt_ci_image.x) - cx) / fx,
-						                           (double(pt_ci_image.y) - cy) / fy,
-						                           1.0);
-
-						Eigen::Vector3d pt_ci = pt_ci_unit / cur_feature.inv_depth_array[0];
-						Eigen::Vector3d pt_w =
-								inv_depth_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + inv_depth_frame.pos;
-
-					}
-
-
-//				if (cur_feature.initialized == false) {
-//					cur_feature.initialized = true;
-//				}
-
-				}
-
-			}
-
-
 
 
 
@@ -864,7 +832,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 				                         [&](int t_id) {
 					                         return t_id == oldest_frame.frame_id;
 				                         });
-				if (feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size() > 2) {
+				if (feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size() > 1) {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
 					// next frame id (select latest frame that observed such feature)

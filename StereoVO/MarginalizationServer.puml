@@ -1,0 +1,10 @@
+@startuml
+
+MarginalizationServer: AddCostFunction()
+MarginalizationServer: markRemovedParameter()
+
+StereoFeatureManager:
+
+
+
+@enduml

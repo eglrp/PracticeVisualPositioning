@@ -23,6 +23,10 @@ struct ParameterBlockInfo {
 	}
 };
 
+struct ResidualBlockInfo{
+
+};
+
 class MarginalizationServer {
 public:
 	MarginalizationServer() {

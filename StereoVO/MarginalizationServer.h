@@ -18,12 +18,14 @@ struct ParameterBlockInfo {
 
 	double *keeped_block_value = nullptr;
 
-	~ParameterBlockInfo(){
-		delete [] keeped_block_value;
+	~ParameterBlockInfo() {
+		delete[] keeped_block_value;
 	}
 };
 
-struct ResidualBlockInfo{
+struct ResidualBlockInfo {
+	ceres::CostFunction *cost_func_ptr;
+	std::vector<double *> para_block_vec;
 
 };
 
@@ -34,7 +36,12 @@ public:
 	}
 
 
-	bool AddCostFunction(ceres::CostFunction *func_ptr);
+	bool AddResidualInfo(ceres::CostFunction *func_ptr,
+	                     std::vector<double *> para_ptr_vec);
+
+	bool AddInvDepthResidualInfo(ceres::CostFunction *cost_func_ptr,
+	                             double *pre_qua_ptr, double *pre_pos_ptr,
+	                             double *qua_ptr, double *pos_ptr, double *inv_depth_ptr);
 
 	/**
 	 * @brief save removed paramteres to
@@ -65,7 +72,8 @@ protected:
 
 	// Save information temp.
 	std::set<double *> removed_block_set_;
-	std::vector<ceres::CostFunction *> cost_func_vec;
+//	std::vector<ceres::CostFunction *> cost_func_vec;
+	std::vector<ResidualBlockInfo> residual_block_vec;
 
 
 };

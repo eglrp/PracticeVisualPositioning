@@ -639,7 +639,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 			}
 
 			if (i < int(config_ptr_->slide_windows_size / 2)) {
-				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(),1);
+				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 1);
 				ordering->AddElementToGroup(cur_frame.pos.data(), 1);
 
 				for (int pi(0); pi < 3; ++pi) {
@@ -713,7 +713,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 						// add left observation for different frame.
 						cv::Point2f &second_left_ob = second_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
-						problem.AddResidualBlock(
+						ceres::CostFunction *inv_depth_error_l =
 								new InvDepthReProjectionError(fx, fy, cx, cy,
 								                              double(first_left_ob.x),
 								                              double(first_left_ob.y),
@@ -721,7 +721,9 @@ bool StereoFeatureManager::OptimizationCoP() {
 								                              double(second_left_ob.y),
 								                              left_q_bc_array, left_t_bc_array,
 								                              left_q_bc_array, left_t_bc_array
-								),
+								);
+						problem.AddResidualBlock(
+								inv_depth_error_l,
 								new ceres::CauchyLoss(1.0),
 //								NULL,
 								first_frame.qua.coeffs().data(), first_frame.pos.data(),
@@ -737,13 +739,15 @@ bool StereoFeatureManager::OptimizationCoP() {
 						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 
 						ceres::CostFunction *inv_depth_error_r = new InvDepthReProjectionError(fx, fy, cx, cy,
-								                              double(first_left_ob.x),
-								                              double(first_left_ob.y),
-								                              double(second_right_ob.x),
-								                              double(second_right_ob.y),
-								                              left_q_bc_array, left_t_bc_array,
-								                              right_q_bc_array, right_t_bc_array
-								);
+						                                                                       double(first_left_ob.x),
+						                                                                       double(first_left_ob.y),
+						                                                                       double(second_right_ob.x),
+						                                                                       double(second_right_ob.y),
+						                                                                       left_q_bc_array,
+						                                                                       left_t_bc_array,
+						                                                                       right_q_bc_array,
+						                                                                       right_t_bc_array
+						);
 
 						problem.AddResidualBlock(
 								inv_depth_error_r,

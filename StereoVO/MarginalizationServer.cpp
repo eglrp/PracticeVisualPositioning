@@ -17,6 +17,16 @@ bool MarginalizationServer::markRemovedParameter(double *para_ptr) {
 
 
 bool MarginalizationServer::MarignalizationProcess() {
+	// initial parameter idx.
+
+
+
+	// generate jacobian matrix. and A, b.
+
+
+
+	//
+
 
 
 	return true;
@@ -40,6 +50,8 @@ bool MarginalizationServer::AddResidualInfo(ceres::CostFunction *func_ptr,
 		ResidualBlockInfo residualBlockInfo;
 		residualBlockInfo.cost_func_ptr = func_ptr;
 		residualBlockInfo.para_block_vec = para_ptr_vec;
+
+		residual_block_vec.push_back(residualBlockInfo);
 
 		return true;
 	} else {

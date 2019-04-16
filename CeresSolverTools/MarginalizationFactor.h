@@ -30,7 +30,7 @@ public:
 		int m = block_linearized_jac_.rows();
 		Eigen::VectorXd dx(n);
 		for(int i=0;i<block_info_vec_.size();++i){
-			int size = block_info_vec_[i]->block_size;
+			int size = block_info_vec_[i]->global_block_size;
 			int idx = block_info_vec_[i]->block_idx;
 			Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(parameters[i],size);
 			Eigen::VectorXd &x0 = block_info_vec_[i]->keeped_block_value;

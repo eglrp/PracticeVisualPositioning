@@ -12,7 +12,10 @@
 
 struct ParameterBlockInfo {
 	const double *block_para_address = nullptr;
-	int block_size = -1;
+	// parameter block size at local and global.
+	int global_block_size = -1;
+	int local_block_size = -1;
+
 	int block_idx = -1;
 	bool removed_flag = false;
 
@@ -26,6 +29,10 @@ struct ParameterBlockInfo {
 struct ResidualBlockInfo {
 	ceres::CostFunction *cost_func_ptr;
 	std::vector<double *> para_block_vec;
+
+	std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> jacobian_matrix_vec;
+
+
 
 };
 

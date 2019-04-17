@@ -789,9 +789,12 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.num_threads = 8;
 		options.num_linear_solver_threads = 8;
 
-		options.max_num_iterations = 10;
-		options.max_solver_time_in_seconds = 0.1;
-		options.linear_solver_ordering.reset(ordering);
+//		options.max_num_iterations = 10;
+//		options.max_solver_time_in_seconds = 0.1;
+
+//		options.linear_solver_ordering.reset(ordering);
+		delete ordering;
+
 
 		ceres::Solve(options, &problem, &summary);
 

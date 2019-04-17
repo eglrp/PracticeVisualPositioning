@@ -54,7 +54,7 @@ public:
 	int pyr_patch_size = 21;
 	int pyr_levels = 3;
 
-	int max_features = 300;
+	int max_features = 200;
 	int min_feature_dis = 15;
 	double feature_quality = 0.03;
 
@@ -76,12 +76,12 @@ public:
 	/**
 	 * Parameters For Feature Manager
 	 */
-	int slide_windows_size = 15; //
+	int slide_windows_size = 20; //
 
 	int min_covisible_feature = 100;// lower bound of tracked feature number.
-	float min_parallex = 40.0; // average moving distance of all features.
+	float min_parallex = 20.0; // average moving distance of all features.
 
-	float min_ob_distance = 2.0;//
+	float min_ob_distance = 5.0;//
 
 	/**
 	 * Parameter For Optimizer

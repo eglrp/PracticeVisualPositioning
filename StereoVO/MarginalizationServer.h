@@ -30,8 +30,12 @@ struct ResidualBlockInfo {
 	ceres::CostFunction *cost_func_ptr;
 	std::vector<double *> para_block_vec;
 
-	std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> jacobian_matrix_vec;
+	std::vector<Eigen::Matrix<double,
+			Eigen::Dynamic,
+			Eigen::Dynamic,
+			Eigen::RowMajor>> jacobian_matrix_vec;
 
+	// TODO:adopting new version of marginalization for speeding up.
 
 
 };
@@ -46,6 +50,16 @@ public:
 	bool AddResidualInfo(ceres::CostFunction *func_ptr,
 	                     std::vector<double *> para_ptr_vec);
 
+	/**
+	 * @brief Add residual block information for inverse depth.
+	 * @param cost_func_ptr
+	 * @param pre_qua_ptr
+	 * @param pre_pos_ptr
+	 * @param qua_ptr
+	 * @param pos_ptr
+	 * @param inv_depth_ptr
+	 * @return
+	 */
 	bool AddInvDepthResidualInfo(ceres::CostFunction *cost_func_ptr,
 	                             double *pre_qua_ptr, double *pre_pos_ptr,
 	                             double *qua_ptr, double *pos_ptr, double *inv_depth_ptr);
@@ -57,6 +71,10 @@ public:
 	 */
 	bool markRemovedParameter(double *para_ptr);
 
+	/**
+	 * @brief
+	 * @return
+	 */
 	bool MarignalizationProcess();
 
 	bool InsertMarignalizationFactor(ceres::Problem &problem);
@@ -71,7 +89,8 @@ protected:
 
 
 	// save marginalization preprocessed data.
-	std::map<double *, ParameterBlockInfo> address_block_info_map_; // recored relate information here.
+	// recored relate information here.
+	std::map<double *, ParameterBlockInfo> address_block_info_map_;
 	// save the information adopted in marginalization constraint
 	Eigen::MatrixXd block_linearized_jac;
 	Eigen::MatrixXd block_linear_residual;
@@ -79,7 +98,6 @@ protected:
 
 	// Save information temp.
 	std::set<double *> removed_block_set_;
-//	std::vector<ceres::CostFunction *> cost_func_vec;
 	std::vector<ResidualBlockInfo> residual_block_vec;
 
 

@@ -35,6 +35,7 @@ bool MarginalizationServer::MarignalizationProcess() {
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
 
+
 }
 
 

@@ -84,10 +84,12 @@ int main() {
 
 	std::string img_name;
 	while (list_file_stream >> img_name) {
-		cv::Mat left_img = cv::imread(dir_name + left_sub_dir_name + "/" + img_name,
-		                              cv::IMREAD_GRAYSCALE);
-		cv::Mat right_img = cv::imread(dir_name + right_sub_dir_name + "/" + img_name,
-		                               cv::IMREAD_GRAYSCALE);
+		cv::Mat left_img =
+				cv::imread(dir_name + left_sub_dir_name + "/" + img_name,
+				           cv::IMREAD_GRAYSCALE);
+		cv::Mat right_img =
+				cv::imread(dir_name + right_sub_dir_name + "/" + img_name,
+				           cv::IMREAD_GRAYSCALE);
 
 //		cv::imshow("left", left_img);
 //		cv::imshow("right", right_img);

@@ -786,14 +786,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 //		options.num_threads = 1;
 //		options.num_linear_solver_threads = 1;
 
-		options.num_threads = 8;
-		options.num_linear_solver_threads = 8;
+		options.num_threads = 6;
+		options.num_linear_solver_threads = 6;
 
-//		options.max_num_iterations = 10;
-//		options.max_solver_time_in_seconds = 0.1;
+		options.max_num_iterations = 30;
+		options.max_solver_time_in_seconds = 0.5;
 
-//		options.linear_solver_ordering.reset(ordering);
-		delete ordering;
+		options.linear_solver_ordering.reset(ordering);
+//		delete ordering;
 
 
 		ceres::Solve(options, &problem, &summary);
@@ -813,9 +813,6 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 		// delete oldest frame.
 		if (key_frame_id_vec_.size() > config_ptr_->slide_windows_size) {
-
-
-
 			/**
 			 * FRAME:
 			 * 1. set key frame flag = false

@@ -48,7 +48,7 @@ bool MarginalizationServer::MarignalizationProcess() {
 
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
-	problem.GetResidualBlocks()
+//	problem.GetResidualBlocks()
 
 
 

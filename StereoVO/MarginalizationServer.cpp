@@ -17,11 +17,19 @@ bool MarginalizationServer::markRemovedParameter(double *para_ptr) {
 
 
 bool MarginalizationServer::MarignalizationProcess() {
+	// remove all parameter BLock info imformation
+	address_block_info_map_.clear();
+
+
 	// initial parameter idx.
 	int total_dimensional=0;
 	int total_removed_dismensional = 0;
 
 	for(auto &residual_block:residual_block_vec){
+		for(auto &para_block_ptr:residual_block.para_block_vec){
+		}
+
+
 
 	}
 
@@ -41,6 +49,7 @@ bool MarginalizationServer::MarignalizationProcess() {
 
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
+
 
 
 }

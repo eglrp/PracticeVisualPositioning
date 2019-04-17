@@ -20,11 +20,12 @@ struct ParameterBlockInfo {
 	int block_idx = -1;
 	bool removed_flag = false;
 
-	double *keeped_block_value = nullptr;
+//	double *keeped_block_value = nullptr;
+	Eigen::VectorXd keeped_block_value;
 
-	~ParameterBlockInfo() {
-		delete[] keeped_block_value;
-	}
+//	~ParameterBlockInfo() {
+//		delete[] keeped_block_value;
+//	}
 };
 
 struct ResidualBlockInfo {

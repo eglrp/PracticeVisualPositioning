@@ -623,13 +623,16 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 			if (std::isnan(cur_frame.qua.coeffs().sum()) || std::isnan(cur_frame.pos.sum())) {
 				std::cout << " at " << cur_frame.frame_id << "-th frame" <<
-				          "quaternion is :" << cur_frame.qua.coeffs().transpose() << " pos is:" << cur_frame.pos
+				          "quaternion is :" << cur_frame.qua.coeffs().transpose()
+				          << " pos is:" << cur_frame.pos
 				          << std::endl;
 				std::cout << __FILE__ << ":  with some problem" << std::endl;
 			}
 
 			cur_frame.qua.normalize();
-			problem.AddParameterBlock(cur_frame.qua.coeffs().data(), 4, new ceres::EigenQuaternionParameterization);
+			problem.AddParameterBlock(cur_frame.qua.coeffs().data(),
+			                          4,
+			                          new ceres::EigenQuaternionParameterization);
 			problem.AddParameterBlock(cur_frame.pos.data(), 3);
 
 			if (cur_frame.frame_id < 1) {
@@ -669,7 +672,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 						cur_feature.depth_frame_id = first_frame.frame_id;
 
 						Eigen::Vector3d pt_cam = left_q_bc * (first_frame.qua.inverse() *
-						                                      (cur_feature.pt - first_frame.pos)) + left_t_bc;
+						                                      (cur_feature.pt - first_frame.pos))
+						                         + left_t_bc;
 						cur_feature.inv_depth_array[0] = 1.0 / pt_cam(2);
 
 					} else {
@@ -709,9 +713,11 @@ bool StereoFeatureManager::OptimizationCoP() {
 				// add frame to frame constraint. based on
 				for (int j = 1; j < cur_feature.key_frame_id_deque.size(); ++j) {
 					FramePreId &second_frame = frame_map_.find(cur_feature.key_frame_id_deque[j])->second;
-					if (second_frame.id_pt_map.find(cur_feature.feature_id) != second_frame.id_pt_map.end()) {
+					if (second_frame.id_pt_map.find(cur_feature.feature_id)
+					    != second_frame.id_pt_map.end()) {
 						// add left observation for different frame.
-						cv::Point2f &second_left_ob = second_frame.id_pt_map.find(cur_feature.feature_id)->second;
+						cv::Point2f &second_left_ob =
+								second_frame.id_pt_map.find(cur_feature.feature_id)->second;
 
 						ceres::CostFunction *inv_depth_error_l =
 								new InvDepthReProjectionError(fx, fy, cx, cy,
@@ -732,22 +738,25 @@ bool StereoFeatureManager::OptimizationCoP() {
 						);
 					}
 
-					if (second_frame.id_r_pt_map.find(cur_feature.feature_id) != second_frame.id_r_pt_map.end()
+					if (second_frame.id_r_pt_map.find(cur_feature.feature_id)
+					    != second_frame.id_r_pt_map.end()
 //					    && second_frame.frame_id < 5
 							) {
 						// add right observation for different frame.
-						cv::Point2f &second_right_ob = second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
+						cv::Point2f &second_right_ob =
+								second_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 
-						ceres::CostFunction *inv_depth_error_r = new InvDepthReProjectionError(fx, fy, cx, cy,
-						                                                                       double(first_left_ob.x),
-						                                                                       double(first_left_ob.y),
-						                                                                       double(second_right_ob.x),
-						                                                                       double(second_right_ob.y),
-						                                                                       left_q_bc_array,
-						                                                                       left_t_bc_array,
-						                                                                       right_q_bc_array,
-						                                                                       right_t_bc_array
-						);
+						ceres::CostFunction *inv_depth_error_r =
+								new InvDepthReProjectionError(fx, fy, cx, cy,
+								                              double(first_left_ob.x),
+								                              double(first_left_ob.y),
+								                              double(second_right_ob.x),
+								                              double(second_right_ob.y),
+								                              left_q_bc_array,
+								                              left_t_bc_array,
+								                              right_q_bc_array,
+								                              right_t_bc_array
+								);
 
 						problem.AddResidualBlock(
 								inv_depth_error_r,
@@ -785,6 +794,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 		options.linear_solver_ordering.reset(ordering);
 
 		ceres::Solve(options, &problem, &summary);
+
+
 //		std::cout << summary.FullReport() << std::endl;
 		std::cout << summary.BriefReport() << std::endl;
 		if (summary.termination_type == ceres::TerminationType::FAILURE) {
@@ -850,7 +861,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 					                           1.0);
 
 					Eigen::Vector3d pt_ci = pt_ci_unit / feature_ptr->inv_depth_array[0];
-					Eigen::Vector3d pt_w = cur_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc)) + cur_frame.pos;
+					Eigen::Vector3d pt_w = cur_frame.qua * (left_q_bc.inverse() * (pt_ci - left_t_bc))
+					                       + cur_frame.pos;
 					Eigen::Vector3d pt_cj =
 							left_q_bc * (next_frame.qua.inverse() * (pt_w - next_frame.pos)) + left_t_bc;
 

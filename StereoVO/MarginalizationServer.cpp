@@ -18,6 +18,13 @@ bool MarginalizationServer::markRemovedParameter(double *para_ptr) {
 
 bool MarginalizationServer::MarignalizationProcess() {
 	// initial parameter idx.
+	int total_dimensional=0;
+	int total_removed_dismensional = 0;
+
+	for(auto &residual_block:residual_block_vec){
+
+	}
+
 
 
 

@@ -34,7 +34,7 @@ public:
 			int idx = block_info_vec_[i]->block_idx;
 			Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(parameters[i],size);
 //			Eigen::VectorXd &x0 = block_info_vec_[i]->keeped_block_value;
-			Eigen::Map<Eigen::VectorXd>
+//			Eigen::Map<Eigen::VectorXd>
 
 		}
 

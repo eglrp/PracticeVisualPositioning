@@ -17,23 +17,34 @@ bool MarginalizationServer::markRemovedParameter(double *para_ptr) {
 
 
 bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
+	// no parameter block is removed.
+	if(removed_block_set_.size() < 1){
+		return false;
+	}
+
+
 	// remove all parameter BLock info imformation
 	address_block_info_map_.clear();
-//	problem.GetResidualBlocks();
 
 
 	// initial parameter idx.
 	int total_dimensional = 0;
 	int total_removed_dismensional = 0;
 
-	// recored all
-	for (auto &residual_block:residual_block_vec) {
-		for (auto &para_block_ptr:residual_block.para_block_vec) {
-			int para_block_size = problem.ParameterBlockSize(para_block_ptr);
-			std::cout <<para_block_size << std::endl;
-
-		}
+	// recored all parameter block
+	std::vector<double *> parameter_block_vec;
+	std::vector<int> parameter_size_vec;
+	problem.GetParameterBlocks(&parameter_block_vec);
+	for(auto &para_ptr:parameter_block_vec){
+		int block_size = problem.ParameterBlockSize(para_ptr);
+		int block_local_size = problem.ParameterBlockLocalSize(para_ptr);
+		if(block_size>1)
+		std::cout << block_size << ":" << block_local_size << "\n";
 	}
+	std::cout << std::endl;
+
+	// arrange all remain and marginalizaed block
+
 
 
 
@@ -45,6 +56,9 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	// generate marginalization factor adopted information.
 
 
+	// clear removed_block_set_
+	removed_block_set_.clear();
+
 
 	return true;
 }
@@ -52,11 +66,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
 	//	problem.GetResidualBlocks()
-
-
-
-
-
+	return true;
 }
 
 

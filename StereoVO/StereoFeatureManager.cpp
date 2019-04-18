@@ -773,6 +773,11 @@ bool StereoFeatureManager::OptimizationCoP() {
 			}
 
 		}
+		// Marginalization Residual block add to problem
+
+		if (marginalizationServer.withMarginalizationInfo()) {
+			marginalizationServer.InsertMarignalizationFactor(problem);
+		}
 
 		//optimization
 
@@ -822,6 +827,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 			key_frame_id_vec_.pop_front();
 			oldest_frame.key_frame_flag = false;
 
+			// recored removed parameter block.
+			marginalizationServer.markRemovedParameter(oldest_frame.qua.coeffs().data());
+			marginalizationServer.markRemovedParameter(oldest_frame.pos.data());
+
 			for (int i = 0; i < oldest_frame.feature_id_vec_.size(); ++i) {
 				FeaturePreId &feature = feature_map_.find(oldest_frame.feature_id_vec_[i])->second;
 				feature.prior_info.push_back(
@@ -850,8 +859,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 				if (feature_ptr->depth_frame_id == *itea && feature_ptr->key_frame_id_deque.size() > 1) {
 					// try to delete the frame represented the pose of feature point by inverse depth.
 					FramePreId &cur_frame = frame_map_.find(*itea)->second;
+
 					// next frame id (select latest frame that observed such feature)
-					int n_frame_id = feature_ptr->key_frame_id_deque[feature_ptr->key_frame_id_deque.size() - 1];
+					int n_frame_id =
+							feature_ptr->key_frame_id_deque[feature_ptr->key_frame_id_deque.size() - 1];
 					FramePreId &next_frame = frame_map_.find(n_frame_id)->second;
 
 					//recover points in world
@@ -871,8 +882,12 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 					// update data.
 					feature_ptr->depth_frame_id = next_frame.frame_id;
-					if (depth > 0.5) {
 
+					//mark inverse depth to be marginalization if inverse_frame is changed.
+					marginalizationServer.markRemovedParameter(feature_ptr->inv_depth_array);
+
+
+					if (depth > 0.5) {
 						feature_ptr->inv_depth_array[0] = 1.0 / depth;
 					}
 
@@ -889,6 +904,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 
 		}
+
+		marginalizationServer.MarignalizationProcess(problem); // create marginalization info for next step.
 
 
 	}

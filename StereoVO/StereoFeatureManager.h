@@ -31,6 +31,8 @@
 
 #include <StereoVO/StereoConfigServer.h>
 
+#include <StereoVO/MarginalizationServer.h>
+
 #include <util/GeoTools.h>
 
 struct FramePreId {
@@ -155,6 +157,8 @@ public:
 	std::set<int> sw_feature_id_set_; // feature id contained in slide windows
 
 	std::deque<Eigen::Matrix4d> pose_deque;
+
+	MarginalizationServer marginalizationServer;
 
 };
 

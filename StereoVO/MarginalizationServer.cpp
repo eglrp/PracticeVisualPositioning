@@ -22,12 +22,12 @@ bool MarginalizationServer::MarignalizationProcess() {
 
 
 	// initial parameter idx.
-	int total_dimensional=0;
+	int total_dimensional = 0;
 	int total_removed_dismensional = 0;
 
 	// recored all
-	for(auto &residual_block:residual_block_vec){
-		for(auto &para_block_ptr:residual_block.para_block_vec){
+	for (auto &residual_block:residual_block_vec) {
+		for (auto &para_block_ptr:residual_block.para_block_vec) {
 
 		}
 	}

@@ -54,6 +54,7 @@ public:
 	int pyr_patch_size = 21;
 	int pyr_levels = 3;
 
+
 	int max_features = 200;
 	int min_feature_dis = 15;
 	double feature_quality = 0.03;

@@ -77,7 +77,7 @@ public:
 	 * @brief
 	 * @return
 	 */
-	bool MarignalizationProcess();
+	bool MarignalizationProcess(ceres::Problem &problem);
 
 	bool InsertMarignalizationFactor(ceres::Problem &problem);
 

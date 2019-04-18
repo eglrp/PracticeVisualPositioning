@@ -16,9 +16,10 @@ bool MarginalizationServer::markRemovedParameter(double *para_ptr) {
 }
 
 
-bool MarginalizationServer::MarignalizationProcess() {
+bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	// remove all parameter BLock info imformation
 	address_block_info_map_.clear();
+//	problem.GetResidualBlocks();
 
 
 	// initial parameter idx.
@@ -28,6 +29,8 @@ bool MarginalizationServer::MarignalizationProcess() {
 	// recored all
 	for (auto &residual_block:residual_block_vec) {
 		for (auto &para_block_ptr:residual_block.para_block_vec) {
+			int para_block_size = problem.ParameterBlockSize(para_block_ptr);
+			std::cout <<para_block_size << std::endl;
 
 		}
 	}
@@ -48,7 +51,9 @@ bool MarginalizationServer::MarignalizationProcess() {
 
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
-//	problem.GetResidualBlocks()
+	//	problem.GetResidualBlocks()
+
+
 
 
 
@@ -64,6 +69,7 @@ bool MarginalizationServer::AddResidualInfo(ceres::CostFunction *func_ptr,
 
 	// para ptr vec size should equal to the number of parametere block in cost function.
 	if (func_ptr->parameter_block_sizes().size() == para_ptr_vec.size()) {
+
 		ResidualBlockInfo residualBlockInfo;
 		residualBlockInfo.cost_func_ptr = func_ptr;
 		residualBlockInfo.para_block_vec = para_ptr_vec;

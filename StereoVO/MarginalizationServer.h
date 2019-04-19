@@ -49,23 +49,6 @@ public:
 	}
 
 
-	bool AddResidualInfo(ceres::CostFunction *func_ptr,
-	                     std::vector<double *> para_ptr_vec);
-
-	/**
-	 * @brief Add residual block information for inverse depth.
-	 * @param cost_func_ptr
-	 * @param pre_qua_ptr
-	 * @param pre_pos_ptr
-	 * @param qua_ptr
-	 * @param pos_ptr
-	 * @param inv_depth_ptr
-	 * @return
-	 */
-	bool AddInvDepthResidualInfo(ceres::CostFunction *cost_func_ptr,
-	                             double *pre_qua_ptr, double *pre_pos_ptr,
-	                             double *qua_ptr, double *pos_ptr, double *inv_depth_ptr);
-
 	/**
 	 * @brief save removed paramteres to
 	 * @param para_ptr
@@ -89,10 +72,12 @@ public:
 protected:
 	bool with_marginalization_info_flag_ = false;
 
+	double eps = 1e-5;
 
 	// save marginalization preprocessed data.
 	// recored relate information here.
 	std::map<double *, ParameterBlockInfo> address_block_info_map_;
+	std::vector<double *> remain_sorted_vec_;
 	// save the information adopted in marginalization constraint
 	Eigen::MatrixXd block_linearized_jac;
 	Eigen::MatrixXd block_linear_residual;
@@ -100,7 +85,8 @@ protected:
 
 	// Save information temp.
 	std::set<double *> removed_block_set_;
-	std::vector<ResidualBlockInfo> residual_block_vec;
+
+	// temperary struct
 
 
 };

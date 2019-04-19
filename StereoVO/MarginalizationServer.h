@@ -13,7 +13,7 @@
 #include <Eigen/Geometry>
 
 #include <StereoVO/MarginalizationInfo.h>
-
+#include <omp.h>
 
 class MarginalizationServer {
 public:

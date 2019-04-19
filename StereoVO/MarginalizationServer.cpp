@@ -22,7 +22,6 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		return false;
 	}
 
-
 	// remove all parameter BLock info imformation
 	remain_sorted_vec_.clear();
 	address_block_info_map_.clear();
@@ -95,7 +94,11 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	/// for each residual block
 	std::vector<ceres::ResidualBlockId> residual_id_vec;
 	problem.GetResidualBlocks(&residual_id_vec);
-	for (auto &residual_block_id:residual_id_vec) {
+//	for (auto &residual_block_id:residual_id_vec) {
+	omp_set_num_threads(8);
+#pragma omp parallel for
+	for (int index = 0; index < residual_id_vec.size(); ++index) {
+		auto &residual_block_id = residual_id_vec[index];
 		auto *loss_ptr = problem.GetLossFunctionForResidualBlock(residual_block_id);
 		auto *cost_ptr = problem.GetCostFunctionForResidualBlock(residual_block_id);
 
@@ -151,27 +154,35 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 			}
 			residual_vector *= residual_scaling_;
 		}
-		// calculate block for A and b.
-		for (int i = 0; i < para_vec.size(); ++i) {
-			int idx_i = address_block_info_map_[para_vec[i]].block_idx;
-			int size_i = para_size_vec[i];
-			Eigen::MatrixXd &jacobian_i = jaco_matrix_vec[i];
-			for (int j = i; j < static_cast<int>(para_vec.size());
-			     ++j) {
-				int idx_j = address_block_info_map_[para_vec[j]].block_idx;
-				int size_j = para_size_vec[j];
-				Eigen::MatrixXd &jacobian_j = jaco_matrix_vec[j];
-				if (i == j) {
-					A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() * jacobian_j;
 
-				} else {
-					A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() *
-					                                         jacobian_j;
-					A.block(idx_j, idx_i, size_j, size_i) =
-							A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
+#pragma omp critical
+		{
+
+			// calculate block for A and b.
+			for (int i = 0; i < para_vec.size(); ++i) {
+				int idx_i = address_block_info_map_[para_vec[i]].block_idx;
+				int size_i = para_size_vec[i];
+				Eigen::MatrixXd &jacobian_i = jaco_matrix_vec[i];
+				for (int j = i; j < static_cast<int>(para_vec.size());
+				     ++j) {
+					int idx_j = address_block_info_map_[para_vec[j]].block_idx;
+					int size_j = para_size_vec[j];
+					Eigen::MatrixXd &jacobian_j = jaco_matrix_vec[j];
+
+					if (i == j) {
+						A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() * jacobian_j;
+
+					} else {
+						A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() *
+						                                         jacobian_j;
+						A.block(idx_j, idx_i, size_j, size_i) =
+								A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
+					}
+					b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
+
 				}
-				b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
 			}
+
 		}
 	}
 	std::cout << "A size:" << A.rows() << "x" << A.cols()
@@ -252,8 +263,6 @@ bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem)
 
 
 
-//		address_block_info_map_.clear();
-//		remain_sorted_vec_.clear();
 		with_marginalization_info_flag_ = false;
 		return true;
 	} else {

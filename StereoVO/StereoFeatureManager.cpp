@@ -889,6 +889,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 					if (depth > 0.5) {
 						feature_ptr->inv_depth_array[0] = 1.0 / depth;
+					}else{
+						feature_ptr->inv_depth_array[0] = 1.0;
 					}
 
 				}

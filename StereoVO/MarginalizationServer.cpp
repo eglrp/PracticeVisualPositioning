@@ -113,7 +113,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	}
 
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int index = 0; index < residual_id_vec.size(); ++index) {
 		auto &residual_block_id = residual_id_vec[index];
 		auto *loss_ptr = problem.GetLossFunctionForResidualBlock(residual_block_id);
@@ -124,9 +124,30 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		std::vector<double *> para_vec;
 		problem.GetParameterBlocksForResidualBlock(residual_block_id,
 		                                           &para_vec);
-		if(para_vec.size()>10){
-			continue;
+
+		// check para vec
+		if (para_vec.size() > 10) {
+			for (auto &para_addres:para_vec) {
+				if (address_block_info_map_.find(para_addres) != address_block_info_map_.end()) {
+
+					auto &para_info = address_block_info_map_.find(para_addres)->second;
+					std::cout << para_info.removed_flag << "--"
+					          << para_info.block_idx << "in"
+					          << (para_info.removed_flag ? remove_index : remain_index) << " size:"
+					          << para_info.global_block_size << "\n";
+					if (!(para_info.removed_flag)) {
+						if (para_info.block_idx + para_info.global_block_size > remain_index) {
+
+							std::cout << para_info.block_idx + para_info.global_block_size << "out of remain index:"
+							          << remain_index << std::endl;
+						}
+					}
+				} else {
+					std::cout << "ERROR  such block not in para address info map" << std::endl;
+				}
+			}
 		}
+
 		Eigen::VectorXd residual_vector;
 		residual_vector.resize(cost_ptr->num_residuals());
 
@@ -274,9 +295,9 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 //	Eigen::isfinite(block_linearized_jac)
 
 	// CHECK INDEX OF remained para
-	for(auto &itea:address_block_info_map_){
+	for (auto &itea:address_block_info_map_) {
 		int cur_index = itea.second.block_idx;
-		assert(cur_index<block_linearized_jac.rows());
+		assert(cur_index < block_linearized_jac.rows());
 	}
 
 	// clear removed_block_set_

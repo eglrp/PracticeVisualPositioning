@@ -15,6 +15,8 @@
 #include <StereoVO/MarginalizationInfo.h>
 #include <omp.h>
 
+#include <util/tic_toc.h>
+
 class MarginalizationServer {
 public:
 	MarginalizationServer() {

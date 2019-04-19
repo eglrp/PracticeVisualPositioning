@@ -91,11 +91,17 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	Eigen::MatrixXd A(total_index, total_index);
 	Eigen::VectorXd b(total_index);
 
+	A.setZero();
+	b.setZero();
+
 	/// for each residual block
 	std::vector<ceres::ResidualBlockId> residual_id_vec;
 	problem.GetResidualBlocks(&residual_id_vec);
 //	for (auto &residual_block_id:residual_id_vec) {
-	omp_set_num_threads(8);
+	std::cout << "total residual block number :" << residual_id_vec.size() << std::endl;
+//	omp_set_num_threads(12);
+	TicToc tt;
+
 #pragma omp parallel for
 	for (int index = 0; index < residual_id_vec.size(); ++index) {
 		auto &residual_block_id = residual_id_vec[index];
@@ -155,31 +161,39 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 			residual_vector *= residual_scaling_;
 		}
 
-#pragma omp critical
-		{
 
-			// calculate block for A and b.
-			for (int i = 0; i < para_vec.size(); ++i) {
-				int idx_i = address_block_info_map_[para_vec[i]].block_idx;
-				int size_i = para_size_vec[i];
-				Eigen::MatrixXd &jacobian_i = jaco_matrix_vec[i];
-				for (int j = i; j < static_cast<int>(para_vec.size());
-				     ++j) {
-					int idx_j = address_block_info_map_[para_vec[j]].block_idx;
-					int size_j = para_size_vec[j];
-					Eigen::MatrixXd &jacobian_j = jaco_matrix_vec[j];
 
+//			std::cout << "cur thread:" <<omp_get_thread_num()
+//			<< " total threads:" << omp_get_num_threads()<< std::endl;
+		// calculate block for A and b.
+#pragma omp parallel for
+		for (int i = 0; i < para_vec.size(); ++i) {
+			int idx_i = address_block_info_map_[para_vec[i]].block_idx;
+			int size_i = para_size_vec[i];
+			Eigen::MatrixXd &jacobian_i = jaco_matrix_vec[i];
+#pragma omp parallel for
+			for (int j = i; j < static_cast<int>(para_vec.size());
+			     ++j) {
+				int idx_j = address_block_info_map_[para_vec[j]].block_idx;
+				int size_j = para_size_vec[j];
+				Eigen::MatrixXd &jacobian_j = jaco_matrix_vec[j];
+				Eigen::MatrixXd iTj = jacobian_i.transpose() * jacobian_j;
+#pragma omp critical (A)
+				{
 					if (i == j) {
-						A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() * jacobian_j;
+						A.block(idx_i, idx_j, size_i, size_j) += iTj;
 
 					} else {
-						A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() *
-						                                         jacobian_j;
-						A.block(idx_j, idx_i, size_j, size_i) =
-								A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
+						A.block(idx_i, idx_j, size_i, size_j) += iTj;
+						A.block(idx_j, idx_i, size_j, size_i) += iTj.transpose();
+//								A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
 					}
-					b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
 
+				}
+#pragma omp critical (b)
+				{
+
+					b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
 				}
 			}
 
@@ -187,6 +201,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	}
 	std::cout << "A size:" << A.rows() << "x" << A.cols()
 	          << " b size:" << b.rows() << "x" << b.cols() << std::endl;
+	std::cout << "calculate using time :" << tt.toc() << std::endl;
 
 
 	// generate marginalization factor adopted information.

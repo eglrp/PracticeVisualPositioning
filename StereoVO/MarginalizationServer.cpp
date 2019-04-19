@@ -24,21 +24,21 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 
 	// remove all parameter BLock info imformation
 	remain_sorted_vec_.clear();
+	remain_sorted_size_vec_.clear();
 	address_block_info_map_.clear();
 
 
 	// initial parameter idx.
-	int total_dimensional = 0;
-	int total_removed_dismensional = 0;
+	int remain_index = 0;
+	int remove_index = 0;
+	int total_index = 0;
+
 
 	// recored all parameter block
 	std::vector<double *> parameter_block_vec;
 	std::vector<int> parameter_size_vec;
 	problem.GetParameterBlocks(&parameter_block_vec);
 
-	int remain_index = 0;
-	int remove_index = 0;
-	int total_index = 0;
 
 	int removed_block_num = 0;
 	for (auto &para_ptr:parameter_block_vec) {
@@ -61,8 +61,9 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 			para_info.block_idx = remain_index;
 			remain_index += block_size;
 			remain_sorted_vec_.push_back(para_ptr);
+			remain_sorted_size_vec_.push_back(block_size);
 		}
-		total_index = remain_index + remove_index;
+
 		para_info.keeped_block_value = Eigen::VectorXd(block_size);
 		memcpy(para_info.keeped_block_value.data(), para_ptr, block_size * sizeof(double));
 
@@ -71,7 +72,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		);
 
 	}
-
+	total_index = remain_index + remove_index + 1;
 	for (auto &para_ptr:parameter_block_vec) {
 		auto &info = address_block_info_map_.find(para_ptr)->second;
 		if (!info.removed_flag) {
@@ -101,6 +102,17 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	std::cout << "total residual block number :" << residual_id_vec.size() << std::endl;
 //	omp_set_num_threads(12);
 	TicToc tt;
+
+	int jac_num_thread = 12;
+	std::vector<Eigen::MatrixXd> local_A_vec;
+	std::vector<Eigen::VectorXd> local_b_vec;
+	for (int i = 0; i < jac_num_thread; ++i) {
+		local_A_vec.push_back(Eigen::MatrixXd(A.rows(), A.cols()));
+		local_A_vec[i].setZero();
+		local_b_vec.push_back(Eigen::VectorXd(b.rows()));
+		local_b_vec[i].setZero();
+	}
+
 
 #pragma omp parallel for
 	for (int index = 0; index < residual_id_vec.size(); ++index) {
@@ -153,9 +165,19 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 			     i < static_cast<int>(para_vec.size());
 			     ++i) {
 
+				if (!std::isfinite(jaco_matrix_vec[i].sum())) {
+					std::cout << "before adopting loss func jacobian matrix error:"
+					          << jaco_matrix_vec[i] << "\n idx:"
+					          << i << std::endl;
+				}
 				jaco_matrix_vec[i] =
 						sqrt_rho1_ * (jaco_matrix_vec[i] - alpha_sq_norm_ * residual_vector
 						                                   * (residual_vector.transpose() * jaco_matrix_vec[i]));
+				if (!std::isfinite(jaco_matrix_vec[i].sum())) {
+					std::cout << "after adopting loss func jacobian matrix error:"
+					          << jaco_matrix_vec[i] << "\n idx:"
+					          << i << std::endl;
+				}
 
 			}
 			residual_vector *= residual_scaling_;
@@ -166,39 +188,42 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 //			std::cout << "cur thread:" <<omp_get_thread_num()
 //			<< " total threads:" << omp_get_num_threads()<< std::endl;
 		// calculate block for A and b.
-#pragma omp parallel for
+//#pragma omp parallel for
+		int thread_index = omp_get_thread_num();
+		assert(thread_index < jac_num_thread);
 		for (int i = 0; i < para_vec.size(); ++i) {
 			int idx_i = address_block_info_map_[para_vec[i]].block_idx;
 			int size_i = para_size_vec[i];
 			Eigen::MatrixXd &jacobian_i = jaco_matrix_vec[i];
-#pragma omp parallel for
 			for (int j = i; j < static_cast<int>(para_vec.size());
 			     ++j) {
 				int idx_j = address_block_info_map_[para_vec[j]].block_idx;
 				int size_j = para_size_vec[j];
 				Eigen::MatrixXd &jacobian_j = jaco_matrix_vec[j];
 				Eigen::MatrixXd iTj = jacobian_i.transpose() * jacobian_j;
-#pragma omp critical (A)
-				{
-					if (i == j) {
-						A.block(idx_i, idx_j, size_i, size_j) += iTj;
+				// data for each element.
+				if (i == j) {
+					local_A_vec[thread_index].block(idx_i, idx_j, size_i, size_j) += iTj;
 
-					} else {
-						A.block(idx_i, idx_j, size_i, size_j) += iTj;
-						A.block(idx_j, idx_i, size_j, size_i) += iTj.transpose();
+				} else {
+					local_A_vec[thread_index].block(idx_i, idx_j, size_i, size_j) += iTj;
+					local_A_vec[thread_index].block(idx_j, idx_i, size_j, size_i) += iTj.transpose();
 //								A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
-					}
-
 				}
-#pragma omp critical (b)
-				{
 
-					b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
-				}
+
+				local_b_vec[thread_index].segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
 			}
 
 		}
 	}
+
+	for (int i = 0; i < local_A_vec.size(); ++i) {
+		A += local_A_vec[i];
+		b += local_b_vec[i];
+	}
+
+
 	std::cout << "A size:" << A.rows() << "x" << A.cols()
 	          << " b size:" << b.rows() << "x" << b.cols() << std::endl;
 	std::cout << "calculate using time :" << tt.toc() << std::endl;
@@ -266,16 +291,20 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
 	if (with_marginalization_info_flag_) {
 
-//		problem.AddResidualBlock(
-//				new MarginalizationFactor(
-//						&address_block_info_map_,
-//						block_linearized_jac,
-//						block_linear_residual
-//				),
-//				NULL,
-//				remain_sorted_vec_
-//		);
+		ceres::CostFunction *marg_cost_func_ptr = new MarginalizationFactor(
+				&address_block_info_map_,
+				remain_sorted_size_vec_,
+				block_linearized_jac,
+				block_linear_residual
+		);
+		std::cout << "remain size:" << remain_sorted_vec_.size()
+		          << " cost func para block number:" << marg_cost_func_ptr->parameter_block_sizes().size() << std::endl;
 
+		problem.AddResidualBlock(
+				marg_cost_func_ptr,
+				NULL,
+				remain_sorted_vec_
+		);
 
 
 		with_marginalization_info_flag_ = false;

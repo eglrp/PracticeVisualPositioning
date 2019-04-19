@@ -57,6 +57,7 @@ protected:
 	Eigen::MatrixXd block_linear_residual;
 
 	std::vector<double *> remain_sorted_vec_;
+	std::vector<int> remain_sorted_size_vec_;
 
 
 	// Save information temp.

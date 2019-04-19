@@ -16,11 +16,16 @@ public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	MarginalizationFactor(std::map<double *, ParameterBlockInfo> *map_ptr,
+	                      std::vector<int> &block_sizes_vec,
 	                      Eigen::MatrixXd &block_linearized_jac,
 	                      Eigen::MatrixXd &block_linear_residual) :
 			block_linearized_jac_(block_linearized_jac),
 			block_linearized_residual_(block_linear_residual) {
 		ptr_info_map_ptr_ = map_ptr;
+		for(int &block_size:block_sizes_vec){
+			mutable_parameter_block_sizes()->push_back(block_size);
+		}
+
 		set_num_residuals(block_linear_residual.rows());// set residual module size.
 	}
 

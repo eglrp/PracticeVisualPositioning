@@ -66,7 +66,9 @@ public:
 			} else {
 				// normal
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
-				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
+//				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
+				assert(size == para_info.keeped_block_value.rows());
+				Eigen::VectorXd &x0  = para_info.keeped_block_value;
 				std::cout << "flag:"<< para_info.removed_flag << "\n";
 				std::cout << "x - x0:" << (x - x0).transpose()
 				          << "x - x0 rows:" << (x - x0).rows()

@@ -22,7 +22,7 @@ public:
 			block_linearized_jac_(block_linearized_jac),
 			block_linearized_residual_(block_linear_residual) {
 		ptr_info_map_ptr_ = map_ptr;
-		for(int &block_size:block_sizes_vec){
+		for (int &block_size:block_sizes_vec) {
 			mutable_parameter_block_sizes()->push_back(block_size);
 		}
 
@@ -32,14 +32,15 @@ public:
 	virtual bool Evaluate(double const *const *parameters,
 	                      double *residuals, double **jacobians) const {
 
-		int n = block_linearized_jac_.rows();
-		int m = block_linearized_jac_.cols();
+		int n = block_linearized_jac_.cols();
+		int m = block_linearized_jac_.rows();
 		Eigen::VectorXd dx(n);
 		for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
 			auto &para_info = ptr_info_map_ptr_->
 					find(const_cast<double *>(parameters[i]))->second;
 			int idx = para_info.block_idx;
 			int size = para_info.global_block_size;
+//			assert(mutable_parameter_block_sizes()->[i]==size);
 
 			if (para_info.global_block_size == 4) {
 				// quaternion
@@ -58,7 +59,13 @@ public:
 				// normal
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
 				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
+//				std::cout << "flag:"<< para_info.removed_flag << "\n";
+//				std::cout << "x - x0:" << (x - x0).transpose()
+//				          << "x - x0 rows:" << (x - x0).rows()
+//				          << " dx rows:" << dx.rows()
+//				          << "idx:" << idx << "size:" << size << "\n";
 				dx.segment(idx, size) = x - x0;
+
 			}
 		}
 		Eigen::Map<Eigen::VectorXd> residual_vector(residuals, n);
@@ -76,8 +83,8 @@ public:
 							Eigen::ColMajor>> jaco_mat(jacobians[i], n, size);
 					jaco_mat.setZero();
 					jaco_mat.leftCols(size) = block_linearized_jac_.middleCols(
-							idx,size
-							);
+							idx, size
+					);
 
 				}
 			}

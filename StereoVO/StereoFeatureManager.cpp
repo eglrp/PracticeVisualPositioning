@@ -693,21 +693,21 @@ bool StereoFeatureManager::OptimizationCoP() {
 					cv::Point2f &first_right_ob = first_frame.id_r_pt_map.find(cur_feature.feature_id)->second;
 //					printf("feature id :%d and frame id :%d\n", cur_feature.feature_id, first_frame.frame_id);
 //					if (cv::norm(first_left_ob - first_right_ob) > 5.0)
-					problem.AddResidualBlock(
-							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
-							                                              double(first_left_ob.x),
-							                                              double(first_left_ob.y),
-							                                              double(first_right_ob.x),
-							                                              double(first_right_ob.y),
-							                                              left_q_bc_array, left_t_bc_array,
-							                                              right_q_bc_array, right_t_bc_array
-							),
-							new ceres::CauchyLoss(1.0),
-							first_frame.qua.coeffs().data(),
-							first_frame.pos.data(),
-							cur_feature.inv_depth_array
-
-					);
+//					problem.AddResidualBlock(
+//							SimpleStereoInvDepthReprojectionError::Create(fx, fy, cx, cy,
+//							                                              double(first_left_ob.x),
+//							                                              double(first_left_ob.y),
+//							                                              double(first_right_ob.x),
+//							                                              double(first_right_ob.y),
+//							                                              left_q_bc_array, left_t_bc_array,
+//							                                              right_q_bc_array, right_t_bc_array
+//							),
+//							new ceres::CauchyLoss(1.0),
+//							first_frame.qua.coeffs().data(),
+//							first_frame.pos.data(),
+//							cur_feature.inv_depth_array
+//
+//					);
 				}
 
 				// add frame to frame constraint. based on
@@ -806,14 +806,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 //		std::cout << summary.FullReport() << std::endl;
 		std::cout << summary.BriefReport() << std::endl;
-		if (summary.termination_type == ceres::TerminationType::FAILURE) {
-			std::cout << summary.FullReport() << std::endl;
-
-			int a = 100;
-			a = a + cur_frame_id;
-			std::cout << " frame id:" << a - 100;
-			std::cout << "some error happend" << std::endl;
-		}
+//		if (summary.termination_type == ceres::TerminationType::FAILURE) {
+//			std::cout << summary.FullReport() << std::endl;
+//
+//			int a = 100;
+//			a = a + cur_frame_id;
+//			std::cout << " frame id:" << a - 100;
+//			std::cout << "some error happend" << std::endl;
+//		}
 
 
 		// delete oldest frame.
@@ -902,10 +902,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 				}
 			}
 
-
+			marginalizationServer.MarignalizationProcess(problem); // create marginalization info for next step.
 		}
 
-		marginalizationServer.MarignalizationProcess(problem); // create marginalization info for next step.
+
 
 
 	}

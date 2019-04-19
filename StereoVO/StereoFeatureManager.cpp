@@ -645,10 +645,10 @@ bool StereoFeatureManager::OptimizationCoP() {
 				ordering->AddElementToGroup(cur_frame.qua.coeffs().data(), 1);
 				ordering->AddElementToGroup(cur_frame.pos.data(), 1);
 
-				for (int pi(0); pi < 3; ++pi) {
-					problem.SetParameterLowerBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) - 1.0);
-					problem.SetParameterUpperBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) + 1.0);
-				}
+//				for (int pi(0); pi < 3; ++pi) {
+//					problem.SetParameterLowerBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) - 1.0);
+//					problem.SetParameterUpperBound(cur_frame.pos.data(), pi, cur_frame.pos(pi) + 1.0);
+//				}
 
 
 			} else {

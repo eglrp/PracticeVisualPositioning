@@ -24,6 +24,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 
 
 	// remove all parameter BLock info imformation
+	remain_sorted_vec_.clear();
 	address_block_info_map_.clear();
 
 
@@ -76,7 +77,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		auto &info = address_block_info_map_.find(para_ptr)->second;
 		if (!info.removed_flag) {
 			info.total_idx = info.block_idx + remove_index;
-		}else{
+		} else {
 			info.total_idx = info.block_idx;
 		}
 	}
@@ -167,7 +168,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 					A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() *
 					                                         jacobian_j;
 					A.block(idx_j, idx_i, size_j, size_i) =
-							A.block(idx_i, idx_j, size_i, size_j).transpose();
+							A.block(idx_i, idx_j, size_i, size_j).transpose().eval();
 				}
 				b.segment(idx_i, size_i) += jacobian_i.transpose() * residual_vector;
 			}
@@ -224,7 +225,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	std::cout << "block jac size:" << block_linearized_jac.rows() << "x" << block_linearized_jac.cols()
 	          << " block residual:" << block_linear_residual.rows() << "x" << block_linear_residual.cols()
 	          << std::endl;
-	Eigen::isfinite(block_linearized_jac)
+//	Eigen::isfinite(block_linearized_jac)
 
 	// clear removed_block_set_
 	removed_block_set_.clear();
@@ -239,10 +240,20 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
 	if (with_marginalization_info_flag_) {
 
+//		problem.AddResidualBlock(
+//				new MarginalizationFactor(
+//						&address_block_info_map_,
+//						block_linearized_jac,
+//						block_linear_residual
+//				),
+//				NULL,
+//				remain_sorted_vec_
+//		);
 
 
-		address_block_info_map_.clear();
-		remain_sorted_vec_.clear();
+
+//		address_block_info_map_.clear();
+//		remain_sorted_vec_.clear();
 		with_marginalization_info_flag_ = false;
 		return true;
 	} else {

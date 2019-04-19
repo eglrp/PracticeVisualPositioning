@@ -8,8 +8,8 @@
 #include <ceres/ceres.h>
 #include <ceres/local_parameterization.h>
 
-
-#include <StereoVO/MarginalizationServer.h>
+//#include <StereoVO/MarginalizationServer.h>
+#include <StereoVO/MarginalizationInfo.h>
 
 class MarginalizationFactor : public ceres::CostFunction {
 public:
@@ -27,11 +27,11 @@ public:
 	virtual bool Evaluate(double const *const *parameters,
 	                      double *residuals, double **jacobians) const {
 
-		int n = block_linearized_jac_.cols();
-		int m = block_linearized_jac_.rows();
+		int n = block_linearized_jac_.rows();
+		int m = block_linearized_jac_.cols();
 		Eigen::VectorXd dx(n);
 		for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
-			ParameterBlockInfo &para_info = ptr_info_map_ptr_->
+			auto &para_info = ptr_info_map_ptr_->
 					find(const_cast<double *>(parameters[i]))->second;
 			int idx = para_info.block_idx;
 			int size = para_info.global_block_size;
@@ -56,11 +56,26 @@ public:
 				dx.segment(idx, size) = x - x0;
 			}
 		}
-		Eigen::Map<Eigen::VectorXd> residual_vector(residuals,n);
+		Eigen::Map<Eigen::VectorXd> residual_vector(residuals, n);
 		residual_vector = block_linearized_residual_ +
-				block_linearized_jac_ * dx;
+		                  block_linearized_jac_ * dx;
 
-		if(jacobians){
+		if (jacobians) {
+			for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
+				if (jacobians[i]) {
+					ParameterBlockInfo &para_info = ptr_info_map_ptr_->
+							find(const_cast<double *>(parameters[i]))->second;
+					int idx = para_info.block_idx;
+					int size = para_info.global_block_size;
+					Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+							Eigen::ColMajor>> jaco_mat(jacobians[i], n, size);
+					jaco_mat.setZero();
+					jaco_mat.leftCols(size) = block_linearized_jac_.middleCols(
+							idx,size
+							);
+
+				}
+			}
 
 		}
 		return true;

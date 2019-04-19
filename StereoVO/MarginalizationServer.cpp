@@ -113,7 +113,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	}
 
 
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (int index = 0; index < residual_id_vec.size(); ++index) {
 		auto &residual_block_id = residual_id_vec[index];
 		auto *loss_ptr = problem.GetLossFunctionForResidualBlock(residual_block_id);
@@ -126,27 +126,27 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		                                           &para_vec);
 
 		// check para vec
-		if (para_vec.size() > 10) {
-			for (auto &para_addres:para_vec) {
-				if (address_block_info_map_.find(para_addres) != address_block_info_map_.end()) {
-
-					auto &para_info = address_block_info_map_.find(para_addres)->second;
-					std::cout << para_info.removed_flag << "--"
-					          << para_info.block_idx << "in"
-					          << (para_info.removed_flag ? remove_index : remain_index) << " size:"
-					          << para_info.global_block_size << "\n";
-					if (!(para_info.removed_flag)) {
-						if (para_info.block_idx + para_info.global_block_size > remain_index) {
-
-							std::cout << para_info.block_idx + para_info.global_block_size << "out of remain index:"
-							          << remain_index << std::endl;
-						}
-					}
-				} else {
-					std::cout << "ERROR  such block not in para address info map" << std::endl;
-				}
-			}
-		}
+//		if (para_vec.size() > 10) {
+//			for (auto &para_addres:para_vec) {
+//				if (address_block_info_map_.find(para_addres) != address_block_info_map_.end()) {
+//
+//					auto &para_info = address_block_info_map_.find(para_addres)->second;
+//					std::cout << para_info.removed_flag << "--"
+//					          << para_info.block_idx << "in"
+//					          << (para_info.removed_flag ? remove_index : remain_index) << " size:"
+//					          << para_info.global_block_size << "\n";
+//					if (!(para_info.removed_flag)) {
+//						if (para_info.block_idx + para_info.global_block_size > remain_index) {
+//
+//							std::cout << para_info.block_idx + para_info.global_block_size << "out of remain index:"
+//							          << remain_index << std::endl;
+//						}
+//					}
+//				} else {
+//					std::cout << "ERROR  such block not in para address info map" << std::endl;
+//				}
+//			}
+//		}
 
 		Eigen::VectorXd residual_vector;
 		residual_vector.resize(cost_ptr->num_residuals());
@@ -322,11 +322,13 @@ bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem)
 		std::cout << "remain size:" << remain_sorted_vec_.size()
 		          << " cost func para block number:" << marg_cost_func_ptr->parameter_block_sizes().size() << std::endl;
 
+		std::cout << "ADDING Marginalization factor-=" << std::endl;
 		problem.AddResidualBlock(
 				marg_cost_func_ptr,
 				NULL,
 				remain_sorted_vec_
 		);
+		std::cout << "===========================================================" << std::endl;
 
 
 		with_marginalization_info_flag_ = false;

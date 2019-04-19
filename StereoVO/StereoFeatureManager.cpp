@@ -788,17 +788,17 @@ bool StereoFeatureManager::OptimizationCoP() {
 //		options.gradient_check_relative_precision = 1e-04;
 
 //		options.update_state_every_iteration = true;
-//		options.num_threads = 1;
-//		options.num_linear_solver_threads = 1;
+		options.num_threads = 1;
+		options.num_linear_solver_threads = 1;
 
-		options.num_threads = 6;
-		options.num_linear_solver_threads = 6;
+//		options.num_threads = 6;
+//		options.num_linear_solver_threads = 6;
 
 		options.max_num_iterations = 30;
 		options.max_solver_time_in_seconds = 0.5;
 
-		options.linear_solver_ordering.reset(ordering);
-//		delete ordering;
+//		options.linear_solver_ordering.reset(ordering);
+		delete ordering;
 
 
 		ceres::Solve(options, &problem, &summary);
@@ -806,14 +806,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 
 //		std::cout << summary.FullReport() << std::endl;
 		std::cout << summary.BriefReport() << std::endl;
-//		if (summary.termination_type == ceres::TerminationType::FAILURE) {
-//			std::cout << summary.FullReport() << std::endl;
-//
-//			int a = 100;
-//			a = a + cur_frame_id;
-//			std::cout << " frame id:" << a - 100;
-//			std::cout << "some error happend" << std::endl;
-//		}
+		if (summary.termination_type == ceres::TerminationType::FAILURE) {
+			std::cout << summary.FullReport() << std::endl;
+
+			int a = 100;
+			a = a + cur_frame_id;
+			std::cout << " frame id:" << a - 100;
+			std::cout << "some error happend" << std::endl;
+		}
 
 
 		// delete oldest frame.

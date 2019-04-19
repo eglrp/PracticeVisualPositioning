@@ -37,7 +37,5 @@ struct ResidualBlockInfo {
 			Eigen::RowMajor>> jacobian_matrix_vec;
 
 	// TODO:adopting new version of marginalization for speeding up.
-
-
 };
 #endif //PRACTICEVISUALPOSITIONING_MARGINALIZATIONINFO_H

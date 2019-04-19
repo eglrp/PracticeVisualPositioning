@@ -21,12 +21,18 @@ public:
 	                      Eigen::MatrixXd &block_linear_residual) :
 			block_linearized_jac_(block_linearized_jac),
 			block_linearized_residual_(block_linear_residual) {
-		ptr_info_map_ptr_ = map_ptr;
+//		ptr_info_map = *map_ptr;
+		ptr_info_map_ptr_ = new std::map<double * ,ParameterBlockInfo>();
+		ptr_info_map_ptr_->insert(map_ptr->begin(),map_ptr->end());
 		for (int &block_size:block_sizes_vec) {
 			mutable_parameter_block_sizes()->push_back(block_size);
 		}
 
 		set_num_residuals(block_linear_residual.rows());// set residual module size.
+	}
+
+	~MarginalizationFactor(){
+		delete ptr_info_map_ptr_;
 	}
 
 	virtual bool Evaluate(double const *const *parameters,
@@ -35,6 +41,8 @@ public:
 		int n = block_linearized_jac_.cols();
 		int m = block_linearized_jac_.rows();
 		Eigen::VectorXd dx(n);
+
+
 		for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
 			auto &para_info = ptr_info_map_ptr_->
 					find(const_cast<double *>(parameters[i]))->second;
@@ -59,11 +67,11 @@ public:
 				// normal
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
 				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
-//				std::cout << "flag:"<< para_info.removed_flag << "\n";
-//				std::cout << "x - x0:" << (x - x0).transpose()
-//				          << "x - x0 rows:" << (x - x0).rows()
-//				          << " dx rows:" << dx.rows()
-//				          << "idx:" << idx << "size:" << size << "\n";
+				std::cout << "flag:"<< para_info.removed_flag << "\n";
+				std::cout << "x - x0:" << (x - x0).transpose()
+				          << "x - x0 rows:" << (x - x0).rows()
+				          << " dx rows:" << dx.rows()
+				          << "idx:" << idx << "size:" << size << "\n";
 				dx.segment(idx, size) = x - x0;
 
 			}
@@ -95,6 +103,7 @@ public:
 	}
 
 	std::map<double *, ParameterBlockInfo> *ptr_info_map_ptr_;
+
 
 	Eigen::MatrixXd block_linearized_jac_;
 	Eigen::MatrixXd block_linearized_residual_;

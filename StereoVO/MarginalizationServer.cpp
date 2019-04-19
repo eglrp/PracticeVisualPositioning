@@ -60,6 +60,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		} else {
 			para_info.block_idx = remain_index;
 			remain_index += block_size;
+			remain_sorted_vec_.push_back(para_ptr);
 		}
 		total_index = remain_index + remove_index;
 		para_info.keeped_block_value = Eigen::VectorXd(block_size);
@@ -74,7 +75,9 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	for (auto &para_ptr:parameter_block_vec) {
 		auto &info = address_block_info_map_.find(para_ptr)->second;
 		if (!info.removed_flag) {
-			info.block_idx += remove_index;
+			info.total_idx = info.block_idx + remove_index;
+		}else{
+			info.total_idx = info.block_idx;
 		}
 	}
 
@@ -221,6 +224,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	std::cout << "block jac size:" << block_linearized_jac.rows() << "x" << block_linearized_jac.cols()
 	          << " block residual:" << block_linear_residual.rows() << "x" << block_linear_residual.cols()
 	          << std::endl;
+	Eigen::isfinite(block_linearized_jac)
 
 	// clear removed_block_set_
 	removed_block_set_.clear();
@@ -236,7 +240,9 @@ bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem)
 	if (with_marginalization_info_flag_) {
 
 
+
 		address_block_info_map_.clear();
+		remain_sorted_vec_.clear();
 		with_marginalization_info_flag_ = false;
 		return true;
 	} else {

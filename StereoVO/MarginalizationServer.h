@@ -12,12 +12,14 @@
 #include <Eigen/Geometry>
 
 struct ParameterBlockInfo {
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	const double *block_para_address = nullptr;
 	// parameter block size at local and global.
 	int global_block_size = -1;
 	int local_block_size = -1;
 
 	int block_idx = -1;
+	int total_idx = -1;
 	bool removed_flag = false;
 
 //	double *keeped_block_value = nullptr;
@@ -77,10 +79,11 @@ protected:
 	// save marginalization preprocessed data.
 	// recored relate information here.
 	std::map<double *, ParameterBlockInfo> address_block_info_map_;
-	std::vector<double *> remain_sorted_vec_;
 	// save the information adopted in marginalization constraint
 	Eigen::MatrixXd block_linearized_jac;
 	Eigen::MatrixXd block_linear_residual;
+
+	std::vector<double *> remain_sorted_vec_;
 
 
 	// Save information temp.

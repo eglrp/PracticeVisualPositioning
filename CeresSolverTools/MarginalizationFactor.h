@@ -15,12 +15,13 @@ class MarginalizationFactor : public ceres::CostFunction {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	MarginalizationFactor(std::vector<ParameterBlockInfo *> block_info_vec,
+	MarginalizationFactor(std::map<double *, ParameterBlockInfo> *map_ptr,
 	                      Eigen::MatrixXd &block_linearized_jac,
 	                      Eigen::MatrixXd &block_linear_residual) :
 			block_linearized_jac_(block_linearized_jac),
 			block_linearized_residual_(block_linear_residual) {
-		block_info_vec_ = block_info_vec;
+		ptr_info_map_ptr_ = map_ptr;
+		set_num_residuals(block_linear_residual.rows());// set residual module size.
 	}
 
 	virtual bool Evaluate(double const *const *parameters,
@@ -29,17 +30,44 @@ public:
 		int n = block_linearized_jac_.cols();
 		int m = block_linearized_jac_.rows();
 		Eigen::VectorXd dx(n);
-		for(int i=0;i<block_info_vec_.size();++i){
-			int size = block_info_vec_[i]->global_block_size;
-			int idx = block_info_vec_[i]->block_idx;
-			Eigen::VectorXd x = Eigen::Map<const Eigen::VectorXd>(parameters[i],size);
-			Eigen::VectorXd &x0 = block_info_vec_[i]->keeped_block_value;
+		for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
+			ParameterBlockInfo &para_info = ptr_info_map_ptr_->
+					find(const_cast<double *>(parameters[i]))->second;
+			int idx = para_info.block_idx;
+			int size = para_info.global_block_size;
+
+			if (para_info.global_block_size == 4) {
+				// quaternion
+				Eigen::Map<const Eigen::Quaterniond> q(parameters[i]);
+				Eigen::Map<Eigen::Quaterniond> q0(para_info.keeped_block_value.data());
+
+				Eigen::Quaterniond q_diff = q0.inverse() * q;
+				if (q_diff.w() > 0) {
+					dx.segment(idx, size) = q_diff.coeffs();
+				} else {
+					dx.segment(idx, size) = q_diff.coeffs() * -1.0;
+				}
+
+
+			} else {
+				// normal
+				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
+				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
+				dx.segment(idx, size) = x - x0;
+			}
+		}
+		Eigen::Map<Eigen::VectorXd> residual_vector(residuals,n);
+		residual_vector = block_linearized_residual_ +
+				block_linearized_jac_ * dx;
+
+		if(jacobians){
 
 		}
+		return true;
 
 	}
 
-	std::vector<ParameterBlockInfo *> block_info_vec_;
+	std::map<double *, ParameterBlockInfo> *ptr_info_map_ptr_;
 
 	Eigen::MatrixXd block_linearized_jac_;
 	Eigen::MatrixXd block_linearized_residual_;

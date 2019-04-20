@@ -113,6 +113,7 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	}
 
 
+	// Calculate jaociban and residual for each residual block and construct A and b.
 #pragma omp parallel for
 	for (int index = 0; index < residual_id_vec.size(); ++index) {
 		auto &residual_block_id = residual_id_vec[index];
@@ -126,26 +127,15 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 		                                           &para_vec);
 
 		// check para vec
-//		if (para_vec.size() > 10) {
-//			for (auto &para_addres:para_vec) {
-//				if (address_block_info_map_.find(para_addres) != address_block_info_map_.end()) {
-//
-//					auto &para_info = address_block_info_map_.find(para_addres)->second;
-//					std::cout << para_info.removed_flag << "--"
-//					          << para_info.block_idx << "in"
-//					          << (para_info.removed_flag ? remove_index : remain_index) << " size:"
-//					          << para_info.global_block_size << "\n";
-//					if (!(para_info.removed_flag)) {
-//						if (para_info.block_idx + para_info.global_block_size > remain_index) {
-//
-//							std::cout << para_info.block_idx + para_info.global_block_size << "out of remain index:"
-//							          << remain_index << std::endl;
-//						}
-//					}
-//				} else {
-//					std::cout << "ERROR  such block not in para address info map" << std::endl;
-//				}
+//		bool contain_removed_para = false;
+//		for(auto para_address:para_vec){
+//			auto &para_info = address_block_info_map_.find(para_address)->second;
+//			if(para_info.removed_flag){
+//				contain_removed_para=true;
 //			}
+//		}
+//		if(!contain_removed_para){
+//			continue;
 //		}
 
 		Eigen::VectorXd residual_vector;

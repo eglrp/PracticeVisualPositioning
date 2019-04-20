@@ -788,14 +788,14 @@ bool StereoFeatureManager::OptimizationCoP() {
 //		options.gradient_check_relative_precision = 1e-04;
 
 //		options.update_state_every_iteration = true;
-		options.num_threads = 1;
-		options.num_linear_solver_threads = 1;
+//		options.num_threads = 1;
+//		options.num_linear_solver_threads = 1;
 
-//		options.num_threads = 6;
-//		options.num_linear_solver_threads = 6;
+		options.num_threads = 6;
+		options.num_linear_solver_threads = 6;
 
 		options.max_num_iterations = 30;
-		options.max_solver_time_in_seconds = 0.5;
+//		options.max_solver_time_in_seconds = 0.5;
 
 //		options.linear_solver_ordering.reset(ordering);
 		delete ordering;
@@ -804,8 +804,8 @@ bool StereoFeatureManager::OptimizationCoP() {
 		ceres::Solve(options, &problem, &summary);
 
 
-//		std::cout << summary.FullReport() << std::endl;
-		std::cout << summary.BriefReport() << std::endl;
+		std::cout << summary.FullReport() << std::endl;
+//		std::cout << summary.BriefReport() << std::endl;
 		if (summary.termination_type == ceres::TerminationType::FAILURE) {
 			std::cout << summary.FullReport() << std::endl;
 

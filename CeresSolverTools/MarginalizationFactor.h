@@ -50,7 +50,7 @@ public:
 
 
 		for (int i = 0; i < block_idx_vec_.size(); ++i) {
-			std::cout << "address [" << i << "]: " << parameters[i] << "\n";
+//			std::cout << "address [" << i << "]: " << parameters[i] << "\n";
 			int idx = block_idx_vec_[i];
 			int size = block_size_vec_[i];
 //			assert(mutable_parameter_block_sizes()->[i]==size);
@@ -66,6 +66,7 @@ public:
 				} else {
 					dx.segment(idx, size) = q_diff.coeffs() * -1.0;
 				}
+				dx.segment(idx,size) = q_diff.coeffs() * 0.0;
 
 
 			} else {
@@ -73,10 +74,10 @@ public:
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
 //				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
 				Eigen::VectorXd x0 = keeped_data_vec_[i];
-//				std::cout << "x - x0:" << (x - x0).transpose()
-//				          << "x - x0 rows:" << (x - x0).rows()
-//				          << " dx rows:" << dx.rows()
-//				          << "idx:" << idx << "size:" << size << "\n";
+				std::cout << "x - x0:" << (x - x0).transpose()
+				          << "x - x0 rows:" << (x - x0).rows()
+				          << " dx rows:" << dx.rows()
+				          << "idx:" << idx << "size:" << size << "\n";
 				dx.segment(idx, size) = x - x0;
 
 			}
@@ -86,6 +87,7 @@ public:
 		                  block_linearized_jac_ * dx;
 
 		if (jacobians) {
+			int valid_jac_counter=0;
 			for (int i = 0; i < block_size_vec_.size(); ++i) {
 				if (jacobians[i]) {
 					int idx = block_idx_vec_[i];
@@ -96,9 +98,22 @@ public:
 					jaco_mat.leftCols(size) = block_linearized_jac_.middleCols(
 							idx, size
 					);
+					if(std::isfinite(jaco_mat.sum())){
+						valid_jac_counter+=1;
+					}else{
+						jaco_mat.setZero();
+					}
+					if(size == 4){
+						jaco_mat.setZero();
+					}
 
 				}
 			}
+			if(valid_jac_counter<10){
+				std::cout << "valid jacobian matrix is less than 10, is :" << valid_jac_counter << std::endl;
+				return false;
+			}
+
 
 		}
 		return true;

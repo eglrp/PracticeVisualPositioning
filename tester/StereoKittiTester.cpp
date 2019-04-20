@@ -97,7 +97,7 @@ int main() {
 		odometry.addNewFrame(left_img, right_img);
 
 
-		cv::waitKey(1);
+		cv::waitKey();
 	}
 
 	cv::waitKey();

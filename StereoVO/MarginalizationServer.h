@@ -47,7 +47,7 @@ public:
 protected:
 	bool with_marginalization_info_flag_ = false;
 
-	double eps = 1e-5;
+	double eps = 1e-8;
 
 	// save marginalization preprocessed data.
 	// recored relate information here.

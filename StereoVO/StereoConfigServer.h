@@ -77,7 +77,7 @@ public:
 	/**
 	 * Parameters For Feature Manager
 	 */
-	int slide_windows_size = 10; //
+	int slide_windows_size = 6; //
 
 	int min_covisible_feature = 100;// lower bound of tracked feature number.
 	float min_parallex = 20.0; // average moving distance of all features.

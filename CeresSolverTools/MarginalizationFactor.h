@@ -22,8 +22,15 @@ public:
 			block_linearized_jac_(block_linearized_jac),
 			block_linearized_residual_(block_linear_residual) {
 //		ptr_info_map = *map_ptr;
-		ptr_info_map_ptr_ = new std::map<double * ,ParameterBlockInfo>();
-		ptr_info_map_ptr_->insert(map_ptr->begin(),map_ptr->end());
+		ptr_info_map_ptr_ = new std::map<double *, ParameterBlockInfo>();
+//		ptr_info_map_ptr_->insert(map_ptr->begin(),map_ptr->end());
+//		for(auto &itea:*map_ptr){
+//			ptr_info_map_ptr_->insert(std::make_pair(itea.first,itea.second));
+//		}
+		ptr_info_map_ptr_->insert(
+				std::make_move_iterator(std::begin(*map_ptr)),
+				std::make_move_iterator(std::end(*map_ptr))
+		);
 		for (int &block_size:block_sizes_vec) {
 			mutable_parameter_block_sizes()->push_back(block_size);
 		}
@@ -31,7 +38,7 @@ public:
 		set_num_residuals(block_linear_residual.rows());// set residual module size.
 	}
 
-	~MarginalizationFactor(){
+	~MarginalizationFactor() {
 		delete ptr_info_map_ptr_;
 	}
 
@@ -46,6 +53,8 @@ public:
 		for (int i = 0; i < ptr_info_map_ptr_->size(); ++i) {
 			auto &para_info = ptr_info_map_ptr_->
 					find(const_cast<double *>(parameters[i]))->second;
+			assert(ptr_info_map_ptr_->find(const_cast<double *>(parameters[i])) !=
+			       ptr_info_map_ptr_->end());
 			int idx = para_info.block_idx;
 			int size = para_info.global_block_size;
 //			assert(mutable_parameter_block_sizes()->[i]==size);
@@ -68,8 +77,8 @@ public:
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
 //				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
 				assert(size == para_info.keeped_block_value.rows());
-				Eigen::VectorXd &x0  = para_info.keeped_block_value;
-				std::cout << "flag:"<< para_info.removed_flag << "\n";
+				Eigen::VectorXd &x0 = para_info.keeped_block_value;
+				std::cout << "flag:" << para_info.removed_flag << "\n";
 				std::cout << "x - x0:" << (x - x0).transpose()
 				          << "x - x0 rows:" << (x - x0).rows()
 				          << " dx rows:" << dx.rows()

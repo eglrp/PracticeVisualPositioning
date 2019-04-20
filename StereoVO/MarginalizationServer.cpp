@@ -259,15 +259,16 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	//
 	//A = [ Amm Amr]
 	//    [ Arm Arr]
-	Eigen::MatrixXd Amr = A.block(0, remove_index, remove_index + 1, remain_index + 1);
-	Eigen::MatrixXd Arm = A.block(remove_index, 0, remain_index + 1, remove_index + 1);
-	Eigen::MatrixXd Arr = A.block(remove_index, remove_index, remain_index + 1, remain_index + 1);
+	Eigen::MatrixXd Amr = A.block(0, remove_index, remove_index , remain_index );
+	Eigen::MatrixXd Arm = A.block(remove_index, 0, remain_index , remove_index );
+	Eigen::MatrixXd Arr = A.block(remove_index, remove_index,
+			remain_index , remain_index );
 
 
 	// b= [bmm]
 	//    [brr]
-	Eigen::VectorXd bmm = b.segment(0, remove_index + 1);
-	Eigen::VectorXd brr = b.segment(remove_index, remain_index + 1);
+	Eigen::VectorXd bmm = b.segment(0, remove_index );
+	Eigen::VectorXd brr = b.segment(remove_index, remain_index );
 
 	Eigen::MatrixXd Amarg = Arr - Arm * Amm_inv * Amr;
 	Eigen::VectorXd bmarg = brr - Arm * Amm_inv * bmm;

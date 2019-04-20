@@ -629,7 +629,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 				std::cout << __FILE__ << ":  with some problem" << std::endl;
 			}
 
-			cur_frame.qua.normalize();
+//			cur_frame.qua.normalize();
 			problem.AddParameterBlock(cur_frame.qua.coeffs().data(),
 			                          4,
 			                          new ceres::EigenQuaternionParameterization);
@@ -782,7 +782,7 @@ bool StereoFeatureManager::OptimizationCoP() {
 		//optimization
 
 		options.linear_solver_type = ceres::DENSE_SCHUR;
-		options.trust_region_strategy_type = ceres::DOGLEG;
+//		options.trust_region_strategy_type = ceres::DOGLEG;
 
 //		options.check_gradients = true;
 //		options.gradient_check_relative_precision = 1e-04;

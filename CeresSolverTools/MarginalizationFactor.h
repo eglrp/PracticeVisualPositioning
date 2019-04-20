@@ -47,6 +47,7 @@ public:
 		int n = block_linearized_jac_.cols();
 		int m = block_linearized_jac_.rows();
 		Eigen::VectorXd dx(n);
+		dx.setZero();
 
 
 		for (int i = 0; i < block_idx_vec_.size(); ++i) {
@@ -61,12 +62,13 @@ public:
 				const Eigen::Map<Eigen::Quaterniond> q0(const_cast<double *>(keeped_data_vec_[i].data()));
 
 				Eigen::Quaterniond q_diff = q0.inverse() * q;
-				if (q_diff.w() > 0) {
-					dx.segment(idx, size) = q_diff.coeffs();
-				} else {
-					dx.segment(idx, size) = q_diff.coeffs() * -1.0;
-				}
-				dx.segment(idx,size) = q_diff.coeffs() * 0.0;
+//				if (q_diff.w() > 0) {
+//					dx.segment(idx, size) = q_diff.coeffs();
+//				} else {
+//					dx.segment(idx, size) = q_diff.coeffs() * -1.0;
+//				}
+//				dx.segment(idx,size) = q_diff.coeffs() * 0.0;
+//				dx(idx) = 0.0;
 
 
 			} else {
@@ -74,10 +76,10 @@ public:
 				Eigen::Map<const Eigen::VectorXd> x(parameters[i], size);
 //				Eigen::Map<Eigen::VectorXd> x0(para_info.keeped_block_value.data(), size);
 				Eigen::VectorXd x0 = keeped_data_vec_[i];
-				std::cout << "x - x0:" << (x - x0).transpose()
-				          << "x - x0 rows:" << (x - x0).rows()
-				          << " dx rows:" << dx.rows()
-				          << "idx:" << idx << "size:" << size << "\n";
+//				std::cout << "x - x0:" << (x - x0).transpose()
+//				          << "x - x0 rows:" << (x - x0).rows()
+//				          << " dx rows:" << dx.rows()
+//				          << "idx:" << idx << "size:" << size << "\n";
 				dx.segment(idx, size) = x - x0;
 
 			}
@@ -103,9 +105,9 @@ public:
 					}else{
 						jaco_mat.setZero();
 					}
-					if(size == 4){
-						jaco_mat.setZero();
-					}
+//					if(size == 4){
+//						jaco_mat.setZero();
+//					}
 
 				}
 			}

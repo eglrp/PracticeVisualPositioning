@@ -259,16 +259,16 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 	//
 	//A = [ Amm Amr]
 	//    [ Arm Arr]
-	Eigen::MatrixXd Amr = A.block(0, remove_index, remove_index , remain_index );
-	Eigen::MatrixXd Arm = A.block(remove_index, 0, remain_index , remove_index );
+	Eigen::MatrixXd Amr = A.block(0, remove_index, remove_index, remain_index);
+	Eigen::MatrixXd Arm = A.block(remove_index, 0, remain_index, remove_index);
 	Eigen::MatrixXd Arr = A.block(remove_index, remove_index,
-			remain_index , remain_index );
+	                              remain_index, remain_index);
 
 
 	// b= [bmm]
 	//    [brr]
-	Eigen::VectorXd bmm = b.segment(0, remove_index );
-	Eigen::VectorXd brr = b.segment(remove_index, remain_index );
+	Eigen::VectorXd bmm = b.segment(0, remove_index);
+	Eigen::VectorXd brr = b.segment(remove_index, remain_index);
 
 	Eigen::MatrixXd Amarg = Arr - Arm * Amm_inv * Amr;
 	Eigen::VectorXd bmarg = brr - Arm * Amm_inv * bmm;
@@ -313,15 +313,32 @@ bool MarginalizationServer::MarignalizationProcess(ceres::Problem &problem) {
 
 bool MarginalizationServer::InsertMarignalizationFactor(ceres::Problem &problem) {
 	if (with_marginalization_info_flag_) {
-
+		std::vector<int> ordered_block_size_vec;
+		std::vector<int> ordered_block_idx_vec;
+		std::vector<Eigen::VectorXd> keeped_data_vec;
+		for (auto &para_address:remain_sorted_vec_) {
+			assert(address_block_info_map_.find(para_address) !=
+			       address_block_info_map_.end());
+			auto &para_info = address_block_info_map_.find(para_address)->second;
+			ordered_block_idx_vec.push_back(para_info.block_idx);
+			ordered_block_size_vec.push_back(para_info.global_block_size);
+			keeped_data_vec.push_back(para_info.keeped_block_value);
+//			std::cout <<para_address <<" address accepted\n";
+		}
+//		std::cout << std::endl;
+		std::cout << "ordered block idx vec size:" << ordered_block_idx_vec.size()
+		          << "ordered block size vec size:" << ordered_block_idx_vec.size()
+		          << " keeped data vec size:" << keeped_data_vec.size() << std::endl;
 		ceres::CostFunction *marg_cost_func_ptr = new MarginalizationFactor(
-				&address_block_info_map_,
-				remain_sorted_size_vec_,
+				ordered_block_size_vec,
+				ordered_block_idx_vec,
+				keeped_data_vec,
 				block_linearized_jac,
 				block_linear_residual
 		);
 		std::cout << "remain size:" << remain_sorted_vec_.size()
 		          << " cost func para block number:" << marg_cost_func_ptr->parameter_block_sizes().size() << std::endl;
+
 
 		std::cout << "ADDING Marginalization factor-=" << std::endl;
 		problem.AddResidualBlock(
